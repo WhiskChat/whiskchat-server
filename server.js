@@ -2,6 +2,7 @@
 
 var io = require('socket.io').listen(Number(process.env.PORT));
 var hash = require('node_hash');
+var crypto = require('crypto');
 var redis = require('redis');
 var sockets = [];
 var online = 0;
@@ -74,7 +75,19 @@ db.on('ready', function() {
 							if(data.password != data.password2){
 								return socket.emit("message", {type: "alert-error", message: "Passwords must match!"});
 							}
-							
+							// Generate seed for password
+							crypto.randomBytes(12, function(ex, buf){
+								var salt = buf.toString('hex');
+								
+								var hashed = hash.sha256(data.password, salt);
+								
+								db.set("users/" + data.username, true);
+								db.set("users/" + data.username + "/password", hashed);
+								db.set("users/" + data.username + "/salt", salt);
+								db.set("users/" + data.username + "/email", data.email);
+								
+								socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
+							});
 						} else {
 							return socket.emit("message", {type: "alert-error", message: "The username is already taken!"});
 						}
