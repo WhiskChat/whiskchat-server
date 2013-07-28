@@ -41,7 +41,12 @@ function login(username, usersocket) {
 	}
     });
     usersocket.emit('chat', {room: 'main', message: 'The version here is ' + versionString + '. ' + online + ' users connected.', user: '[MOTD]', timestamp: Date.now()});
+    usersocket.emit('chat', {room: 'main', message: 'The latest source code is <a href="https://github.com/WhiskTech/whiskchat-server/">here</a>.', user: '[MOTD]', timestamp: Date.now()});
     usersocket.emit('joinroom', {room: 'whiskchat'});
+    usersocket.emit('whitelist', {whitelisted: 1});
+    db.get('users/' + username + '/balance', function(err, reply) {
+	usersocket.emit('balance', {balance: reply});
+    });
     console.log('user ' + username + ' just logged in! :D');
 }
 function handle(err) {
