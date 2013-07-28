@@ -63,6 +63,7 @@ function handle(err) {
 }
 db.on('ready', function() {
     console.log('info - DB connected');
+});
     io.sockets.on('connection', function(socket) {
 	sockets.push(socket);
 	online++;
@@ -159,7 +160,7 @@ db.on('ready', function() {
 	    }
 	    else {
                 sockets.forEach(function(socket) {
-		    // H
+		    
 		});
 	    }
 	});
@@ -169,4 +170,3 @@ db.on('ready', function() {
 	});
     });
     console.log('info - listening');
-});
