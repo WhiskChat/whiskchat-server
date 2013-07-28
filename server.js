@@ -40,8 +40,18 @@ db.on('ready', function() {
 		online--;
 	});
 	socket.emit('joinroom', {room: 'main'});
-	socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '[server]'});
-        socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="coinchat.org">coinchat.org</a>, (c) 2013 admin@glados.cc', user: '[server]'});
+        socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '[server]', timestamp: Date.now()});
+        socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="coinchat.org">coinchat.org</a>, (c) 2013 admin@glados.cc', user: '[server]', timestamp: Date.now()});
+        socket.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '[server]', timestamp: Date.now()});
+	socket.authed = false;
+	socket.on('accounts', function(data) {
+	    // do some login stuff here
+	});
+	socket.on('chat', function(data) {
+	    if (!socket.authed) {
+                socket.emit('chat', {room: 'main', message: 'Please log in or register to chat!', user: '[server]', timestamp: Date.now()});
+	    }
+	});
     });
     console.log('info - listening');
 }); 
