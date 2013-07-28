@@ -8,6 +8,8 @@ var sockets = [];
 var online = 0;
 var lastSendOnline = new Date(); //throttle online requests
 
+var alphanumeric = /^[a-z0-9]+$/i;
+
 // For Heroku:
 io.configure(function () { 
     io.set("transports", ["xhr-polling"]); 
@@ -61,7 +63,7 @@ db.on('ready', function() {
 		if(data && data.action){
 		    if(data.action == "register"){
 			if(data.username && data.password && data.password2 && data.email){
-			    if(data.username.length < 3 || data.username.length > 16 || data.username.test(/^[a-z0-9]+$/i)){
+			    if(data.username.length < 3 || data.username.length > 16 || alphanumeric.test(data.username)){
 				return socket.emit("message", {type: "alert-error", message: "Username must be between 3 and 16 characters, and must be alphanumeric"});
 			    }
 			    db.get("users/" + data.username, function(err, reply){
