@@ -80,6 +80,7 @@ db.on('ready', function() {
         socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '[server]', timestamp: Date.now()});
         socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, (c) 2013 admin@glados.cc', user: '[server]', timestamp: Date.now()});
         socket.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '[server]', timestamp: Date.now()});
+        socket.emit('chat', {room: 'main', message: 'Supported features: login, register', user: '[server]', timestamp: Date.now()});
 	socket.authed = false;
 	socket.on('accounts', function(data) {
 	    if(data && data.action){
@@ -135,7 +136,7 @@ db.on('ready', function() {
 				    login(data.username, socket);
 				}
 				else {
-                                    return socket.emit("message", {type: "alert-error", message: "Password incorrect!"}); 
+                                    return socket.emit("message", {type: "alert-error", message: "Password incorrect, or username does not exist!"}); 
 				}
 			    });
 			}
@@ -143,18 +144,20 @@ db.on('ready', function() {
 		}
 	    }
 	});
-	socket.on('chat', function(data) {
+	socket.on('chat', function(chat) {
 	    if (!socket.authed) {
                 socket.emit('chat', {room: 'main', message: 'Please log in or register to chat!', user: '[server]', timestamp: Date.now()});
 	    }
 	    else {
                 sockets.forEach(function(socket) {
-		    
+		    chat.username = data.username;
+		    socket.emit('chat', data);
 		});
 	    }
 	});
-	socket.on('joinroom', function(data) {
-	    
+	socket.on('joinroom', function(join) {
+	    // Get the current room owner, and make it the user if it's null.
+	    // Then join it! :)
 	});
     });
     console.log('info - listening');
