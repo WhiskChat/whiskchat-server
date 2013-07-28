@@ -7,7 +7,7 @@ var redis = require('redis');
 var sockets = [];
 var online = 0;
 var lastSendOnline = new Date(); //throttle online requests
-
+var versionString = "WhiskChat Server beta v0.0.1";
 var alphanumeric = /^[a-z0-9]+$/i;
 
 io.configure(function () { 
@@ -40,6 +40,7 @@ function login(username, usersocket) {
 	    });
 	}
     });
+    usersocket.emit('chat', {room: 'main', message: 'The version here is ' + versionString + '. ' + online + ' users connected.', user: '[MOTD]', timestamp: Date.now()});
     usersocket.emit('joinroom', {room: 'whiskchat'});
     console.log('user ' + username + ' just logged in! :D');
 }
