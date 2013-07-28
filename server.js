@@ -46,6 +46,7 @@ function login(username, usersocket) {
     usersocket.emit('whitelist', {whitelisted: 1});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
+        usersocket.emit('chat', {room: 'main', message: 'Your balance is ' + reply + ' mBTC. I haven\'t implemented whitelist yet :P', user: '[MOTD]', timestamp: Date.now()});
     });
     console.log('user ' + username + ' just logged in! :D');
 }
@@ -77,7 +78,7 @@ db.on('ready', function() {
 	});
 	socket.emit('joinroom', {room: 'main'});
         socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '[server]', timestamp: Date.now()});
-        socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="coinchat.org">coinchat.org</a>, (c) 2013 admin@glados.cc', user: '[server]', timestamp: Date.now()});
+        socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, (c) 2013 admin@glados.cc', user: '[server]', timestamp: Date.now()});
         socket.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '[server]', timestamp: Date.now()});
 	socket.authed = false;
 	socket.on('accounts', function(data) {
