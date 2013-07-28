@@ -8,5 +8,5 @@
 	"redis" :  "*",
 	"node_hash" :  "*",
 	"crypto"    :  "*"
-    },
+    }
 }
