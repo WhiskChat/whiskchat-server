@@ -10,10 +10,10 @@ var lastSendOnline = new Date(); //throttle online requests
 
 var alphanumeric = /^[a-z0-9]+$/i;
 
-// For Heroku:
 io.configure(function () { 
     io.set("transports", ["xhr-polling"]); 
-    io.set("polling duration", 10); 
+    io.set("polling duration", 10);
+    io.set('log level', 1);
 });
 console.log('info - WhiskChat Server starting');
 console.log('info - Starting DB');
@@ -41,6 +41,7 @@ function login(username, usersocket) {
 	}
     });
     usersocket.emit('joinroom', {room: 'whiskchat'});
+    console.log('user ' + username + ' just logged in! :D');
 }
 function handle(err) {
     console.log('error - ' + err);
