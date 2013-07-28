@@ -28,6 +28,10 @@ if (process.env.REDISTOGO_URL) {
 db.on('error', function(err) {
     console.log('error - DB error: ' + err);
 });
+function login(username, usersocket) {
+    usersocket.emit('loggedin', {username: username});
+    usersocket.authed = true;
+}
 function handle(err) {
     console.log('error - ' + err);
     try {
@@ -90,6 +94,7 @@ db.on('ready', function() {
 				    db.set("users/" + data.username + "/email", data.email);
 				    
 				    socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
+				    login(data.username, socket);
 				});
 			    } else {
 				return socket.emit("message", {type: "alert-error", message: "The username is already taken!"});
@@ -108,7 +113,8 @@ db.on('ready', function() {
 			    db.get('users/' + data.username + '/salt', function(err, salt) {
                                 var hashed = hash.sha256(data.password, salt);
 				if (reply == hashed) {
-                                    socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"}); 
+                                    socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
+				    login(data.username, socket);
 				}
 				else {
                                     return socket.emit("message", {type: "alert-error", message: "Password incorrect!"}); 
@@ -122,6 +128,10 @@ db.on('ready', function() {
 	socket.on('chat', function(data) {
 	    if (!socket.authed) {
                 socket.emit('chat', {room: 'main', message: 'Please log in or register to chat!', user: '[server]', timestamp: Date.now()});
+	    }
+	    else {
+                socket.emit('chat', {room: 'main', message: 'Chat echo: ' + data.message + ' in room ' + data.room, user: '[server]', timestamp: Date.now()});
+		
 	    }
 	});
     });
