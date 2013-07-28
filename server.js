@@ -1,6 +1,7 @@
 // WhiskChat Server! :D
 
 var io = require('socket.io').listen(Number(process.env.PORT));
+var hash = require('node_hash');
 var redis = require('redis');
 var sockets = [];
 var online = 0;
@@ -45,7 +46,34 @@ db.on('ready', function() {
         socket.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '[server]', timestamp: Date.now()});
 	socket.authed = false;
 	socket.on('accounts', function(data) {
-	    // do some login stuff here
+		if(data && data.action){
+			if(data.action == "register"){
+				if(data.username && data.password && data.password2 && data.email){
+					if(data.username.length < 3 || data.username.length > 16 || data.username.test(/^[a-z0-9]+$/i)){
+						return socket.emit("message", {type: "alert-error", message: "Username must be between 3 and 16 characters, and must be alphanumeric"});
+					}
+					db.get("users/" + data.username, function(err, reply){
+						if(!reply){
+							if(data.password.length < 6){
+								return socket.emit("message", {type: "alert-error", message: "Password must be at least 6 characters!"});
+							}
+							if(data.email.indexOf("@") == -1 || data.email.indexOf(".") == -1){
+								//simple email check
+								return socket.emit("message", {type: "alert-error", message: "Please enter a valid email."});
+							}
+							if(data.password != data.password2){
+								return socket.emit("message", {type: "alert-error", message: "Passwords must match!"});
+							}
+							
+						} else {
+							return socket.emit("message", {type: "alert-error", message: "The username is already taken!"});
+						}
+					});
+				} else {
+					socket.emit("message", {type: "alert-error", message: "Please fill in all the fields."});
+				}
+			}
+		}
 	});
 	socket.on('chat', function(data) {
 	    if (!socket.authed) {
