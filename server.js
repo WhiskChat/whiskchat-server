@@ -3,6 +3,9 @@
 var io = require('socket.io').listen(Number(process.env.PORT));
 var redis = require('redis');
 var sockets = [];
+var online = 0;
+var lastSendOnline = new Date(); //throttle online requests
+
 // For Heroku:
 io.configure(function () { 
     io.set("transports", ["xhr-polling"]); 
@@ -25,8 +28,16 @@ db.on('ready', function() {
     console.log('info - DB connected');
     io.sockets.on('connection', function(socket) {
 	sockets.push(socket);
+	online++;
+	if(lastSendOnline.getTime() < new Date().getTime() - 2.5 * 1000){
+		io.sockets.volatile.emit("onine", {people: online});
+		lastSendOnline = new Date();
+	} else {
+		socket.emit("online", {people: online});
+	}
 	socket.on('disconnect', function() {
-	    sockets.splice(sockets.indexOf(socket), 1);
+		sockets.splice(sockets.indexOf(socket), 1);
+		online--;
 	});
 	socket.emit('joinroom', {room: 'main'});
 	socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '[server]'});
