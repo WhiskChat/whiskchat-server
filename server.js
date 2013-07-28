@@ -77,10 +77,10 @@ db.on('ready', function() {
 	    online--;
 	});
 	socket.emit('joinroom', {room: 'main'});
-        socket.volatile.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> (beta)', user: '[server]', timestamp: Date.now()});
-        socket.volatile.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, (c) 2013 admin@glados.cc', user: '[server]', timestamp: Date.now()});
-        socket.volatile.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '[server]', timestamp: Date.now()});
-        socket.volatile.emit('chat', {room: 'main', message: 'Supported features: login, register', user: '[server]', timestamp: Date.now()});
+        socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> (beta)', user: '[server]', timestamp: Date.now()});
+        socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, (c) 2013 admin@glados.cc', user: '[server]', timestamp: Date.now()});
+        socket.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '[server]', timestamp: Date.now()});
+        socket.emit('chat', {room: 'main', message: 'Supported features: login, register', user: '[server]', timestamp: Date.now()});
 	socket.authed = false;
 	socket.on('accounts', function(data) {
 	    if(data && data.action){
