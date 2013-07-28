@@ -150,8 +150,7 @@ db.on('ready', function() {
 	    }
 	    else {
                 sockets.forEach(function(socket) {
-		    chat.username = data.username;
-		    socket.emit('chat', data);
+		    socket.emit('chat', chat); // Tada, the sketchiest thing ever
 		});
 	    }
 	});
