@@ -67,7 +67,7 @@ db.on('ready', function() {
 	sockets.push(socket);
 	online++;
 	if(lastSendOnline.getTime() < new Date().getTime() - 2.5 * 1000){
-	    io.sockets.volatile.emit("onine", {people: online});
+	    io.sockets.volatile.emit("online", {people: online});
 	    lastSendOnline = new Date();
 	} else {
 	    socket.emit("online", {people: online});
@@ -77,10 +77,10 @@ db.on('ready', function() {
 	    online--;
 	});
 	socket.emit('joinroom', {room: 'main'});
-        socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '[server]', timestamp: Date.now()});
-        socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, (c) 2013 admin@glados.cc', user: '[server]', timestamp: Date.now()});
-        socket.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '[server]', timestamp: Date.now()});
-        socket.emit('chat', {room: 'main', message: 'Supported features: login, register', user: '[server]', timestamp: Date.now()});
+        socket.volatile.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> (beta)', user: '[server]', timestamp: Date.now()});
+        socket.volatile.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, (c) 2013 admin@glados.cc', user: '[server]', timestamp: Date.now()});
+        socket.volatile.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '[server]', timestamp: Date.now()});
+        socket.volatile.emit('chat', {room: 'main', message: 'Supported features: login, register', user: '[server]', timestamp: Date.now()});
 	socket.authed = false;
 	socket.on('accounts', function(data) {
 	    if(data && data.action){
@@ -128,7 +128,11 @@ db.on('ready', function() {
 			if (err) {
 			    handle(err);
 			}
+			
 			else {
+                            if (reply.indexOf("Nuked: ") !== -1) {
+                                return socket.emit("message", {type: "alert-error", message: "You have been nuked! " + reply}); 
+                            }
 			    db.get('users/' + data.username + '/salt', function(err, salt) {
                                 var hashed = hash.sha256(data.password, salt);
 				if (reply == hashed) {
@@ -136,7 +140,12 @@ db.on('ready', function() {
 				    login(data.username, socket);
 				}
 				else {
-                                    return socket.emit("message", {type: "alert-error", message: "Password incorrect, or username does not exist!"}); 
+				    if (reply == null) {
+					socket.emit("message", {type: "alert-error", message: "User does not exist."});
+				    }
+				    else {
+                                        socket.emit("message", {type: "alert-error", message: "Incorrect password."});
+				    }
 				}
 			    });
 			}
@@ -150,7 +159,7 @@ db.on('ready', function() {
 	    }
 	    else {
                 sockets.forEach(function(socket) {
-		    socket.emit('chat', chat); // Tada, the sketchiest thing ever
+		    // H
 		});
 	    }
 	});
