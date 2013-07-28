@@ -31,6 +31,16 @@ db.on('error', function(err) {
 function login(username, usersocket) {
     usersocket.emit('loggedin', {username: username});
     usersocket.authed = true;
+    usersocket.emit('chat', {room: 'main', message: 'Signed in as ' + username + '!', user: '[server]', timestamp: Date.now()});
+    db.get('motd', function(err, reply) {
+	if (reply) {
+	    var motd = reply.split('|');
+	    motd.forEach(function(line) {
+                usersocket.emit('chat', {room: 'main', message: line, user: '[MOTD]', timestamp: Date.now()});
+	    });
+	}
+    });
+    usersocket.emit('joinroom', {room: 'whiskchat'});
 }
 function handle(err) {
     console.log('error - ' + err);
@@ -130,9 +140,13 @@ db.on('ready', function() {
                 socket.emit('chat', {room: 'main', message: 'Please log in or register to chat!', user: '[server]', timestamp: Date.now()});
 	    }
 	    else {
-                socket.emit('chat', {room: 'main', message: 'Chat echo: ' + data.message + ' in room ' + data.room, user: '[server]', timestamp: Date.now()});
-		
+                sockets.forEach(function(socket) {
+		    
+		});
 	    }
+	});
+	socket.on('joinroom', function(data) {
+	    
 	});
     });
     console.log('info - listening');
