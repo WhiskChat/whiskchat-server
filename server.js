@@ -40,6 +40,7 @@ function login(username, usersocket) {
 	    });
 	}
     });
+    usersocket.user = username;
     usersocket.emit('chat', {room: 'main', message: 'The version here is ' + versionString + '. ' + online + ' users connected.', user: '[MOTD]', timestamp: Date.now()});
     usersocket.emit('chat', {room: 'main', message: 'The latest source code is <a href="https://github.com/WhiskTech/whiskchat-server/">here</a>.', user: '[MOTD]', timestamp: Date.now()});
     usersocket.emit('joinroom', {room: 'whiskchat'});
@@ -159,14 +160,15 @@ db.on('ready', function() {
                 socket.emit('chat', {room: 'main', message: 'Please log in or register to chat!', user: '[server]', timestamp: Date.now()});
 	    }
 	    else {
-                sockets.forEach(function(socket) {
-		    
+                sockets.forEach(function(cs) {
+                    cs.emit('chat', {room: chat.room, message: chat.message, user: socket.user, timestamp: Date.now()});
 		});
 	    }
 	});
 	socket.on('joinroom', function(join) {
 	    // Get the current room owner, and make it the user if it's null.
 	    // Then join it! :)
+	    socket.join(join.room); // We can use socket.io rooms! :D
 	});
     });
     console.log('info - listening');
