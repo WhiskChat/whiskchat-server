@@ -1,0 +1,12 @@
+{
+    "name": "whiskchat-server",
+    "version": "0.0.1",
+    "author": "WhiskTech",
+    "description": "a fork of coinchat",
+    "dependencies" : {
+	"socket.io"   :  "*",
+	"redis" :  "*",
+	"node_hash" :  "*",
+	"crypto"    :  "*"
+    },
+}
