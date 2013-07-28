@@ -21,6 +21,16 @@ if (process.env.REDISTOGO_URL) {
 db.on('error', function(err) {
     console.log('error - DB error: ' + err);
 });
+function handle(err) {
+    console.log('error - ' + err);
+    try {
+        sockets.forEach(function(socket) {
+	    socket.emit({room: 'main', message: 'Server error: ' + err, user: '[server]', timestamp: Date.now()});
+	});
+    }
+    catch(e) {
+	console.log('error - couldn\'t notify sockets: ' + e);
+    }
 db.on('ready', function() {
     console.log('info - DB connected');
     io.sockets.on('connection', function(socket) {
