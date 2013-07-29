@@ -172,7 +172,7 @@ io.sockets.on('connection', function(socket) {
 	    if (muted.indexOf(mute.target) == -1) {
 		muted.push(mute.target);
 	    }
-	    socket.emit('chat', {room: 'main', message: '<span class="label label-important">' + mute.target + ' has been muted by ' + socket.user + ' for ' + mute.mute + ' seconds!</span>', user: '[server]', timestamp: Date.now()});
+	    socket.emit('chat', {room: 'main', message: '<span class="label label-important">' + mute.target + ' has been muted by ' + socket.user + ' for ' + mute.mute + ' seconds! Reason: ' + mute.reason + '</span>', user: '[server]', timestamp: Date.now()});
 	    setTimeout(function() {
 		muted.splice(muted.indexOf(mute.target), 1);
                 socket.emit('chat', {room: 'main', message: '<span class="label label-important">' + mute.target + '\'s mute expired!</span>', user: '[server]', timestamp: Date.now()});
@@ -186,7 +186,7 @@ io.sockets.on('connection', function(socket) {
 	else {
             sockets.forEach(function(cs) {
 		if (muted.indexOf(socket.user) !== -1) {
-                    socket.emit("message", {type: "alert-error", message: "You have been muted!"});
+                    socket.volatile.emit("message", {type: "alert-error", message: "You have been muted!"});
 		    return;
                 }
 		    if (chat.message.substr(0, 1) == "\\") {
