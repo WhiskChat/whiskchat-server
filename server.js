@@ -7,7 +7,7 @@ var redis = require('redis');
 var sockets = [];
 var online = 0;
 var lastSendOnline = new Date(); //throttle online requests
-var versionString = "WhiskChat Server beta v0.0.1";
+var versionString = "WhiskChat Server beta v0.0.2";
 var alphanumeric = /^[a-z0-9]+$/i;
 
 io.configure(function () { 
@@ -28,6 +28,9 @@ if (process.env.REDISTOGO_URL) {
 db.on('error', function(err) {
     console.log('error - DB error: ' + err);
 });
+function stripHTML(html) {
+    return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
+}
 function login(username, usersocket) {
     usersocket.emit('loggedin', {username: username});
     usersocket.authed = true;
@@ -65,110 +68,110 @@ function handle(err) {
 db.on('ready', function() {
     console.log('info - DB connected');
 });
-    io.sockets.on('connection', function(socket) {
-	sockets.push(socket);
-	online++;
-	if(lastSendOnline.getTime() < new Date().getTime() - 2.5 * 1000){
-	    io.sockets.volatile.emit("online", {people: online});
-	    lastSendOnline = new Date();
-	} else {
-	    socket.emit("online", {people: online});
-	}
-	socket.on('disconnect', function() {
-	    sockets.splice(sockets.indexOf(socket), 1);
-	    online--;
-	});
-	socket.emit('joinroom', {room: 'main'});
-        socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> (beta)', user: '[server]', timestamp: Date.now()});
-        socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, (c) 2013 admin@glados.cc', user: '[server]', timestamp: Date.now()});
-        socket.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '[server]', timestamp: Date.now()});
-        socket.emit('chat', {room: 'main', message: 'Supported features: login, register', user: '[server]', timestamp: Date.now()});
-	socket.authed = false;
-	socket.on('accounts', function(data) {
-	    if(data && data.action){
-		if(data.action == "register"){
-		    if(data.username && data.password && data.password2 && data.email){
-			if(data.username.length < 3 || data.username.length > 16 || data.username == "[server]"){
-			    return socket.emit("message", {type: "alert-error", message: "Username must be between 3 and 16 characters"});
-			}
-			db.get("users/" + data.username, function(err, reply){
-			    if(!reply){
-				if(data.password.length < 6){
-				    return socket.emit("message", {type: "alert-error", message: "Password must be at least 6 characters!"});
-				}
-				if(data.email.indexOf("@") == -1 || data.email.indexOf(".") == -1){
-				    //simple email check
-				    return socket.emit("message", {type: "alert-error", message: "Please enter a valid email."});
-				}
-				if(data.password != data.password2){
-				    return socket.emit("message", {type: "alert-error", message: "Passwords must match!"});
-				}
-				// Generate seed for password
-				crypto.randomBytes(12, function(ex, buf){
-				    var salt = buf.toString('hex');
-				    
-				    var hashed = hash.sha256(data.password, salt);
-				    
-				    db.set("users/" + data.username, true);
-				    db.set("users/" + data.username + "/password", hashed);
-				    db.set("users/" + data.username + "/salt", salt);
-				    db.set("users/" + data.username + "/email", data.email);
-				    
-				    socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
-				    login(data.username, socket);
-				});
-			    } else {
-				return socket.emit("message", {type: "alert-error", message: "The username is already taken!"});
-			    }
-			});
-		    } else {
-			socket.emit("message", {type: "alert-error", message: "Please fill in all the fields."});
+io.sockets.on('connection', function(socket) {
+    sockets.push(socket);
+    online++;
+    if(lastSendOnline.getTime() < new Date().getTime() - 2.5 * 1000){
+	io.sockets.volatile.emit("online", {people: online});
+	lastSendOnline = new Date();
+    } else {
+	socket.emit("online", {people: online});
+    }
+    socket.on('disconnect', function() {
+	sockets.splice(sockets.indexOf(socket), 1);
+	online--;
+    });
+    socket.emit('joinroom', {room: 'main'});
+    socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> (beta)', user: '[server]', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, (c) 2013 admin@glados.cc', user: '[server]', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '[server]', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: 'Supported features: login, register', user: '[server]', timestamp: Date.now()});
+    socket.authed = false;
+    socket.on('accounts', function(data) {
+	if(data && data.action){
+	    if(data.action == "register"){
+		if(data.username && data.password && data.password2 && data.email){
+		    if(data.username.length < 3 || data.username.length > 16 || data.username == "[server]"){
+			return socket.emit("message", {type: "alert-error", message: "Username must be between 3 and 16 characters"});
 		    }
-		}
-		if (data.action == "login") {
-		    db.get("users/" + data.username + "/password", function(err, reply) {
-			if (err) {
-			    handle(err);
-			}
-			
-			else {
-                            if (reply.indexOf("Nuked: ") !== -1) {
-                                return socket.emit("message", {type: "alert-error", message: "You have been nuked! " + reply}); 
-                            }
-			    db.get('users/' + data.username + '/salt', function(err, salt) {
-                                var hashed = hash.sha256(data.password, salt);
-				if (reply == hashed) {
-                                    socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
-				    login(data.username, socket);
-				}
-				else {
-				    if (reply == null) {
-					socket.emit("message", {type: "alert-error", message: "User does not exist."});
-				    }
-				    else {
-                                        socket.emit("message", {type: "alert-error", message: "Incorrect password."});
-				    }
-				}
+		    db.get("users/" + data.username, function(err, reply){
+			if(!reply){
+			    if(data.password.length < 6){
+				return socket.emit("message", {type: "alert-error", message: "Password must be at least 6 characters!"});
+			    }
+			    if(data.email.indexOf("@") == -1 || data.email.indexOf(".") == -1){
+				//simple email check
+				return socket.emit("message", {type: "alert-error", message: "Please enter a valid email."});
+			    }
+			    if(data.password != data.password2){
+				return socket.emit("message", {type: "alert-error", message: "Passwords must match!"});
+			    }
+			    // Generate seed for password
+			    crypto.randomBytes(12, function(ex, buf){
+				var salt = buf.toString('hex');
+				
+				var hashed = hash.sha256(data.password, salt);
+				
+				db.set("users/" + data.username, true);
+				db.set("users/" + data.username + "/password", hashed);
+				db.set("users/" + data.username + "/salt", salt);
+				db.set("users/" + data.username + "/email", data.email);
+				
+				socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
+				login(data.username, socket);
 			    });
+			} else {
+			    return socket.emit("message", {type: "alert-error", message: "The username is already taken!"});
 			}
 		    });
+		} else {
+		    socket.emit("message", {type: "alert-error", message: "Please fill in all the fields."});
 		}
 	    }
-	});
-	socket.on('chat', function(chat) {
-	    if (!socket.authed) {
-                socket.emit('chat', {room: 'main', message: 'Please log in or register to chat!', user: '[server]', timestamp: Date.now()});
-	    }
-	    else {
-                sockets.forEach(function(cs) {
-                    cs.emit('chat', {room: chat.room, message: chat.message, user: socket.user, timestamp: Date.now()});
+	    if (data.action == "login") {
+		db.get("users/" + data.username + "/password", function(err, reply) {
+		    if (err) {
+			handle(err);
+		    }
+		    
+		    else {
+                        if (reply.indexOf("Nuked: ") !== -1) {
+                            return socket.emit("message", {type: "alert-error", message: "You have been nuked! " + reply}); 
+                        }
+			db.get('users/' + data.username + '/salt', function(err, salt) {
+                            var hashed = hash.sha256(data.password, salt);
+			    if (reply == hashed) {
+                                socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
+				login(data.username, socket);
+			    }
+			    else {
+				if (reply == null) {
+				    socket.emit("message", {type: "alert-error", message: "User does not exist."});
+				}
+				else {
+                                    socket.emit("message", {type: "alert-error", message: "Incorrect password."});
+				}
+			    }
+			});
+		    }
 		});
 	    }
-	});
-	socket.on('joinroom', function(join) {
-	    // Get the current room owner, and make it the user if it's null.
-	    // Then join it! :)
-	    socket.join(join.room); // We can use socket.io rooms! :D
-	});
+	}
     });
-    console.log('info - listening');
+    socket.on('chat', function(chat) {
+	if (!socket.authed) {
+            socket.emit('chat', {room: 'main', message: 'Please log in or register to chat!', user: '[server]', timestamp: Date.now()});
+	}
+	else {
+            sockets.forEach(function(cs) {
+                cs.emit('chat', {room: chat.room, message: stripHTML(chat.message), user: socket.user, timestamp: Date.now()});
+	    });
+	}
+    });
+    socket.on('joinroom', function(join) {
+	// Get the current room owner, and make it the user if it's null.
+	// Then join it! :)
+	socket.join(join.room); // We can use socket.io rooms! :D
+    });
+});
+console.log('info - listening');
