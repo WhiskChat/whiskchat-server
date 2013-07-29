@@ -6,6 +6,7 @@ var crypto = require('crypto');
 var redis = require('redis');
 var sockets = [];
 var online = 0;
+var bbcode = require('bbcode');
 var mods = ['whiskers75', 'admin', 'peapodamus'];
 var lastSendOnline = new Date(); //throttle online requests
 var versionString = "WhiskChat Server beta v0.0.3";
@@ -168,15 +169,9 @@ io.sockets.on('connection', function(socket) {
 	}
 	else {
             sockets.forEach(function(cs) {
-		if (chat.message.substr(0, 3) == "/me ") {
-                    return cs.emit('chat', {room: chat.room, message: '<i>' + stripHTML(chat.message) + '</i>', user: socket.user, timestamp: Date.now()});
-		}
-		if (mods.indexOf(socket.user) !== -1) {
-                    cs.emit('chat', {room: chat.room, message: chat.message, user: socket.user, timestamp: Date.now()});
-		}
-		else {
-                    cs.emit('chat', {room: chat.room, message: stripHTML(chat.message), user: socket.user, timestamp: Date.now()});
-		}
+		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
+		    cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now()});
+		});
 	    });
 	}
     });
