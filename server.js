@@ -172,8 +172,8 @@ io.sockets.on('connection', function(socket) {
 		if (chat.message.indexOf('§') !== -1 && mods.indexOf(socket.user) !== -1) {
                     cs.emit('chat', {room: chat.room, message: chat.message.replace(/§/, ''), user: socket.user, timestamp: Date.now()});
 		}
-                if (chat.message.indexOf('\\') !== -1) {
-                    cs.emit('chat', {room: chat.room, message: '<i>' + stripHTML(chat.message.replace(/\\/, '')) + '</i>', user: socket.user, timestamp: Date.now()});
+                if (chat.message.substr(0, 3) == "/me") {
+                    cs.emit('chat', {room: chat.room, message: '<i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', user: socket.user, timestamp: Date.now()});
                 }
 		else {
 		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
