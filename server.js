@@ -188,14 +188,17 @@ io.sockets.on('connection', function(socket) {
 		if (muted.indexOf(socket.user) !== -1) {
                     socket.emit("message", {type: "alert-error", message: "You have been muted!"});
 		    return;
-		}
+                }
+		    if (chat.message.substr(0, 1) == "\\") {
+                        return cs.emit('chat', {room: chat.room, message: '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + stripHTML(chat.message.substr(4, chat.message.length)) + '</span>', user: socket.user, timestamp: Date.now()});
+		    }
                 if (chat.message.substr(0, 3) == "/me") {
                     return cs.emit('chat', {room: chat.room, message: '<i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', user: socket.user, timestamp: Date.now()});
                 }
 		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 
-			/* link links */
-			parsedcode = urlify(parsedcode);
+		    /* link links */
+		    parsedcode = urlify(parsedcode);
 		    cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now()});
 		});
 	    });
