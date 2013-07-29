@@ -11,6 +11,7 @@ var mods = ['whiskers75', 'admin', 'peapodamus'];
 var lastSendOnline = new Date(); //throttle online requests
 var versionString = "WhiskChat Server beta v0.1";
 var alphanumeric = /^[a-z0-9]+$/i;
+var muted = [];
 
 io.configure(function () { 
     io.set("transports", ["xhr-polling"]); 
@@ -163,15 +164,32 @@ io.sockets.on('connection', function(socket) {
 	    }
 	}
     });
+    socket.on('mute', function(mute) {
+	if (mods.indexOf(socket.user) == -1) {
+            socket.emit("message", {type: "alert-error", message: "You are not a moderator!"});
+	}
+	else {
+	    muted.push(mute.target);
+	    socket.emit('chat', {room: 'main', message: '<span class="label label-important">' + mute.target + ' has been muted by ' + socket.user + ' for ' + mute.mute + ' seconds!</span>', user: '[server]', timestamp: Date.now()});
+	    setTimeout(function() {
+		muted.splice(muted.indexOf(mute.target), 1);
+                socket.emit('chat', {room: 'main', message: '<span class="label label-important">' + mute.target + '\'s mute expired!</span>', user: '[server]', timestamp: Date.now()});
+	    }, mute.mute * 1000);
+	}
+    });
     socket.on('chat', function(chat) {
 	if (!socket.authed) {
             socket.emit('chat', {room: 'main', message: 'Please log in or register to chat!', user: '[server]', timestamp: Date.now()});
 	}
 	else {
             sockets.forEach(function(cs) {
-		if (chat.message.indexOf('§') !== -1 && mods.indexOf(socket.user) !== -1) {
-                    return cs.emit('chat', {room: chat.room, message: chat.message.replace(/§/, ''), user: socket.user, timestamp: Date.now()});
+		if (muted.indexOf(socket.user) !== -1) {
+                    socket.emit("message", {type: "alert-error", message: "You have been muted!"});
+		    return;
 		}
+	/*	if (chat.message.indexOf('§') !== -1 && mods.indexOf(socket.user) !== -1) {
+                    return cs.emit('chat', {room: chat.room, message: chat.message.replace(/§/, ''), user: socket.user, timestamp: Date.now()});
+		}*/
                 if (chat.message.substr(0, 3) == "/me") {
                     return cs.emit('chat', {room: chat.room, message: '<i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', user: socket.user, timestamp: Date.now()});
                 }
