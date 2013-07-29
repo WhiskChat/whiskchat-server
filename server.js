@@ -172,10 +172,14 @@ io.sockets.on('connection', function(socket) {
 	    if (muted.indexOf(mute.target) == -1) {
 		muted.push(mute.target);
 	    }
-	    socket.emit('chat', {room: 'main', message: '<span class="label label-important">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(socket.user) + ' for ' + stripHTML(mute.mute) + ' seconds! Reason: ' + stripHTML(mute.reason) + '</span>', user: '[server]', timestamp: Date.now()});
+	    sockets.forEach(function(cs) {
+		cs.emit('chat', {room: 'main', message: '<span class="label label-important">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(socket.user) + ' for ' + stripHTML(mute.mute) + ' seconds! Reason: ' + stripHTML(mute.reason) + '</span>', user: '[server]', timestamp: Date.now()});
+	    });
 	    setTimeout(function() {
 		muted.splice(muted.indexOf(mute.target), 1);
-                socket.emit('chat', {room: 'main', message: '<span class="label label-important">' + mute.target + '\'s mute expired!</span>', user: '[server]', timestamp: Date.now()});
+		sockets.forEach(function(cs) {
+                    cs.emit('chat', {room: 'main', message: '<span class="label label-important">' + mute.target + '\'s mute expired!</span>', user: '[server]', timestamp: Date.now()});
+		});
 	    }, mute.mute * 1000);
 	}
     });
