@@ -173,7 +173,7 @@ io.sockets.on('connection', function(socket) {
                     cs.emit('chat', {room: chat.room, message: chat.message.replace(/§/, ''), user: socket.user, timestamp: Date.now()});
 		}
                 if (chat.message.indexOf('\\') !== -1) {
-                    cs.emit('chat', {room: chat.room, message: stripHTML(chat.message.replace(/\\/, '')), user: socket.user, timestamp: Date.now()});
+                    cs.emit('chat', {room: chat.room, message: '<i>' + stripHTML(chat.message.replace(/\\/, '')) + '</i>', user: socket.user, timestamp: Date.now()});
                 }
 		else {
 		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
