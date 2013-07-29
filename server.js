@@ -168,7 +168,7 @@ io.sockets.on('connection', function(socket) {
 	}
 	else {
             sockets.forEach(function(cs) {
-		if (cs.message.substr(0, 3) == "/me ") {
+		if (chat.message.substr(0, 3) == "/me ") {
                     return cs.emit('chat', {room: chat.room, message: '<i>' + stripHTML(chat.message) + '</i>', user: socket.user, timestamp: Date.now()});
 		}
 		if (mods.indexOf(socket.user) !== -1) {
