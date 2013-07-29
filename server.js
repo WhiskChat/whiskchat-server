@@ -32,6 +32,7 @@ function stripHTML(html) {
     return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
 }
 function login(username, usersocket) {
+    online++;
     usersocket.emit('loggedin', {username: username});
     usersocket.authed = true;
     usersocket.emit('chat', {room: 'main', message: 'Signed in as ' + username + '!', user: '[server]', timestamp: Date.now()});
@@ -70,7 +71,7 @@ db.on('ready', function() {
 });
 io.sockets.on('connection', function(socket) {
     sockets.push(socket);
-    online++;
+    
     if(lastSendOnline.getTime() < new Date().getTime() - 2.5 * 1000){
 	io.sockets.volatile.emit("online", {people: online});
 	lastSendOnline = new Date();
@@ -79,7 +80,9 @@ io.sockets.on('connection', function(socket) {
     }
     socket.on('disconnect', function() {
 	sockets.splice(sockets.indexOf(socket), 1);
-	online--;
+	if (socket.authed) {
+	    online--;
+	}
     });
     socket.emit('joinroom', {room: 'main'});
     socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> (beta)', user: '[server]', timestamp: Date.now()});
