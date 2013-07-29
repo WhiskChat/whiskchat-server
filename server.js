@@ -197,8 +197,8 @@ io.sockets.on('connection', function(socket) {
 		    return;
 		}
 		if (chat.message.substr(0, 1) == "\\") {
-                        return cs.emit('chat', {room: chat.room, message: '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', user: socket.user, timestamp: Date.now()});
-		    }
+                    return cs.emit('chat', {room: chat.room, message: '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', user: socket.user, timestamp: Date.now()});
+		}
                 if (chat.message.substr(0, 1) == "|") {
                     return cs.emit('chat', {room: chat.room, message: '<span class="rainbow">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', user: socket.user, timestamp: Date.now()});
                 }
@@ -209,7 +209,6 @@ io.sockets.on('connection', function(socket) {
                     return cs.emit('chat', {room: chat.room, message: '<iframe width="560" height="315" src="//www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + '" frameborder="0" allowfullscreen></iframe> <button onclick="$(\'iframe\').hide()" class="btn btn-small btn-danger">Hide YouTube</button> <button onclick="$(\'iframe\').show()" class="btn btn-small btn-success">Show YouTube</button>', user: socket.user, timestamp: Date.now()});
                 }
         	bbcode.parse(stripHTML(chat.message), function(parsedcode) {
-
 		    /* link links */
 		    parsedcode = urlify(parsedcode);
 		    cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now()});
@@ -224,9 +223,10 @@ io.sockets.on('connection', function(socket) {
     });
 });
 function urlify(text) {
-    var urlRegex = /(https?:\/\/[^\s]+)/g;
+    /*var urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.replace(urlRegex, function(url) {
         return '<a href="' + url + '">' + url + '</a>';
-    });
+	});*/ // Make this work with BBCode IMG
+    return text;
 }
 console.log('info - listening');
