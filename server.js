@@ -9,7 +9,7 @@ var online = 0;
 var bbcode = require('bbcode');
 var mods = ['whiskers75', 'admin', 'peapodamus'];
 var lastSendOnline = new Date(); //throttle online requests
-var versionString = "WhiskChat Server beta v0.0.3";
+var versionString = "WhiskChat Server beta v0.1";
 var alphanumeric = /^[a-z0-9]+$/i;
 
 io.configure(function () { 
@@ -172,6 +172,9 @@ io.sockets.on('connection', function(socket) {
 		if (chat.message.indexOf('§') !== -1 && mods.indexOf(socket.user) !== -1) {
                     cs.emit('chat', {room: chat.room, message: chat.message.replace(/§/, ''), user: socket.user, timestamp: Date.now()});
 		}
+                if (chat.message.indexOf('\\') !== -1) {
+                    cs.emit('chat', {room: chat.room, message: stripHTML(chat.message.replace(/\\/, '')), user: socket.user, timestamp: Date.now()});
+                }
 		else {
 		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		    cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now()});
