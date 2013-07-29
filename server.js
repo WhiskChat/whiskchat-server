@@ -169,7 +169,9 @@ io.sockets.on('connection', function(socket) {
             socket.emit("message", {type: "alert-error", message: "You are not a moderator!"});
 	}
 	else {
-	    muted.push(mute.target);
+	    if (muted.indexOf(mute.target) == -1) {
+		muted.push(mute.target);
+	    }
 	    socket.emit('chat', {room: 'main', message: '<span class="label label-important">' + mute.target + ' has been muted by ' + socket.user + ' for ' + mute.mute + ' seconds!</span>', user: '[server]', timestamp: Date.now()});
 	    setTimeout(function() {
 		muted.splice(muted.indexOf(mute.target), 1);
