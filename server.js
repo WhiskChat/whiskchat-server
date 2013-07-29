@@ -206,7 +206,7 @@ io.sockets.on('connection', function(socket) {
                     return cs.emit('chat', {room: chat.room, message: '<i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', user: socket.user, timestamp: Date.now()});
                 }
                 if (chat.message.substr(0, 3) == "/yt") {
-                    return cs.emit('chat', {room: chat.room, message: '<iframe width="560" height="315" src="//www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + 'QvxdDDHElZo" frameborder="0" allowfullscreen></iframe>', user: socket.user, timestamp: Date.now()});
+                    return cs.emit('chat', {room: chat.room, message: '<iframe width="560" height="315" src="//www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + '" frameborder="0" allowfullscreen></iframe>', user: socket.user, timestamp: Date.now()});
                 }
         	bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 
