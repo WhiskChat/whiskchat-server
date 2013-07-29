@@ -170,7 +170,7 @@ io.sockets.on('connection', function(socket) {
 	else {
             sockets.forEach(function(cs) {
 		if (chat.message.indexOf('§') !== -1 && mods.indexOf(socket.user) !== -1) {
-                    cs.emit('chat', {room: chat.room, message: chat.message, user: socket.user, timestamp: Date.now()});
+                    cs.emit('chat', {room: chat.room, message: chat.message.replace(/§/, ''), user: socket.user, timestamp: Date.now()});
 		}
 		else {
 		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
