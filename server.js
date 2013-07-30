@@ -88,7 +88,7 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.emit('joinroom', {room: 'main'});
-    socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> <i>(beta)</i>', user: '<strong>Server</strong>', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> (beta)', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, © 2013 admin@glados.cc', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. ' + online + ' users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
