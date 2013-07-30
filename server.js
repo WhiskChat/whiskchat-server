@@ -7,9 +7,9 @@ var redis = require('redis');
 var sockets = [];
 var online = 0;
 var bbcode = require('bbcode');
-var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress'];
+var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
 var lastSendOnline = new Date(); //throttle online requests
-var versionString = "WhiskChat Server beta v0.1";
+var versionString = "WhiskChat Server beta v0.1.5";
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 
@@ -38,24 +38,23 @@ function login(username, usersocket) {
     online++;
     usersocket.emit('loggedin', {username: username});
     usersocket.authed = true;
-    usersocket.emit('chat', {room: 'main', message: 'Signed in as ' + username + '!', user: '[server]', timestamp: Date.now()});
+    usersocket.emit('chat', {room: 'main', message: 'Signed in as ' + username + '!', user: '<strong>Server</strong>', timestamp: Date.now()});
     db.get('motd', function(err, reply) {
 	if (reply) {
 	    var motd = reply.split('|');
 	    motd.forEach(function(line) {
-                usersocket.emit('chat', {room: 'main', message: line, user: '[MOTD]', timestamp: Date.now()});
+                usersocket.emit('chat', {room: 'main', message: line, user: '<strong>MOTD</strong>', timestamp: Date.now()});
 	    });
 	}
     });
     usersocket.user = username;
-    usersocket.emit('chat', {room: 'main', message: 'The version here is ' + versionString + '. ' + online + ' users connected.', user: '[MOTD]', timestamp: Date.now()});
-    usersocket.emit('chat', {room: 'main', message: 'The latest source code is <a href="https://github.com/WhiskTech/whiskchat-server/">here</a>.', user: '[MOTD]', timestamp: Date.now()});
-    usersocket.emit('chat', {room: 'main', message: '<iframe id="ohhai" style="" width="560" height="315" src="//www.youtube.com/embed/QvxdDDHElZo" frameborder="0" allowfullscreen=""></iframe>', user: '[MOTD]', timestamp: Date.now()});
+    usersocket.emit('chat', {room: 'main', message: 'The latest source code is <a href="https://github.com/WhiskTech/whiskchat-server/">here</a>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
+    usersocket.emit('chat', {room: 'main', message: '<iframe id="ohhai" style="" width="560" height="315" src="//www.youtube.com/embed/QvxdDDHElZo" frameborder="0" allowfullscreen=""></iframe>', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     usersocket.emit('joinroom', {room: 'whiskchat'});
     usersocket.emit('whitelist', {whitelisted: 1});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
-        usersocket.emit('chat', {room: 'main', message: 'Your balance is ' + reply + ' mBTC. I haven\'t implemented whitelist yet :P', user: '[MOTD]', timestamp: Date.now()});
+        usersocket.emit('chat', {room: 'main', message: 'Your balance is ' + Number(reply) + ' mBTC. I haven\'t implemented whitelist yet :P', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     });
     console.log('user ' + username + ' just logged in! :D');
 }
@@ -63,7 +62,7 @@ function handle(err) {
     console.log('error - ' + err);
     try {
         sockets.forEach(function(socket) {
-	    socket.emit({room: 'main', message: 'Server error: ' + err, user: '[server]', timestamp: Date.now()});
+	    socket.emit({room: 'main', message: 'Server error: ' + err, user: '<strong>Server</strong>', timestamp: Date.now()});
 	});
     }
     catch(e) {
@@ -89,16 +88,17 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.emit('joinroom', {room: 'main'});
-    socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> (beta)', user: '[server]', timestamp: Date.now()});
-    socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, (c) 2013 admin@glados.cc', user: '[server]', timestamp: Date.now()});
-    socket.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '[server]', timestamp: Date.now()});
-    socket.emit('chat', {room: 'main', message: 'Supported features: login, register', user: '[server]', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> <i>(beta)</i>', user: '<strong>Server</strong>', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, © 2013 admin@glados.cc', user: '<strong>Server</strong>', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '<strong>Server</strong>', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. ' + online + ' users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: 'Supported features: login, register, chat, youtube, bbcode', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.authed = false;
     socket.on('accounts', function(data) {
 	if(data && data.action){
 	    if(data.action == "register"){
 		if(data.username && data.password && data.password2 && data.email){
-		    if(data.username.length < 3 || data.username.length > 16 || data.username == "[server]"){
+		    if(data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>"){
 			return socket.emit("message", {type: "alert-error", message: "Username must be between 3 and 16 characters"});
 		    }
 		    db.get("users/" + data.username, function(err, reply){
@@ -174,19 +174,19 @@ io.sockets.on('connection', function(socket) {
 		muted.push(mute.target);
 	    }
 	    sockets.forEach(function(cs) {
-		cs.emit('chat', {room: 'main', message: '<span class="label label-important">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(socket.user) + ' for ' + stripHTML(mute.mute) + ' seconds! Reason: ' + stripHTML(mute.reason) + '</span>', user: '[server]', timestamp: Date.now()});
+		cs.emit('chat', {room: 'main', message: '<span class="label label-important">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(socket.user) + ' for ' + stripHTML(mute.mute) + ' seconds! Reason: ' + stripHTML(mute.reason) + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
 	    });
 	    setTimeout(function() {
 		muted.splice(muted.indexOf(mute.target), 1);
 		sockets.forEach(function(cs) {
-                    cs.emit('chat', {room: 'main', message: '<span class="label label-important">' + mute.target + '\'s mute expired!</span>', user: '[server]', timestamp: Date.now()});
+                    cs.emit('chat', {room: 'main', message: '<span class="label label-important">' + mute.target + '\'s mute expired!</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
 		});
 	    }, mute.mute * 1000);
 	}
     });
     socket.on('chat', function(chat) {
 	if (!socket.authed) {
-            socket.emit('chat', {room: 'main', message: 'Please log in or register to chat!', user: '[server]', timestamp: Date.now()});
+            socket.emit('chat', {room: 'main', message: 'Please log in or register to chat!', user: '<strong>Server</strong>', timestamp: Date.now()});
 	}
 	else {
             sockets.forEach(function(cs) {
@@ -232,23 +232,32 @@ io.sockets.on('connection', function(socket) {
     });
 });
 function urlify(text) {
-    /*var urlRegex = /(https?:\/\/[^\s]+)/g;
+    if (text.indexOf('<') !== -1) {
+	// The BBCode parser has made HTML from this, so we don't touch it
+	return text;
+    }
+    var urlRegex = /(https?:\/\/[^\s]+)/g;
       return text.replace(urlRegex, function(url) {
-      return '<a href="' + url + '">' + url + '</a>';
-      });*/ // Make this work with BBCode IMG
-    return text;
+	  return '<a href="' + url + '">' + url + '</a>';
+      });
 }
 console.log('info - listening');
 process.on('SIGTERM', function() {
     sockets.forEach(function(cs) {
-        cs.emit('chat', {room: 'main', message: '<span class="label label-important">Server stopping! (Most likely just rebooting)</span>', user: '[server]', timestamp: Date.now()});
+        cs.emit('chat', {room: 'main', message: '<span class="label label-important">Server stopping in 5 seconds! (Most likely just rebooting)</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
     setTimeout(function() {
-	process.exit(0);
-    }, 1500);
+        sockets.forEach(function(cs) {
+            cs.emit('chat', {room: 'main', message: '<span class="label label-important">Server stopping!</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+        });
+	setTimeout(function() {
+	    process.exit(0);
+	}, 1000);
+    }, 5000);
 });
 process.on('uncaughtException', function(err) {
     sockets.forEach(function(cs) {
-	cs.emit('chat', {room: 'main', message: '<span class="label label-important">Server error: ' + err + '</span>', user: '[server]', timestamp: Date.now()});
+	cs.emit('chat', {room: 'main', message: '<span class="label label-important">Server error: ' + err + '!</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
+    console.log('error - ' + err);
 });
