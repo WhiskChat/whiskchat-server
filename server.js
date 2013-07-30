@@ -225,9 +225,11 @@ io.sockets.on('connection', function(socket) {
 		    parsedcode = urlify(parsedcode);
                     var rand = Math.floor(Math.random() * 101);
 		    if (rand < 26) {
-			db.incrby('users/' + socket.user + '/balance', parsedcode.length / 100, function(err, res) {
-                            socket.emit('balance', {balance: res});
-			    cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: parsedcode.length / 100});
+			db.get('users/' + socket.user + '/balance', function(err, reply) {
+			    db.set('users/' + socket.user + '/balance', Number(reply) + parsedcode.length / 100, function(err, res) {
+				socket.emit('balance', {balance: Number(reply) + parsedcode.length / 100});
+				cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: parsedcode.length / 100});
+			    });
 			});
 		    }
 		    else {
