@@ -9,7 +9,7 @@ var online = 0;
 var bbcode = require('bbcode');
 var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
 var lastSendOnline = new Date(); //throttle online requests
-var versionString = "WhiskChat Server beta v0.1.5";
+var versionString = "WhiskChat Server beta v0.1.7";
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 
@@ -54,7 +54,7 @@ function login(username, usersocket) {
     usersocket.emit('whitelist', {whitelisted: 1});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
-        usersocket.emit('chat', {room: 'main', message: 'Your balance is ' + Number(reply) + ' mBTC. I haven\'t implemented whitelist yet :P', user: '<strong>MOTD</strong>', timestamp: Date.now()});
+        usersocket.emit('chat', {room: 'main', message: 'Your balance is ' + Number(reply) + ' WC. I haven\'t implemented whitelist yet :P', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     });
     console.log('user ' + username + ' just logged in! :D');
 }
@@ -165,6 +165,9 @@ io.sockets.on('connection', function(socket) {
 	    }
 	}
     });
+    socket.on('ping', function() {
+	socket.emit('ping');
+    });
     socket.on('mute', function(mute) {
 	if (mods.indexOf(socket.user) == -1) {
             socket.emit("message", {type: "alert-error", message: "You are not a moderator!"});
@@ -220,7 +223,16 @@ io.sockets.on('connection', function(socket) {
 		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		    /* link links */
 		    parsedcode = urlify(parsedcode);
-		    cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now()});
+                    var rand = Math.floor(Math.random() * 101);
+		    if (rand < 26) {
+			db.incrby('users/' + socket.user + '/balance', parsedcode.length / 1000, function(err, res) {
+                            cs.emit('balance', {balance: res});
+			    cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: parsedcode.length / 1000});
+			});
+		    }
+		    else {
+                        cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now()});
+		    }
 		});
 	    });
 	}
