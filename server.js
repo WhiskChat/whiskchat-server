@@ -51,7 +51,6 @@ function login(username, usersocket) {
     usersocket.emit('chat', {room: 'main', message: 'The version here is ' + versionString + '. ' + online + ' users connected.', user: '[MOTD]', timestamp: Date.now()});
     usersocket.emit('chat', {room: 'main', message: 'The latest source code is <a href="https://github.com/WhiskTech/whiskchat-server/">here</a>.', user: '[MOTD]', timestamp: Date.now()});
     usersocket.emit('chat', {room: 'main', message: '<iframe id="ohhai" style="" width="560" height="315" src="//www.youtube.com/embed/QvxdDDHElZo" frameborder="0" allowfullscreen=""></iframe>', user: '[MOTD]', timestamp: Date.now()});
-    usersocket.emit('chat', {room: 'main', message: '<button onclick="$(\'ohhai\').hide()" class="btn btn-small btn-link">Hide Oh Hai video :)</button>', user: '[MOTD]', timestamp: Date.now()});
     usersocket.emit('joinroom', {room: 'whiskchat'});
     usersocket.emit('whitelist', {whitelisted: 1});
     db.get('users/' + username + '/balance', function(err, reply) {
@@ -240,3 +239,16 @@ function urlify(text) {
     return text;
 }
 console.log('info - listening');
+process.on('SIGTERM', function() {
+    sockets.forEach(function(cs) {
+        cs.emit('chat', {room: 'main', message: '<span class="label label-important">Server stopping! (Most likely just rebooting)</span>', user: '[server]', timestamp: Date.now()});
+    });
+    setTimeout(function() {
+	process.exit(0);
+    }, 1500);
+});
+process.on('uncaughtException', function(err) {
+    sockets.forEach(function(cs) {
+	cs.emit('chat', {room: 'main', message: '<span class="label label-important">Server error: ' + err + '</span>', user: '[server]', timestamp: Date.now()});
+    });
+});
