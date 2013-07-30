@@ -206,16 +206,17 @@ io.sockets.on('connection', function(socket) {
                     return cs.emit('chat', {room: chat.room, message: '<i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', user: socket.user, timestamp: Date.now()});
                 }
                 if (chat.message.substr(0, 3) == "/yt") {
-                    return cs.emit('chat', {room: chat.room, message: '<iframe width="560" height="315" src="//www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + '" frameborder="0" allowfullscreen></iframe> <button onclick="$(\'iframe\').hide()" class="btn btn-small btn-danger">Hide YouTube</button> <button onclick="$(\'iframe\').show()" class="btn btn-small btn-success">Show YouTube</button>', user: socket.user, timestamp: Date.now()});
+                    return cs.emit('chat', {room: chat.room, message: '<span style="display: inline;" id="y' + stripHTML(chat.message.substr(4, chat.message.length)) + '">YouTube Video</span> (ID: ' + stripHTML(chat.message.substr(4, chat.message.length)) + ') <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').hide()" class="btn btn-small btn-danger">Hide</button> <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '\').show()" class="btn btn-small btn-success">Show</button><iframe id="vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '" style="display: none;" width="560" height="315" src="//www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + '" frameborder="0" allowfullscreen></iframe> <script>function ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'() {$(\'#yt' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').html(data.entry["title"].$t)}</script><script type="text/javascript" src="http://gdata.youtube.com/feeds/api/videos/' + stripHTML(chat.message.substr(4, chat.message.length)) +'?v=2&alt=json-in-script&callback=ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'"></script>', user: socket.user, timestamp: Date.now()});
                 }
                 if (chat.message.substr(0,3) == "/ma") {
-                    if (mods.indexOf(socket.user) != -1)
-                	return cs.emit('chat', {room: chat.room, message: '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', user: socket.user, timestamp: Date.now()});
-                    else
-                	socket.emit("message", {type: "alert-error", message: "You are not a moderator!"});
-                    
+                    if (mods.indexOf(socket.user) == -1) {
+                        socket.emit("message", {type: "alert-error", message: "You are not a moderator!"});
+		    }
+                    else {
+                        return cs.emit('chat', {room: chat.room, message: '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', user: socket.user, timestamp: Date.now()});
+		    }
                 }
-        	bbcode.parse(stripHTML(chat.message), function(parsedcode) {
+		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		    /* link links */
 		    parsedcode = urlify(parsedcode);
 		    cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now()});
