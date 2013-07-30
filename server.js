@@ -149,6 +149,7 @@ io.sockets.on('connection', function(socket) {
                             var hashed = hash.sha256(data.password, salt);
 			    if (reply == hashed) {
                                 socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
+				login(data.username, socket);
 			    }
 			    else {
 				if (reply == null) {
