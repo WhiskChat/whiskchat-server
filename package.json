@@ -8,6 +8,6 @@
 	"redis" :  "*",
 	"node_hash" :  "*",
 	"crypto"    :  "*",
-	"bbcode"    :  "*"
+        "bbcode"    :  "git://github.com/whiskers75/whiskchat-bbcode#master"
     }
 }

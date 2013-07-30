@@ -32,7 +32,7 @@ db.on('error', function(err) {
     console.log('error - DB error: ' + err);
 });
 function stripHTML(html) {
-    return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
+    return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '[stripped HTML]');
 }
 function login(username, usersocket, session) {
     online++;
@@ -222,6 +222,13 @@ io.sockets.on('connection', function(socket) {
                 if (chat.message.substr(0, 3) == "/yt") {
                     return cs.emit('chat', {room: chat.room, message: '<iframe width="560" height="315" src="//www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + '" frameborder="0" allowfullscreen></iframe> <button onclick="$(\'iframe\').hide()" class="btn btn-small btn-danger">Hide YouTube</button> <button onclick="$(\'iframe\').show()" class="btn btn-small btn-success">Show YouTube</button>', user: socket.user, timestamp: Date.now()});
                 }
+                if (chat.message.substr(0,3) == "/ma") {
+                    if (mods.indexOf(socket.user) != -1)
+                	return cs.emit('chat', {room: chat.room, message: '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', user: socket.user, timestamp: Date.now()});
+                    else
+                	socket.emit("message", {type: "alert-error", message: "You are not a moderator!"});
+                    
+                }
         	bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		    /* link links */
 		    parsedcode = urlify(parsedcode);
@@ -238,9 +245,9 @@ io.sockets.on('connection', function(socket) {
 });
 function urlify(text) {
     /*var urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, function(url) {
-        return '<a href="' + url + '">' + url + '</a>';
-	});*/ // Make this work with BBCode IMG
+      return text.replace(urlRegex, function(url) {
+      return '<a href="' + url + '">' + url + '</a>';
+      });*/ // Make this work with BBCode IMG
     return text;
 }
 console.log('info - listening');
