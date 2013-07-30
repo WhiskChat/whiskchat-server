@@ -54,7 +54,7 @@ function login(username, usersocket) {
     usersocket.emit('whitelist', {whitelisted: 1});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
-        usersocket.emit('chat', {room: 'main', message: 'Your balance is ' + Number(reply) + ' WC. I haven\'t implemented whitelist yet :P', user: '<strong>MOTD</strong>', timestamp: Date.now()});
+        usersocket.emit('chat', {room: 'main', message: 'Your balance is ' + Number(reply) + 'WC. I haven\'t implemented whitelist yet :P', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     });
     console.log('user ' + username + ' just logged in! :D');
 }
@@ -142,9 +142,6 @@ io.sockets.on('connection', function(socket) {
 		    }
 		    
 		    else {
-                        if (reply.indexOf("Nuked: ") !== -1) {
-                            return socket.emit("message", {type: "alert-error", message: "You have been nuked! " + reply}); 
-                        }
 			db.get('users/' + data.username + '/salt', function(err, salt) {
                             var hashed = hash.sha256(data.password, salt);
 			    if (reply == hashed) {
@@ -251,9 +248,9 @@ function urlify(text) {
 	return text;
     }
     var urlRegex = /(https?:\/\/[^\s]+)/g;
-      return text.replace(urlRegex, function(url) {
-	  return '<a href="' + url + '">' + url + '</a>';
-      });
+    return text.replace(urlRegex, function(url) {
+	return '<a href="' + url + '">' + url + '</a>';
+    });
 }
 console.log('info - listening');
 process.on('SIGTERM', function() {
