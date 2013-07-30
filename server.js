@@ -244,16 +244,11 @@ function urlify(text) {
 console.log('info - listening');
 process.on('SIGTERM', function() {
     sockets.forEach(function(cs) {
-        cs.emit('chat', {room: 'main', message: '<span class="label label-important">Server stopping in 5 seconds! (Most likely just rebooting)</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+        cs.emit('chat', {room: 'main', message: '<span class="label label-important">Server stopping! (most likely just rebooting)</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
     setTimeout(function() {
-        sockets.forEach(function(cs) {
-            cs.emit('chat', {room: 'main', message: '<span class="label label-important">Server stopping!</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
-        });
-	setTimeout(function() {
-	    process.exit(0);
-	}, 1000);
-    }, 5000);
+	process.exit(0);
+    }, 1500);
 });
 process.on('uncaughtException', function(err) {
     sockets.forEach(function(cs) {
