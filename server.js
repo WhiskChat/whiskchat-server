@@ -93,7 +93,6 @@ io.sockets.on('connection', function(socket) {
     socket.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '[server]', timestamp: Date.now()});
     socket.emit('chat', {room: 'main', message: 'Supported features: login, register', user: '[server]', timestamp: Date.now()});
     socket.authed = false;
-    
     socket.on('accounts', function(data) {
 	if(data && data.action){
 	    if(data.action == "register"){
@@ -238,3 +237,8 @@ function urlify(text) {
     return text;
 }
 console.log('info - listening');
+setInterval(function() {
+    sockets.forEach(function(cs) {
+        cs.emit('chatad', {ad: "<iframe data-aa='5218' src='http://ad.a-ads.com/5218?size=320x50&background_color=eeeeee&text_color=000000' scrolling='no' style='width:320px; height:50px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>"});
+    });
+}, 120000);
