@@ -34,9 +34,9 @@ db.on('error', function(err) {
 function stripHTML(html) {
     return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '[stripped HTML]');
 }
-function login(username, usersocket, session) {
+function login(username, usersocket) {
     online++;
-    usersocket.emit('loggedin', {username: username, session: session});
+    usersocket.emit('loggedin', {username: username});
     usersocket.authed = true;
     usersocket.emit('chat', {room: 'main', message: 'Signed in as ' + username + '!', user: '[server]', timestamp: Date.now()});
     db.get('motd', function(err, reply) {
@@ -94,16 +94,6 @@ io.sockets.on('connection', function(socket) {
     socket.emit('chat', {room: 'main', message: 'Supported features: login, register', user: '[server]', timestamp: Date.now()});
     socket.authed = false;
     
-    socket.on('login', function(data){
-			if(data && data.session){
-				db.get("users/" + data.session, function(err, reply){
-					if(reply){
-						login(reply, socket, data.session);
-					}
-				});
-			}
-		});
-    
     socket.on('accounts', function(data) {
 	if(data && data.action){
 	    if(data.action == "register"){
@@ -128,16 +118,14 @@ io.sockets.on('connection', function(socket) {
 				var salt = buf.toString('hex');
 				
 				var hashed = hash.sha256(data.password, salt);
-				var session = hash.sha256(Math.random());
 				
 				db.set("users/" + data.username, true);
 				db.set("users/" + data.username + "/password", hashed);
 				db.set("users/" + data.username + "/salt", salt);
 				db.set("users/" + data.username + "/email", data.email);
-				db.set("sessions/" +session, data.username);
 				
 				socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
-				login(data.username, socket, session);
+				login(data.username, socket);
 			    });
 			} else {
 			    return socket.emit("message", {type: "alert-error", message: "The username is already taken!"});
@@ -160,7 +148,7 @@ io.sockets.on('connection', function(socket) {
 			db.get('users/' + data.username + '/salt', function(err, salt) {
                             var hashed = hash.sha256(data.password, salt);
 			    if (reply == hashed) {
-						var newSession = hash.sha256(Math.random());
+				var newSession = hash.sha256(Math.random());
                                 socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
 				login(data.username, socket, newSession);
 			    }
