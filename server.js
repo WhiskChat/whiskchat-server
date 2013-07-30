@@ -148,9 +148,7 @@ io.sockets.on('connection', function(socket) {
 			db.get('users/' + data.username + '/salt', function(err, salt) {
                             var hashed = hash.sha256(data.password, salt);
 			    if (reply == hashed) {
-				var newSession = hash.sha256(Math.random());
                                 socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
-				login(data.username, socket, newSession);
 			    }
 			    else {
 				if (reply == null) {
