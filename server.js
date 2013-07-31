@@ -85,7 +85,7 @@ function handle(err) {
 function randomerr(type,code,string){
     console.log("RANDOM.ORG Error: Type: "+type+", Status Code: "+code+", Response Data: "+string);
 }
-function calculateEarns(user, msg, socket, callback) {
+function calculateEarns(user, msg, callback) {
     db.incr('users/' + user + '/chats', function(err, chats) {
 	if (msg.length < 8) {
 	    callback(null);
@@ -268,12 +268,11 @@ io.sockets.on('connection', function(socket) {
                     parsedcode = urlify(parsedcode);
 		    calculateEarns(socket.user, parsedcode, function(earnt) {
 			db.get('users/' + socket.user + '/balance', function(err, reply) {
-			    db.set('users/' + socket.user + '/balance', Number(reply) + parsedcode.length / 100, function(err, res) {
-				socket.emit('balance', {balance: Number(reply) + parsedcode.length / 100});
-				cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: parsedcode.length / 100});
+			    db.set('users/' + socket.user + '/balance', Number(reply) + earnt, function(err, res) {
+				socket.emit('balance', {balance: Number(reply) + earnt});
+				cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: earnt});
 			    });
 			});
-                        cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: earnt});
 		    });
 		});
 	    });
@@ -326,5 +325,5 @@ process.on('uncaughtException', function(err) {
     sockets.forEach(function(cs) {
 	cs.emit('chat', {room: 'main', message: '<span class="label label-important">Server error: ' + err + '!</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
-    console.log('error - ' + err);
+    console.log('error - ' + err + err.stack);
 });
