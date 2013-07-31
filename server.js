@@ -246,7 +246,7 @@ io.sockets.on('connection', function(socket) {
                     return;
 		}
                 if (chat.message.substr(0, 4) == "/btc") {
-                    return cs.emit('chat', {room: chat.room, message: '<strong>BTC conversion of ' + stripHTML(chat.message.substr(5, chat.message.length)) + '</strong>:<img src="http://btcticker.appspot.com/mtgox/"' + stripHTML(chat.message.substr(5, chat.message.length)) + '.png"></img>', user: socket.user, timestamp: Date.now()});
+                    return cs.emit('chat', {room: chat.room, message: '<strong>BTC conversion of ' + stripHTML(chat.message.substr(5, chat.message.length)) + '</strong>: <img src="http://btcticker.appspot.com/mtgox/' + stripHTML(chat.message.substr(5, chat.message.length)) + '.png"></img>', user: socket.user, timestamp: Date.now()});
                 }
                 if (chat.message.substr(0, 3) == "/sc") {
                     return cs.emit('chat', {room: chat.room, message: '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + stripHTML(chat.message.substr(4, chat.message.length)) + '"></iframe>', user: socket.user, timestamp: Date.now()}); 
