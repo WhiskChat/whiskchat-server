@@ -249,12 +249,12 @@ io.sockets.on('connection', function(socket) {
 		    db.set('users/' + socket.user + '/balance', bal1 - tip.tip, redis.print);
                     db.set('users/' + tip.user + '/balance', bal2 + tip.tip, redis.print);
                     sockets.forEach(function(cs) {
-                        cs.emit('chat', {room: 'main', message: '<span class="label label-success">has tipped ' + tip.user + ' ' + Number(tip.tip) + ' mBTC!' + (tip.message ? ' (message: ' + tip.message + ')</span>' : ''), user: socket.user, timestamp: Date.now()});
+                        cs.emit('chat', {room: 'main', message: '<span class="label label-success">has tipped ' + stripHTML(tip.user) + ' ' + Number(tip.tip) + ' mBTC!' + (tip.message ? ' (message: ' + tip.message + ')</span>' : ''), user: socket.user, timestamp: Date.now()});
 			if (cs.user == socket.user) {
-			    cs.emit('balance', {balance: bal1 - tip.tip});
+			    cs.emit('balance', {balance: Number(bal1 - tip.tip)});
 			}
 			if (cs.user == tip.user) {
-			    cs.emit('balance', {balance: bal2 + tip.tip});
+			    cs.emit('balance', {balance: Number(bal2 + tip.tip)});
 			}
                     });
                 }
