@@ -6,10 +6,11 @@ var crypto = require('crypto');
 var redis = require('redis');
 var sockets = [];
 var online = 0;
+var random = require("random");
 var bbcode = require('bbcode');
 var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
 var lastSendOnline = new Date(); //throttle online requests
-var versionString = "WhiskChat Server beta v0.1.7";
+var versionString = "WhiskChat Server beta v0.2.3";
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 
@@ -33,6 +34,16 @@ db.on('error', function(err) {
 });
 function stripHTML(html) {
     return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
+}
+function urlify(text) {
+    if (text.indexOf('<') !== -1) {
+        // The BBCode parser has made HTML from this, so we don't touch it
+        return text;
+    }
+    var urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.replace(urlRegex, function(url) {
+        return '<a href="' + url + '">' + url + '</a>';
+    });
 }
 function login(username, usersocket) {
     online++;
@@ -70,6 +81,26 @@ function handle(err) {
     catch(e) {
 	console.log('error - couldn\'t notify sockets: ' + e);
     }
+}
+function randomerr(type,code,string){
+    console.log("RANDOM.ORG Error: Type: "+type+", Status Code: "+code+", Response Data: "+string);
+}
+function calculateEarns(user, msg, socket, callback) {
+    db.incr('users/' + user + '/chats', function(err, chats) {
+	if (msg.length < 8) {
+	    callback(null);
+	}
+        random.generateIntegers(function(randInt) {
+	    if (randInt[0][0] < 25) {
+		callback(randInt[1][0] / 100);
+	    }
+	    else {
+		callback(null);
+	    }
+	}, {secure: true, num: 2, min: 1, max: 100, col: 1}, function() {
+	    callback(null);
+	});
+    });
 }
 db.on('ready', function() {
     console.log('info - DB connected');
@@ -234,19 +265,16 @@ io.sockets.on('connection', function(socket) {
                 }
 		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		    /* link links */
-		    parsedcode = urlify(parsedcode);
-                    var rand = Math.floor(Math.random() * 101);
-		    if (rand < 26) {
+                    parsedcode = urlify(parsedcode);
+		    calculateEarns(socket.user, parsedcode, function(earnt) {
 			db.get('users/' + socket.user + '/balance', function(err, reply) {
 			    db.set('users/' + socket.user + '/balance', Number(reply) + parsedcode.length / 100, function(err, res) {
 				socket.emit('balance', {balance: Number(reply) + parsedcode.length / 100});
 				cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: parsedcode.length / 100});
 			    });
 			});
-		    }
-		    else {
-                        cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now()});
-		    }
+                        cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: earnt});
+		    });
 		});
 	    });
 	}
@@ -284,16 +312,7 @@ io.sockets.on('connection', function(socket) {
 	socket.join(join.room); // We can use socket.io rooms! :D
     });
 });
-function urlify(text) {
-    if (text.indexOf('<') !== -1) {
-	// The BBCode parser has made HTML from this, so we don't touch it
-	return text;
-    }
-    var urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, function(url) {
-	return '<a href="' + url + '">' + url + '</a>';
-    });
-}
+
 console.log('info - listening');
 process.on('SIGTERM', function() {
     sockets.forEach(function(cs) {
