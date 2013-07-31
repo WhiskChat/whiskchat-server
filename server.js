@@ -51,6 +51,8 @@ function login(username, usersocket) {
     usersocket.emit('chat', {room: 'main', message: 'The latest source code is <a href="https://github.com/WhiskTech/whiskchat-server/">here</a>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     usersocket.emit('chat', {room: 'main', message: '<iframe id="ohhai" style="" width="560" height="315" src="//www.youtube.com/embed/QvxdDDHElZo" frameborder="0" allowfullscreen=""></iframe>', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     usersocket.emit('joinroom', {room: 'whiskchat'});
+    usersocket.emit('joinroom', {room: 'botgames'});
+
     usersocket.emit('whitelist', {whitelisted: 1});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
@@ -100,6 +102,10 @@ io.sockets.on('connection', function(socket) {
 		if(data.username && data.password && data.password2 && data.email){
 		    if(data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>"){
 			return socket.emit("message", {type: "alert-error", message: "Username must be between 3 and 16 characters"});
+		    }
+		    if(data.username.indexOf('<') !== -1 || data.username.indexOf('>') !== -1)
+		    {
+			return socket.emit("message", {type: "alert-error", message: "HTML Usernames are not permitted"});
 		    }
 		    db.get("users/" + data.username, function(err, reply){
 			if(!reply){
