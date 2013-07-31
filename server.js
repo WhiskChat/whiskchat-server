@@ -89,6 +89,7 @@ function calculateEarns(user, msg, callback) {
     db.incr('users/' + user + '/chats', function(err, chats) {
 	if (msg.length < 8) {
 	    callback(null);
+	    return;
 	}
         random.generateIntegers(function(randInt) {
 	    if (randInt[0][0] < 25) {
@@ -96,9 +97,11 @@ function calculateEarns(user, msg, callback) {
 	    }
 	    else {
 		callback(null);
+		return;
 	    }
 	}, {secure: true, num: 2, min: 1, max: 100, col: 1}, function() {
 	    callback(null);
+	    return;
 	});
     });
 }
@@ -267,12 +270,17 @@ io.sockets.on('connection', function(socket) {
 		    /* link links */
                     parsedcode = urlify(parsedcode);
 		    calculateEarns(socket.user, parsedcode, function(earnt) {
+			if (earnt) { // Avoid DB lag
 			db.get('users/' + socket.user + '/balance', function(err, reply) {
 			    db.set('users/' + socket.user + '/balance', Number(reply) + earnt, function(err, res) {
 				socket.emit('balance', {balance: Number(reply) + earnt});
 				cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: earnt});
 			    });
 			});
+			}
+			else {
+                            cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: earnt}); 
+			}
 		    });
 		});
 	    });
