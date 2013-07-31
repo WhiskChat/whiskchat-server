@@ -32,7 +32,7 @@ db.on('error', function(err) {
     console.log('error - DB error: ' + err);
 });
 function stripHTML(html) {
-    return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '[stripped HTML]');
+    return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
 }
 function login(username, usersocket) {
     online++;
@@ -52,7 +52,7 @@ function login(username, usersocket) {
     usersocket.emit('chat', {room: 'main', message: '<iframe id="ohhai" style="" width="560" height="315" src="//www.youtube.com/embed/QvxdDDHElZo" frameborder="0" allowfullscreen=""></iframe>', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     usersocket.emit('joinroom', {room: 'whiskchat'});
     usersocket.emit('joinroom', {room: 'botgames'});
-
+    
     usersocket.emit('whitelist', {whitelisted: 1});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
@@ -214,6 +214,9 @@ io.sockets.on('connection', function(socket) {
                 }
 		if (chat.message.substr(0, 4) == "/spt") {
                     return cs.emit('chat', {room: chat.room, message: '<iframe src="https://embed.spotify.com/?uri=' + stripHTML(chat.message.substr(5, chat.message.length)) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', user: socket.user, timestamp: Date.now()}); 
+		}
+		if (chat.message.substr(0, 4) == "!moo") {
+                    return cs.emit('chat', {room: chat.room, message: '<strong>Moobot is a primitive implementation of the features WhiskChat Server offers. As such, it does not exist here.</strong>', user: socket.user, timestamp: Date.now()});
 		}
                 if (chat.message.substr(0, 3) == "/sc") {
                     return cs.emit('chat', {room: chat.room, message: '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + stripHTML(chat.message.substr(4, chat.message.length)) + '"></iframe>', user: socket.user, timestamp: Date.now()}); 
