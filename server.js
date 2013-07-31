@@ -246,8 +246,8 @@ io.sockets.on('connection', function(socket) {
 	db.get('users/' + socket.user + '/balance', function(err, bal1) {
 	    db.get('users/' + tip.user + '/balance', function(err, bal2) {
 		if (tip.tip < bal1) {
-		    db.set('users/' + socket.user + '/balance', bal1 - tip.tip, redis.print);
-                    db.set('users/' + tip.user + '/balance', bal2 + tip.tip, redis.print);
+		    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
+                    db.set('users/' + tip.user + '/balance', Number(bal2) + Number(tip.tip), redis.print);
                     sockets.forEach(function(cs) {
                         cs.emit('chat', {room: 'main', message: '<span class="label label-success">has tipped ' + stripHTML(tip.user) + ' ' + Number(tip.tip) + ' mBTC!' + (tip.message ? ' (message: ' + tip.message + ')</span>' : ''), user: socket.user, timestamp: Date.now()});
 			if (cs.user == socket.user) {
