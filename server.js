@@ -92,7 +92,7 @@ function calculateEarns(user, msg, callback) {
 	    return;
 	}
         random.generateIntegers(function(randInt) {
-	    if (randInt[0][0] < 25) {
+	    if (randInt[0][0] < 15) {
 		callback(randInt[1][0] / 100);
 	    }
 	    else {
@@ -270,13 +270,13 @@ io.sockets.on('connection', function(socket) {
 		    /* link links */
                     parsedcode = urlify(parsedcode);
 		    calculateEarns(socket.user, parsedcode, function(earnt) {
-			if (earnt) { // Avoid DB lag
-			db.get('users/' + socket.user + '/balance', function(err, reply) {
-			    db.set('users/' + socket.user + '/balance', Number(reply) + earnt, function(err, res) {
-				socket.emit('balance', {balance: Number(reply) + earnt});
-				cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: earnt});
+			if (earnt) {
+                            cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: earnt});
+			    db.get('users/' + socket.user + '/balance', function(err, reply) {
+				db.set('users/' + socket.user + '/balance', Number(reply) + earnt, function(err, res) {
+				    socket.emit('balance', {balance: Number(reply) + earnt});
+				});
 			    });
-			});
 			}
 			else {
                             cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: earnt}); 
