@@ -251,10 +251,10 @@ io.sockets.on('connection', function(socket) {
                     sockets.forEach(function(cs) {
                         cs.emit('tip', {room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
 			if (cs.user == socket.user) {
-			    cs.emit('balance', {balance: Number(bal1 - tip.tip)});
+			    cs.emit('balance', {balance: Number(bal1) - Number(tip.tip)});
 			}
 			if (cs.user == tip.user) {
-			    cs.emit('balance', {balance: Number(bal2 + tip.tip)});
+			    cs.emit('balance', {balance: Number(bal2) + Number(tip.tip)});
 			}
                     });
                 }
