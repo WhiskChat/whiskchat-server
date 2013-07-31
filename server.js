@@ -10,7 +10,7 @@ var random = require("random");
 var bbcode = require('bbcode');
 var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
 var lastSendOnline = new Date(); //throttle online requests
-var versionString = "WhiskChat Server beta v0.2.3";
+var versionString = "WhiskChat Server beta v0.3";
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 
@@ -67,7 +67,7 @@ function login(username, usersocket) {
     usersocket.emit('whitelist', {whitelisted: 1});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
-        usersocket.emit('chat', {room: 'main', message: 'Your balance is ' + Number(reply) + 'WC. I haven\'t implemented whitelist yet :P', user: '<strong>MOTD</strong>', timestamp: Date.now()});
+        usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong>' + Number(reply).toFixed(2) + ' mWC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     });
     console.log('user ' + username + ' just logged in! :D');
 }
