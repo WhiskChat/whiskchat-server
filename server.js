@@ -119,9 +119,7 @@ io.sockets.on('connection', function(socket) {
     socket.emit('joinroom', {room: 'main'});
     socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> (beta)', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, © 2013 admin@glados.cc', user: '<strong>Server</strong>', timestamp: Date.now()});
-    socket.emit('chat', {room: 'main', message: 'Please authenticate using the link at the top.', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. ' + online + ' users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
-    socket.emit('chat', {room: 'main', message: 'Supported features: login, register, chat, youtube, bbcode', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.authed = false;
     socket.on('accounts', function(data) {
 	if(data && data.action){
@@ -210,10 +208,12 @@ io.sockets.on('connection', function(socket) {
 		cs.emit('chat', {room: 'main', message: '<span class="label label-important">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(socket.user) + ' for ' + stripHTML(mute.mute) + ' seconds! Reason: ' + stripHTML(mute.reason) + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
 	    });
 	    setTimeout(function() {
+		if (muted.indexOf(mute.target) !== -1) {
 		muted.splice(muted.indexOf(mute.target), 1);
 		sockets.forEach(function(cs) {
-                    cs.emit('chat', {room: 'main', message: '<span class="label label-important">' + mute.target + '\'s mute expired!</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+                    cs.emit('chat', {room: 'main', message: '<span class="label label-success">' + mute.target + '\'s mute expired!</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
 		});
+		}
 	    }, mute.mute * 1000);
 	}
     });
@@ -243,8 +243,11 @@ io.sockets.on('connection', function(socket) {
                     return cs.emit('chat', {room: chat.room, message: '<iframe src="https://embed.spotify.com/?uri=' + stripHTML(chat.message.substr(5, chat.message.length)) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', user: socket.user, timestamp: Date.now()}); 
 		}
 		if (chat.message.substr(0, 4) == "!moo") {
-                    return cs.emit('chat', {room: chat.room, message: '<strong>Moobot is a primitive implementation of the features WhiskChat Server offers. As such, it does not exist here.</strong>', user: socket.user, timestamp: Date.now()});
+                    return;
 		}
+                if (chat.message.substr(0, 4) == "/btc") {
+                    return cs.emit('chat', {room: chat.room, message: '<strong>BTC conversion of ' + stripHTML(chat.message.substr(5, chat.message.length)) + '</strong>:<img src="http://btcticker.appspot.com/mtgox/"' + stripHTML(chat.message.substr(5, chat.message.length)) + '.png"></img>', user: socket.user, timestamp: Date.now()});
+                }
                 if (chat.message.substr(0, 3) == "/sc") {
                     return cs.emit('chat', {room: chat.room, message: '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + stripHTML(chat.message.substr(4, chat.message.length)) + '"></iframe>', user: socket.user, timestamp: Date.now()}); 
                 }
