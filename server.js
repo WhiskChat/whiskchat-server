@@ -86,24 +86,17 @@ function randomerr(type,code,string){
     console.log("RANDOM.ORG Error: Type: "+type+", Status Code: "+code+", Response Data: "+string);
 }
 function calculateEarns(user, msg, callback) {
-    db.incr('users/' + user + '/chats', function(err, chats) {
-	if (msg.length < 8) {
-	    callback(null);
-	    return;
-	}
-        random.generateIntegers(function(randInt) {
-	    if (randInt[0][0] < 15) {
-		callback(randInt[1][0] / 100);
-	    }
-	    else {
-		callback(null);
-		return;
-	    }
-	}, {secure: true, num: 2, min: 1, max: 100, col: 1}, function() {
-	    callback(null);
-	    return;
-	});
-    });
+    if (msg.length < 8) {
+	callback(null);
+	return;
+    }
+    if (Math.floor(Math.random()*101) < 15) {
+        callback(Math.floor(Math.random()*101) / 100);
+    }
+    else {
+	callback(null);
+	return;
+    }
 }
 db.on('ready', function() {
     console.log('info - DB connected');
