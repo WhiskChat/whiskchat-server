@@ -212,6 +212,9 @@ io.sockets.on('connection', function(socket) {
                 if (chat.message.substr(0, 3) == "/me") {
                     return cs.emit('chat', {room: chat.room, message: ' <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', user: socket.user, timestamp: Date.now()});
                 }
+		if (chat.message.substr(0, 4) == "/spt") {
+                    return cs.emit('chat', {room: chat.room, message: '<iframe src="https://embed.spotify.com/?uri=' + stripHTML(chat.message.substr(5, chat.message.length)) + '" width="300" height="380" frameborder="0" allowtransparency="true"></iframe>', user: socket.user, timestamp: Date.now()}); 
+		}
                 if (chat.message.substr(0, 3) == "/yt") {
                     return cs.emit('chat', {room: chat.room, message: '<span style="display: inline;" id="y' + stripHTML(chat.message.substr(4, chat.message.length)) + '">YouTube Video</span> (ID: ' + stripHTML(chat.message.substr(4, chat.message.length)) + ') <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').hide()" class="btn btn-small btn-danger">Hide</button> <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '\').show()" class="btn btn-small btn-success">Show</button><iframe id="vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '" style="display: none;" width="560" height="315" src="//www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + '" frameborder="0" allowfullscreen></iframe> <script>function ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'() {$(\'#yt' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').html(data.entry["title"].$t)}</script><script type="text/javascript" src="http://gdata.youtube.com/feeds/api/videos/' + stripHTML(chat.message.substr(4, chat.message.length)) +'?v=2&alt=json-in-script&callback=ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'"></script>', user: socket.user, timestamp: Date.now()});
                 }
@@ -259,7 +262,7 @@ io.sockets.on('connection', function(socket) {
                     });
                 }
 		else {
-                    socket.emit('message', {type: "alert-error", message: "Your current balance is " + bal1 + ", which is not enough for a tip of " + tip.tip + ", or the tip is not > 0."});
+                    socket.emit('message', {type: "alert-error", message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."});
 		}
 	    });
 	});
