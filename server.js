@@ -249,7 +249,7 @@ io.sockets.on('connection', function(socket) {
 		    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
                     db.set('users/' + tip.user + '/balance', Number(bal2) + Number(tip.tip), redis.print);
                     sockets.forEach(function(cs) {
-                        cs.emit('chat', {room: tip.room, message: '<span class="label label-success">has tipped ' + stripHTML(tip.user) + ' ' + Number(tip.tip) + ' mBTC!' + (tip.message ? ' (message: ' + tip.message + ')</span>' : '</span>'), user: socket.user, timestamp: Date.now()});
+                        cs.emit('tip', {room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
 			if (cs.user == socket.user) {
 			    cs.emit('balance', {balance: Number(bal1 - tip.tip)});
 			}
@@ -262,6 +262,11 @@ io.sockets.on('connection', function(socket) {
                     socket.emit('message', {type: "alert-error", message: "Your current balance is " + bal1 + ", which is not enough for a tip of " + tip.tip + ", or the tip is not > 0."});
 		}
 	    });
+	});
+    });
+    socket.on('getbalance', function() {
+	db.get('users/' + socket.user + '/balance', function(err, balance) {
+	    socket.emit('balance', {balance: balance});
 	});
     });
     socket.on('joinroom', function(join) {
