@@ -64,7 +64,7 @@ function getClientIp(req) {
     }
     return ipAddress;
 }
-app.get('/inputs', function(req, res) {
+app.get('/inputs', function(req, resp) {
     console.log('info - Got Inputs request');
     if (getClientIp(req) !== "50.116.37.202") {
         console.log('info - request was fake (' + getClientIp(req) +')');
@@ -93,8 +93,7 @@ app.get('/inputs', function(req, res) {
 		}
 		console.log('tx sent: ' + tx);
 	    });
-	    res.writeHead(200);
-	    res.end('*OK*');
+	    resp.send('*OK*');
 	    return;
 	}
 	else {
@@ -108,8 +107,7 @@ app.get('/inputs', function(req, res) {
 			    console.log('info - deposited ' + req.query.amount + ' into ' + req.query.note + '\'s account');
 			}
 		    });
-		    res.writeHead(200);
-                    res.end("*OK*");
+                    resp.send("*OK*");
                     return;
                 });
             });
