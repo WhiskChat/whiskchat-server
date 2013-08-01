@@ -19,7 +19,7 @@ var bbcode = require('bbcode');
 var admins = ['whiskers75', 'admin'];
 var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
 var lastSendOnline = new Date(); //throttle online requests
-var versionString = "WhiskChat Server v1.2.1";
+var versionString = "WhiskChat Server v1.2.2";
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 
@@ -393,6 +393,7 @@ io.sockets.on('connection', function(socket) {
                     });
                 });
             }
+	});
     });
     socket.on('getbalance', function() {
         db.get('users/' + socket.user + '/balance', function(err, balance) {
@@ -405,7 +406,7 @@ io.sockets.on('connection', function(socket) {
 	socket.join(join.room); // We can use socket.io rooms! :D
     });
 });
-
+    
 console.log('info - listening');
 process.on('SIGTERM', function() {
     sockets.forEach(function(cs) {
