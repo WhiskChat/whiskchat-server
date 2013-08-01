@@ -107,7 +107,7 @@ app.get('/inputs', function(req, res) {
 			    console.log('info - deposited ' + req.query.amount + ' into ' + req.query.note + '\'s account');
 			}
 		    });
-                    res.send('*OK*');
+                    res.send("*OK*");
                     return;
                 });
             });
@@ -142,9 +142,9 @@ function urlify(text) {
         return '<a href="' + url + '">' + url + '</a>';
     });
 }
-function login(username, usersocket) {
+function login(username, usersocket, sess) {
     online++;
-    usersocket.emit('loggedin', {username: username});
+    usersocket.emit('loggedin', {username: username, session: sess});
     usersocket.authed = true;
     usersocket.emit('chat', {room: 'main', message: 'Signed in as ' + username + '!', user: '<strong>Server</strong>', timestamp: Date.now()});
     db.get('motd', function(err, reply) {
@@ -246,7 +246,7 @@ io.sockets.on('connection', function(socket) {
 				db.set("users/" + data.username + "/email", data.email);
 				
 				socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
-				login(data.username, socket);
+				login(data.username, socket, salt);
 			    });
 			    }
 			    catch(e) {
@@ -276,7 +276,7 @@ io.sockets.on('connection', function(socket) {
 			    }
 			    if (reply == hashed) {
                                 socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
-				login(data.username, socket);
+				login(data.username, socket, salt);
 			    }
 			    else {
 				if (reply == null) {
