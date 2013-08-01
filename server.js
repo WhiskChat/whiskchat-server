@@ -211,6 +211,14 @@ io.sockets.on('connection', function(socket) {
     socket.authed = false;
     socket.ready = true;
     socket.on('accounts', function(data) {
+	if (data && data.session) {
+	    db.get('sessions/' + data.session, function(err, reply) {
+		if (reply) {
+		    login(socket, reply, data.session);
+                    socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "! (automatically logged in)"});
+		}
+	    });
+	}
 	if(data && data.action){
 	    if(data.action == "register"){
 		if(data.username && data.password && data.password2 && data.email){
@@ -244,6 +252,7 @@ io.sockets.on('connection', function(socket) {
 				db.set("users/" + data.username + "/password", hashed);
 				db.set("users/" + data.username + "/salt", salt);
 				db.set("users/" + data.username + "/email", data.email);
+				db.set("sessions/" + salt, data.username);
 				
 				socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
 				login(data.username, socket, salt);
@@ -276,6 +285,7 @@ io.sockets.on('connection', function(socket) {
 			    }
 			    if (reply == hashed) {
                                 socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
+                                db.set("sessions/" + salt, data.username);
 				login(data.username, socket, salt);
 			    }
 			    else {
