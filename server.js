@@ -86,8 +86,7 @@ app.get('/inputs', function(req, res) {
 		}
 		console.log('tx sent: ' + tx);
 	    });
-	    res.writeHead(200);
-	    res.end('*OK*');
+	    res.send('*OK*');
 	    return;
 	}
 	else {
