@@ -80,6 +80,8 @@ app.get('/inputs', function(req, res) {
 	}
 	if (txids.indexOf(req.query.txid) !== -1) {
 	    // This is a hacky tx ;P
+	    console.log('info - this tx already has been handled');
+	    return;
 	}
 	txids.push(req.query.txid);
         if (!user || Number(req.query.amount) < 0.00001) {
@@ -102,8 +104,11 @@ app.get('/inputs', function(req, res) {
 			if (so.user == req.query.note) {
                             so.emit('balance', {balance: Number(reply) + Number(req.query.amount * 1000)});
                             so.emit('chat', {room: 'main', message: 'You deposited ' + req.query.amount * 1000 + ' mBTC!', user: '<strong>Server</strong>', timestamp: Date.now()});
+			    console.log('info - deposited ' + req.query.amount + ' into ' + req.query.note + '\'s account');
 			}
 		    });
+                    res.send('*OK*');
+                    return;
                 });
             });
         }
