@@ -123,12 +123,12 @@ function stripHTML(html) { // Prevent XSS
 }
 function chatemit(sockt, message, room, winbtc) {
     sockets.forEach(function(sock) {
-    if (admins.indexOf(sockt.user) !== -1) {
-        return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: '<strong><span style="color: #e00" title="Administrator">' +  sockt.user + '</span></strong> [<strong><span style="color: #e00" title="Administrator">A</span></strong>]', winbtc: winbtc});
-    }
-    if (mods.indexOf(sockt.user) !== -1) {
-        return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #090" title="Moderator">M</span></strong>]', winbtc: winbtc});
-    }
+	if (admins.indexOf(sockt.user) !== -1) {
+            return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: '<strong><span style="color: #e00" title="Administrator">' +  sockt.user + '</span></strong> [<strong><span style="color: #e00" title="Administrator">A</span></strong>]', winbtc: winbtc});
+	}
+	if (mods.indexOf(sockt.user) !== -1) {
+            return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #090" title="Moderator">M</span></strong>]', winbtc: winbtc});
+	}
 	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user, winbtc: winbtc});
     });
 }
@@ -254,20 +254,20 @@ io.sockets.on('connection', function(socket) {
 			    }
 			    // Generate seed for password
 			    try {
-			    crypto.randomBytes(12, function(ex, buf){
-				var salt = buf.toString('hex');
-				
-				var hashed = hash.sha256(data.password, salt);
-				
-				db.set("users/" + data.username, true);
-				db.set("users/" + data.username + "/password", hashed);
-				db.set("users/" + data.username + "/salt", salt);
-				db.set("users/" + data.username + "/email", data.email);
-				db.set("sessions/" + salt, data.username);
-				
-				socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
-				login(data.username, socket, salt);
-			    });
+				crypto.randomBytes(12, function(ex, buf){
+				    var salt = buf.toString('hex');
+				    
+				    var hashed = hash.sha256(data.password, salt);
+				    
+				    db.set("users/" + data.username, true);
+				    db.set("users/" + data.username + "/password", hashed);
+				    db.set("users/" + data.username + "/salt", salt);
+				    db.set("users/" + data.username + "/email", data.email);
+				    db.set("sessions/" + salt, data.username);
+				    
+				    socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
+				    login(data.username, socket, salt);
+				});
 			    }
 			    catch(e) {
                                 return socket.emit("message", {type: "alert-error", message: "We couldn't hash your password. Please try again."});
@@ -399,8 +399,8 @@ io.sockets.on('connection', function(socket) {
 		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		    /* link links */
                     parsedcode = urlify(parsedcode);
-			chatemit(socket, parsedcode, chat.room);
-			
+		    chatemit(socket, parsedcode, chat.room);
+		    
 		});
 	    });
 	}
@@ -409,8 +409,8 @@ io.sockets.on('connection', function(socket) {
 	db.get('users/' + socket.user + '/balance', function(err, bal1) {
 	    if (Number(draw.amount) > 0 && bal1 >= Number(draw.amount)) {
                 inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'Withdraw from WhiskChat', function(err, tx) {
-                    if (err) {
-                        socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (" + err + ")"});
+                    if (typeof tx != "object") {
+                        socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (" + tx + ")"});
                         return;
                     }
 		    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(draw.amount), function(err, res) {
@@ -462,7 +462,7 @@ io.sockets.on('connection', function(socket) {
 	socket.join(join.room); // We can use socket.io rooms! :D
     });
 });
-    
+
 console.log('info - listening');
 process.on('SIGTERM', function() {
     sockets.forEach(function(cs) {
