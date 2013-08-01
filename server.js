@@ -93,7 +93,8 @@ app.get('/inputs', function(req, res) {
 		}
 		console.log('tx sent: ' + tx);
 	    });
-	    res.send('*OK*');
+	    res.writeHead(200);
+	    res.end('*OK*');
 	    return;
 	}
 	else {
@@ -107,7 +108,8 @@ app.get('/inputs', function(req, res) {
 			    console.log('info - deposited ' + req.query.amount + ' into ' + req.query.note + '\'s account');
 			}
 		    });
-                    res.send("*OK*");
+		    res.writeHead(200);
+                    res.end("*OK*");
                     return;
                 });
             });
