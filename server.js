@@ -114,12 +114,12 @@ function stripHTML(html) { // Prevent XSS
 function chatemit(sockt, message, room, winbtc) {
     sockets.forEach(function(sock) {
     if (admins.indexOf(sock.user) !== -1) {
-        return sock.emit('chat', {room: room, message: message, user: sock.user, timestamp: Date.now(), userShow: '<strong><span style="color: #e00" title="Administrator">' +  sock.user + '</span></strong> [<strong><span style="color: #e00" title="Administrator">A</span></strong>]', winbtc: winbtc});
+        return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: '<strong><span style="color: #e00" title="Administrator">' +  sockt.user + '</span></strong> [<strong><span style="color: #e00" title="Administrator">A</span></strong>]', winbtc: winbtc});
     }
     if (mods.indexOf(sock.user) !== -1) {
-        return sock.emit('chat', {room: room, message: message, user: sock.user, timestamp: Date.now(), userShow: sock.user + ' [<strong><span style="color: #090" title="Moderator">M</span></strong>]', winbtc: winbtc});
+        return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #090" title="Moderator">M</span></strong>]', winbtc: winbtc});
     }
-	sock.emit('chat', {room: room, message: message, user: sock.user, timestamp: Date.now(), userShow: sock.user, winbtc: winbtc});
+	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user, winbtc: winbtc});
     });
 }
 function urlify(text) {
