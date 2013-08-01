@@ -45,11 +45,28 @@ db.on('error', function(err) {
 });
 
 // Inputs.io code
-
+function getClientIp(req) {
+    var ipAddress;
+    // Amazon EC2 / Heroku workaround to get real client IP
+    var forwardedIpsStr = req.header('x-forwarded-for'); 
+    if (forwardedIpsStr) {
+        // 'x-forwarded-for' header may return multiple IP addresses in
+        // the format: "client IP, proxy 1 IP, proxy 2 IP" so take the
+        // the first one
+        var forwardedIps = forwardedIpsStr.split(',');
+        ipAddress = forwardedIps[0];
+    }
+    if (!ipAddress) {
+        // Ensure getting client IP address still works in
+        // development environment
+        ipAddress = req.connection.remoteAddress;
+    }
+    return ipAddress;
+}
 app.get('/inputs', function(req, res) {
     console.log('info - Got Inputs request');
-    if (req.connection.remoteAddress !== "50.116.37.202" && req.headers['X-Forwarded-For'] !== "50.116.37.202") {
-        console.log('info - request was fake (' + req.connection.remoteAddress + ', fwd: ' + req.headers['X-Forwarded-For'] +')');
+    if (getClientIp(req) !== "50.116.37.202") {
+        console.log('info - request was fake (' + getClientIp(req) +')');
 	res.writeHead(401);
 	res.end('Y U TRY TO FAKE INPUTS CALLBACK');
 	return;
