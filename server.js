@@ -210,15 +210,21 @@ io.sockets.on('connection', function(socket) {
     socket.emit('chat', {room: 'main', message: '<strong>NOTICE: WhiskChat has moved out of beta! The DB has been wiped. YOU WILL NEED TO RE-REGISTER YOUR ACCOUNT!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.authed = false;
     socket.ready = true;
-    socket.on('accounts', function(data) {
-	if (data && data.session) {
-	    db.get('sessions/' + data.session, function(err, reply) {
-		if (reply) {
-		    login(socket, reply, data.session);
+    socket.on('login', function(data) {
+        if (data && data.session) {
+            socket.emit("message", {type: "alert-success", message: "Checking session cookie..."});
+            db.get('sessions/' + data.session, function(err, reply) {
+                if (reply) {
                     socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "! (automatically logged in)"});
-		}
-	    });
-	}
+                    login(socket, reply, data.session);
+                }
+                else {
+                    socket.emit("message", {type: "alert-error", message: "Incorrect session cookie."});
+                }
+            });
+        }
+    });
+    socket.on('accounts', function(data) {
 	if(data && data.action){
 	    if(data.action == "register"){
 		if(data.username && data.password && data.password2 && data.email){
