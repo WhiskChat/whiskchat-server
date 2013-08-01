@@ -144,7 +144,12 @@ function urlify(text) {
 }
 function login(username, usersocket, sess) {
     online++;
-    usersocket.emit('loggedin', {username: username, session: sess});
+    if (sess) {
+	usersocket.emit('loggedin', {username: username, session: sess});
+    }
+    else {
+        usersocket.emit('loggedin', {username: username});
+    }
     usersocket.authed = true;
     usersocket.emit('chat', {room: 'main', message: 'Signed in as ' + username + '!', user: '<strong>Server</strong>', timestamp: Date.now()});
     db.get('motd', function(err, reply) {
@@ -216,7 +221,7 @@ io.sockets.on('connection', function(socket) {
             db.get('sessions/' + data.session, function(err, reply) {
                 if (reply) {
                     socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "! (automatically logged in)"});
-                    login(socket, reply, data.session);
+                    login(socket, reply);
                 }
                 else {
                     socket.emit("message", {type: "alert-error", message: "Incorrect session cookie."});
