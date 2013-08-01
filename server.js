@@ -289,16 +289,15 @@ io.sockets.on('connection', function(socket) {
 		    else {
 			db.get('users/' + data.username + '/salt', function(err, salt) {
 			    try {
-				var hashed = hash.sha256(reply, salt);
-			    }
-			    catch(e) {
-                                return socket.emit("message", {type: "alert-error", message: "Crypto error, please retry!"});
-			    }
-			    if (reply == hashed) {
+                            if (hash.sha256(data.password, salt) == reply) {
                                 socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
                                 db.set("sessions/" + salt, data.username);
 				login(data.username, socket, salt);
 			    }
+			    }
+                            catch(e) {
+                                return socket.emit("message", {type: "alert-error", message: "Crypto error, please retry!"});
+                            }
 			    else {
 				if (reply == null) {
 				    socket.emit("message", {type: "alert-error", message: "User does not exist."});
