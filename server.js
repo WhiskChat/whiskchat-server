@@ -8,6 +8,7 @@ var sockets = [];
 var online = 0;
 var random = require("random");
 var bbcode = require('bbcode');
+var admins = ['whiskers75', 'admin'];
 var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
 var lastSendOnline = new Date(); //throttle online requests
 var versionString = "WhiskChat Server beta v0.3";
@@ -32,8 +33,17 @@ if (process.env.REDISTOGO_URL) {
 db.on('error', function(err) {
     console.log('error - DB error: ' + err);
 });
-function stripHTML(html) {
+function stripHTML(html) { // Prevent XSS
     return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
+}
+function chat(sock, message, room) {
+    if (admins.indexOf(sock.user) !== -1) {
+        return sock.emit('chat', {room: room, message: message, user: sock.user, timestamp: Date.now(), userShow: '<strong><span style="color: #e00" title="Administrator">' +  sock.user + '</span></strong> [<strong><span style="color: #e00" title="Administrator">A</span></strong>]'});
+    }
+    if (mods.indexOf(sock.user) !== -1) {
+        return sock.emit('chat', {room: room, message: message, user: sock.user, timestamp: Date.now(), userShow:  sock.user + ' [<strong><span style="color: #090" title="Moderator">M</span></strong>]'});
+    }
+    sock.emit('chat', {room: 'main', message: 'The latest source code is <a href="https://github.com/WhiskTech/whiskchat-server/">here</a>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
 }
 function urlify(text) {
     if (text.indexOf('<') !== -1) {
@@ -209,10 +219,10 @@ io.sockets.on('connection', function(socket) {
 	    });
 	    setTimeout(function() {
 		if (muted.indexOf(mute.target) !== -1) {
-		muted.splice(muted.indexOf(mute.target), 1);
-		sockets.forEach(function(cs) {
-                    cs.emit('chat', {room: 'main', message: '<span class="label label-success">' + mute.target + '\'s mute expired!</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
-		});
+		    muted.splice(muted.indexOf(mute.target), 1);
+		    sockets.forEach(function(cs) {
+			cs.emit('chat', {room: 'main', message: '<span class="label label-success">' + mute.target + '\'s mute expired!</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+		    });
 		}
 	    }, mute.mute * 1000);
 	}
