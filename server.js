@@ -19,7 +19,7 @@ var bbcode = require('bbcode');
 var admins = ['whiskers75', 'admin'];
 var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
 var lastSendOnline = new Date(); //throttle online requests
-var versionString = "WhiskChat Server beta v0.4.1";
+var versionString = "WhiskChat Server v1.0.0";
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 
@@ -196,6 +196,7 @@ io.sockets.on('connection', function(socket) {
     socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> (beta)', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, © 2013 admin@glados.cc', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. ' + online + ' users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: '<strong>NOTICE: WhiskChat has moved out of beta! The DB has been wiped. YOU WILL NEED TO RE-REGISTER YOUR ACCOUNT!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.authed = false;
     socket.on('accounts', function(data) {
 	if(data && data.action){
