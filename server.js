@@ -13,6 +13,7 @@ var hash = require('node_hash');
 var crypto = require('crypto');
 var redis = require('redis');
 var sockets = [];
+var txids = [];
 var online = 0;
 var random = require("random");
 var bbcode = require('bbcode');
@@ -77,6 +78,10 @@ app.get('/inputs', function(req, res) {
 	    handle(err); // Wait for next callback
 	    return;
 	}
+	if (txids.indexOf(req.query.txid) !== -1) {
+	    // This is a hacky tx ;P
+	}
+	txids.push(req.query.txid);
         if (!user || Number(req.query.amount) < 0.00001) {
 	    console.log('info - returning money');
             inputs.transactions.send(req.query.from, req.query.amount, 'Error depositing. Reasons: the user does not exist (specify the username in the note field) or the deposit is too little (min deposit 0.00001 BTC)', function(err, tx) {
@@ -106,7 +111,7 @@ app.get('/inputs', function(req, res) {
 });
 
 
-    
+
 
 function stripHTML(html) { // Prevent XSS
     return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
