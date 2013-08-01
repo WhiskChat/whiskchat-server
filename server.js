@@ -288,7 +288,7 @@ io.sockets.on('connection', function(socket) {
 			    });
 			}
 			else {
-                            chat(socket, parsedcode, chat.room, earnt); 
+                            chat(socket, parsedcode, chat.room); 
 			}
 		    });
 		});
