@@ -312,7 +312,14 @@ io.sockets.on('connection', function(socket) {
 		if (chat.message.length < 2) {
 		    return;
 		}
-		if (chat.message.substr(0, 1) == "\\") {
+		if (!socket.ready) {
+		    return;
+		}
+                socket.ready = false;
+                setTimeout(function() {
+                    socket.ready = true;
+                }, 800);
+                if (chat.message.substr(0, 1) == "\\") {
                     chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
 		    return;
 		}
@@ -354,13 +361,8 @@ io.sockets.on('connection', function(socket) {
 		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		    /* link links */
                     parsedcode = urlify(parsedcode);
-		    if (socket.ready) {
 			chatemit(socket, parsedcode, chat.room);
-			socket.ready = false;
-			setTimeout(function() {
-			    socket.ready = true;
-			}, 800);
-		    }
+			
 		});
 	    });
 	}
