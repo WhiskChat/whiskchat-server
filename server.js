@@ -1,6 +1,14 @@
 // WhiskChat Server! :D
 
-var io = require('socket.io').listen(Number(process.env.PORT));
+var express = require('express');
+var app = express();
+var InputsIO = require('inputs.io');
+var inputs = new InputsIO({
+    APIKey: process.env.INPUTSAPIKEY,
+    pin: process.env.INPUTSPIN
+});
+var iottp = require('http').createServer(app);
+var io = require('socket.io').listen(iottp);
 var hash = require('node_hash');
 var crypto = require('crypto');
 var redis = require('redis');
@@ -14,6 +22,8 @@ var lastSendOnline = new Date(); //throttle online requests
 var versionString = "WhiskChat Server beta v0.4.1";
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
+
+iottp.listen(process.env.PORT);
 
 io.configure(function () { 
     io.set("transports", ["xhr-polling"]); 
@@ -33,6 +43,55 @@ if (process.env.REDISTOGO_URL) {
 db.on('error', function(err) {
     console.log('error - DB error: ' + err);
 });
+
+// Inputs.io code
+
+app.get('/inputs', function(req, res) {
+    console.log('info - Got Inputs request');
+    if (req.connection.remoteAddress !== "50.116.37.202") {
+	console.log('info - request was fake');
+	res.writeHead(401);
+	res.end('Y U TRY TO FAKE INPUTS CALLBACK');
+	return;
+    }
+    console.log('info - request is authentic');
+    db.get('users/' + req.query.note, function(err, user) {
+	if (err) {
+	    handle(err); // Wait for next callback
+	    return;
+	}
+	if (!user) {
+	    console.log('info - returning money');
+	    inputs.transactions.send(req.query.from, req.query.amount, 'This user does not exist', function(err, tx) {
+		if (err) {
+		    handle(err); // Inputs will callback again
+		    return;
+		}
+		console.log('tx sent: ' + tx);
+	    });
+	    res.writeHead(200);
+	    res.end('*OK*');
+	    return;
+	}
+	else {
+            db.get('users/' + req.query.note + '/balance', function(err, reply) {
+                db.set('users/' + req.query.note + '/balance', Number(reply) + Number(req.query.amount), function(err, res) {
+                    sockets.forEach(function(so) {
+                        so.emit('chat', {room: 'main', message: '<strong>' + req.query.note + ' deposited ' + req.query.amount + ' BTC using Inputs.io!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
+			if (so.user == req.query.note) {
+                            so.emit('balance', {balance: Number(reply) + Number(req.query.amount)});
+                            so.emit('chat', {room: 'main', message: 'You deposited ' + req.query.amount + ' BTC!', user: '<strong>Server</strong>', timestamp: Date.now()});
+			}
+		    });
+                });
+            });
+        }
+    });
+});
+
+
+    
+
 function stripHTML(html) { // Prevent XSS
     return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
 }
@@ -96,17 +155,7 @@ function randomerr(type,code,string){
     console.log("RANDOM.ORG Error: Type: "+type+", Status Code: "+code+", Response Data: "+string);
 }
 function calculateEarns(user, msg, callback) {
-    if (msg.length < 8) {
-	callback(null);
-	return;
-    }
-    if (Math.floor(Math.random()*101) < 15) {
-        callback(Math.floor(Math.random()*101) / 100);
-    }
-    else {
-	callback(null);
-	return;
-    }
+    callback(null);
 }
 db.on('ready', function() {
     console.log('info - DB connected');
