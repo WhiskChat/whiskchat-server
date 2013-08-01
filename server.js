@@ -197,6 +197,7 @@ io.sockets.on('connection', function(socket) {
     socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. ' + online + ' users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit('chat', {room: 'main', message: '<strong>NOTICE: WhiskChat has moved out of beta! The DB has been wiped. YOU WILL NEED TO RE-REGISTER YOUR ACCOUNT!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.authed = false;
+    socket.ready = true;
     socket.on('accounts', function(data) {
 	if(data && data.action){
 	    if(data.action == "register"){
@@ -312,16 +313,20 @@ io.sockets.on('connection', function(socket) {
 		    return;
 		}
 		if (chat.message.substr(0, 1) == "\\") {
-                    return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
+                    chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
+		    return;
 		}
                 if (chat.message.substr(0, 1) == "|") {
-                    return chatemit(socket, '<span class="rainbow">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
+                    chatemit(socket, '<span class="rainbow">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
+		    return;
                 }
                 if (chat.message.substr(0, 3) == "/me") {
-                    return chatemit(socket, ' <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
+		    chatemit(socket, ' <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
+		    return;
                 }
 		if (chat.message.substr(0, 4) == "/spt") {
-                    return chatemit(socket, '<iframe src="https://embed.spotify.com/?uri=' + stripHTML(chat.message.substr(5, chat.message.length)) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room); 
+                    chatemit(socket, '<iframe src="https://embed.spotify.com/?uri=' + stripHTML(chat.message.substr(5, chat.message.length)) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room);
+		    return;
 		}
 		if (chat.message.substr(0, 4) == "!moo") {
                     return;
@@ -349,7 +354,13 @@ io.sockets.on('connection', function(socket) {
 		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		    /* link links */
                     parsedcode = urlify(parsedcode);
-                    chatemit(socket, parsedcode, chat.room);
+		    if (socket.ready) {
+			chatemit(socket, parsedcode, chat.room);
+			socket.ready = false;
+			setTimeout(function() {
+			    socket.ready = true;
+			}, 800);
+		    }
 		});
 	    });
 	}
