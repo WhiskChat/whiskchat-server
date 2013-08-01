@@ -11,7 +11,7 @@ var bbcode = require('bbcode');
 var admins = ['whiskers75', 'admin'];
 var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
 var lastSendOnline = new Date(); //throttle online requests
-var versionString = "WhiskChat Server beta v0.3";
+var versionString = "WhiskChat Server beta v0.4.1";
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 
@@ -36,14 +36,14 @@ db.on('error', function(err) {
 function stripHTML(html) { // Prevent XSS
     return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
 }
-function chat(sock, message, room) {
+function chat(sock, message, room, winbtc) {
     if (admins.indexOf(sock.user) !== -1) {
-        return sock.emit('chat', {room: room, message: message, user: sock.user, timestamp: Date.now(), userShow: '<strong><span style="color: #e00" title="Administrator">' +  sock.user + '</span></strong> [<strong><span style="color: #e00" title="Administrator">A</span></strong>]'});
+        return sock.emit('chat', {room: room, message: message, user: sock.user, timestamp: Date.now(), userShow: '<strong><span style="color: #e00" title="Administrator">' +  sock.user + '</span></strong> [<strong><span style="color: #e00" title="Administrator">A</span></strong>]', winbtc: winbtc});
     }
     if (mods.indexOf(sock.user) !== -1) {
-        return sock.emit('chat', {room: room, message: message, user: sock.user, timestamp: Date.now(), userShow:  sock.user + ' [<strong><span style="color: #090" title="Moderator">M</span></strong>]'});
+        return sock.emit('chat', {room: room, message: message, user: sock.user, timestamp: Date.now(), userShow: sock.user + ' [<strong><span style="color: #090" title="Moderator">M</span></strong>]', winbtc: winbtc});
     }
-    sock.emit('chat', {room: 'main', message: 'The latest source code is <a href="https://github.com/WhiskTech/whiskchat-server/">here</a>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
+    sock.emit('chat', {room: 'main', message: 'The latest source code is <a href="https://github.com/WhiskTech/whiskchat-server/">here</a>.', user: '<strong>MOTD</strong>', timestamp: Date.now(), winbtc: winbtc});
 }
 function urlify(text) {
     if (text.indexOf('<') !== -1) {
@@ -241,28 +241,31 @@ io.sockets.on('connection', function(socket) {
 		    return;
 		}
 		if (chat.message.substr(0, 1) == "\\") {
-                    return cs.emit('chat', {room: chat.room, message: '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', user: socket.user, timestamp: Date.now()});
+                    return chat(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
 		}
                 if (chat.message.substr(0, 1) == "|") {
-                    return cs.emit('chat', {room: chat.room, message: '<span class="rainbow">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', user: socket.user, timestamp: Date.now()});
+                    return chat(socket, '<span class="rainbow">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
                 }
                 if (chat.message.substr(0, 3) == "/me") {
-                    return cs.emit('chat', {room: chat.room, message: ' <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', user: socket.user, timestamp: Date.now()});
+                    return chat(socket, ' <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
                 }
 		if (chat.message.substr(0, 4) == "/spt") {
-                    return cs.emit('chat', {room: chat.room, message: '<iframe src="https://embed.spotify.com/?uri=' + stripHTML(chat.message.substr(5, chat.message.length)) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', user: socket.user, timestamp: Date.now()}); 
+                    return chat(socket, '<iframe src="https://embed.spotify.com/?uri=' + stripHTML(chat.message.substr(5, chat.message.length)) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room); 
 		}
 		if (chat.message.substr(0, 4) == "!moo") {
                     return;
 		}
                 if (chat.message.substr(0, 4) == "/btc") {
-                    return cs.emit('chat', {room: chat.room, message: '<strong>BTC conversion of ' + stripHTML(chat.message.substr(5, chat.message.length)) + '</strong>: <img src="http://btcticker.appspot.com/mtgox/' + stripHTML(chat.message.substr(5, chat.message.length)) + '.png"></img>', user: socket.user, timestamp: Date.now()});
+                    if (stripHTML(chat.message.substr(5, chat.message.length))) {
+			return chat(socket, '<strong>BTC conversion of ' + stripHTML(chat.message.substr(5, chat.message.length)) + '</strong>: <img src="http://btcticker.appspot.com/mtgox/' + stripHTML(chat.message.substr(5, chat.message.length)) + '.png"></img>', chat.room);
+		    }
+                    return chat(socket, '<strong>BTC conversion of 1 BTC to USD: </strong>: <img src="http://btcticker.appspot.com/mtgox/1btc.png"></img>', chat.room);
                 }
                 if (chat.message.substr(0, 3) == "/sc") {
-                    return cs.emit('chat', {room: chat.room, message: '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + stripHTML(chat.message.substr(4, chat.message.length)) + '"></iframe>', user: socket.user, timestamp: Date.now()}); 
+                    return chat(socket, '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + stripHTML(chat.message.substr(4, chat.message.length)) + '"></iframe>', chat.room); 
                 }
                 if (chat.message.substr(0, 3) == "/yt") {
-                    return cs.emit('chat', {room: chat.room, message: '<span style="display: inline;" id="y' + stripHTML(chat.message.substr(4, chat.message.length)) + '">YouTube Video</span> (ID: ' + stripHTML(chat.message.substr(4, chat.message.length)) + ') <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').hide()" class="btn btn-small btn-danger">Hide</button> <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '\').show()" class="btn btn-small btn-success">Show</button><iframe id="vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '" style="display: none;" width="560" height="315" src="//www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + '" frameborder="0" allowfullscreen></iframe> <script>function ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'() {$(\'#yt' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').html(data.entry["title"].$t)}</script><script type="text/javascript" src="http://gdata.youtube.com/feeds/api/videos/' + stripHTML(chat.message.substr(4, chat.message.length)) +'?v=2&alt=json-in-script&callback=ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'"></script>', user: socket.user, timestamp: Date.now()});
+                    return chat(socket, '<span style="display: inline;" id="y' + stripHTML(chat.message.substr(4, chat.message.length)) + '">YouTube Video</span> (ID: ' + stripHTML(chat.message.substr(4, chat.message.length)) + ') <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').hide()" class="btn btn-small btn-danger">Hide</button> <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '\').show()" class="btn btn-small btn-success">Show</button><iframe id="vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '" style="display: none;" width="560" height="315" src="//www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + '" frameborder="0" allowfullscreen></iframe> <script>function ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'() {$(\'#yt' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').html(data.entry["title"].$t)}</script><script type="text/javascript" src="http://gdata.youtube.com/feeds/api/videos/' + stripHTML(chat.message.substr(4, chat.message.length)) +'?v=2&alt=json-in-script&callback=ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'"></script>', chat.room); // Good luck trying to decode that :P -whiskers75
                 }
                 if (chat.message.substr(0,3) == "/ma") {
                     if (mods.indexOf(socket.user) == -1) {
@@ -277,7 +280,7 @@ io.sockets.on('connection', function(socket) {
                     parsedcode = urlify(parsedcode);
 		    calculateEarns(socket.user, parsedcode, function(earnt) {
 			if (earnt) {
-                            cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: earnt});
+                            chat(socket, parsedcode, chat.room, earnt);
 			    db.get('users/' + socket.user + '/balance', function(err, reply) {
 				db.set('users/' + socket.user + '/balance', Number(reply) + earnt, function(err, res) {
 				    socket.emit('balance', {balance: Number(reply) + earnt});
@@ -285,7 +288,7 @@ io.sockets.on('connection', function(socket) {
 			    });
 			}
 			else {
-                            cs.emit('chat', {room: chat.room, message: parsedcode, user: socket.user, timestamp: Date.now(), winbtc: earnt}); 
+                            chat(socket, parsedcode, chat.room, earnt); 
 			}
 		    });
 		});
