@@ -48,8 +48,8 @@ db.on('error', function(err) {
 
 app.get('/inputs', function(req, res) {
     console.log('info - Got Inputs request');
-    if (req.connection.remoteAddress !== "50.116.37.202") {
-	console.log('info - request was fake (' + req.connection.remoteAddress + ')');
+    if (req.connection.remoteAddress !== "50.116.37.202" && req.headers['X-Forwarded-For'] !== "50.116.37.202") {
+        console.log('info - request was fake (' + req.connection.remoteAddress + ', fwd: ' + req.headers['X-Forwarded-For'] +')');
 	res.writeHead(401);
 	res.end('Y U TRY TO FAKE INPUTS CALLBACK');
 	return;
