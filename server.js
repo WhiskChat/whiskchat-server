@@ -361,6 +361,7 @@ io.sockets.on('connection', function(socket) {
 		    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(draw.amount), function(err, res) {
 			console.log('withdraw tx sent: ' + tx);
 			socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " completed."});
+			socket.emit('balance', {balance: Number(bal1) - Number(draw.amount)});
 		    });
                 });
 	    }
