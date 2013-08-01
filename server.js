@@ -19,7 +19,7 @@ var bbcode = require('bbcode');
 var admins = ['whiskers75', 'admin'];
 var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
 var lastSendOnline = new Date(); //throttle online requests
-var versionString = "WhiskChat Server v1.0.0";
+var versionString = "WhiskChat Server v1.0.2";
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 
@@ -351,6 +351,8 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.on('tip', function(tip) {
+	db.get('users/' + tip.user, function(err, exists) {
+	    if (exists) {
 	db.get('users/' + socket.user + '/balance', function(err, bal1) {
 	    db.get('users/' + tip.user + '/balance', function(err, bal2) {
 		if (Number(tip.tip) < bal1 && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
@@ -370,6 +372,11 @@ io.sockets.on('connection', function(socket) {
                     socket.emit('message', {type: "alert-error", message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."});
 		}
 	    });
+	});
+	    }
+	    else {
+                socket.emit('message', {type: "alert-error", message: "That person does not exist."});
+	    }
 	});
     });
     socket.on('getbalance', function() {
