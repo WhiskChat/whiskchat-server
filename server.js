@@ -256,7 +256,12 @@ io.sockets.on('connection', function(socket) {
 		    
 		    else {
 			db.get('users/' + data.username + '/salt', function(err, salt) {
-                            var hashed = hash.sha256(data.password, salt);
+			    try {
+				var hashed = hash.sha256(data.password, salt);
+			    }
+			    catch(e) {
+                                return socket.emit("message", {type: "alert-error", message: "Crypto error, please retry!"});
+			    }
 			    if (reply == hashed) {
                                 socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
 				login(data.username, socket);
