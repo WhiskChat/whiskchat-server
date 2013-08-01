@@ -119,7 +119,7 @@ function chatemit(sock, message, room, winbtc) {
     if (mods.indexOf(sock.user) !== -1) {
         return sock.emit('chat', {room: room, message: message, user: sock.user, timestamp: Date.now(), userShow: sock.user + ' [<strong><span style="color: #090" title="Moderator">M</span></strong>]', winbtc: winbtc});
     }
-    sock.emit('chat', {room: 'main', message: 'The latest source code is <a href="https://github.com/WhiskTech/whiskchat-server/">here</a>.', user: '<strong>MOTD</strong>', timestamp: Date.now(), winbtc: winbtc});
+    sock.emit('chat', {room: room, message: message, user: sock.user, timestamp: Date.now(), userShow: sock.user, winbtc: winbtc});
 }
 function urlify(text) {
     if (text.indexOf('<') !== -1) {
@@ -345,19 +345,7 @@ io.sockets.on('connection', function(socket) {
 		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		    /* link links */
                     parsedcode = urlify(parsedcode);
-		    calculateEarns(socket.user, parsedcode, function(earnt) {
-			if (earnt) {
-                            chatemit(socket, parsedcode, chat.room, earnt);
-			    db.get('users/' + socket.user + '/balance', function(err, reply) {
-				db.set('users/' + socket.user + '/balance', Number(reply) + earnt, function(err, res) {
-				    socket.emit('balance', {balance: Number(reply) + earnt});
-				});
-			    });
-			}
-			else {
-                            chatemit(socket, parsedcode, chat.room, earnt); 
-			}
-		    });
+                    chatemit(socket, parsedcode, chat.room);
 		});
 	    });
 	}
