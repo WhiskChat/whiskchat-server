@@ -220,8 +220,8 @@ io.sockets.on('connection', function(socket) {
             socket.emit("message", {type: "alert-success", message: "Checking session cookie..."});
             db.get('sessions/' + data.session, function(err, reply) {
                 if (reply) {
-                    socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "! (automatically logged in)"});
-                    login(data.username, socket, data.session);
+                    socket.emit("message", {type: "alert-success", message: "Welcome back, " + reply + "! (automatically logged in)"});
+                    login(reply, socket, data.session);
                 }
                 else {
                     socket.emit("message", {type: "alert-error", message: "Incorrect session cookie."});
