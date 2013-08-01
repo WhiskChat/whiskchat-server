@@ -77,9 +77,9 @@ app.get('/inputs', function(req, res) {
 	    handle(err); // Wait for next callback
 	    return;
 	}
-	if (!user) {
+        if (!user || Number(req.query.amount) < 0.00001) {
 	    console.log('info - returning money');
-	    inputs.transactions.send(req.query.from, req.query.amount, 'This user does not exist', function(err, tx) {
+            inputs.transactions.send(req.query.from, req.query.amount, 'Error depositing. Reasons: the user does not exist (specify the username in the note field) or the deposit is too little (min deposit 0.00001 BTC)', function(err, tx) {
 		if (err) {
 		    handle(err); // Inputs will callback again
 		    return;
@@ -92,12 +92,12 @@ app.get('/inputs', function(req, res) {
 	}
 	else {
             db.get('users/' + req.query.note + '/balance', function(err, reply) {
-                db.set('users/' + req.query.note + '/balance', Number(reply) + Number(req.query.amount), function(err, res) {
+                db.set('users/' + req.query.note + '/balance', Number(reply) + (Number(req.query.amount) * 1000), function(err, res) {
                     sockets.forEach(function(so) {
-                        so.emit('chat', {room: 'main', message: '<strong>' + req.query.note + ' deposited ' + req.query.amount + ' BTC using Inputs.io!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
+                        so.emit('chat', {room: 'main', message: '<strong>' + req.query.note + ' deposited ' + req.query.amount * 1000 + ' mBTC using Inputs.io!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
 			if (so.user == req.query.note) {
-                            so.emit('balance', {balance: Number(reply) + Number(req.query.amount)});
-                            so.emit('chat', {room: 'main', message: 'You deposited ' + req.query.amount + ' BTC!', user: '<strong>Server</strong>', timestamp: Date.now()});
+                            so.emit('balance', {balance: Number(reply) + Number(req.query.amount * 1000)});
+                            so.emit('chat', {room: 'main', message: 'You deposited ' + req.query.amount * 1000 + ' mBTC!', user: '<strong>Server</strong>', timestamp: Date.now()});
 			}
 		    });
                 });
@@ -153,7 +153,7 @@ function login(username, usersocket) {
     usersocket.emit('whitelist', {whitelisted: 1});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
-        usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong>' + Number(reply).toFixed(2) + ' mWC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
+        usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong>' + Number(reply).toFixed(2) + ' mBTC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     });
     console.log('user ' + username + ' just logged in! :D');
 }
