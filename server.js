@@ -221,6 +221,7 @@ io.sockets.on('connection', function(socket) {
 				return socket.emit("message", {type: "alert-error", message: "Passwords must match!"});
 			    }
 			    // Generate seed for password
+			    try {
 			    crypto.randomBytes(12, function(ex, buf){
 				var salt = buf.toString('hex');
 				
@@ -234,6 +235,10 @@ io.sockets.on('connection', function(socket) {
 				socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
 				login(data.username, socket);
 			    });
+			    }
+			    catch(e) {
+                                return socket.emit("message", {type: "alert-error", message: "We couldn't hash your password. Please try again."});
+			    }
 			} else {
 			    return socket.emit("message", {type: "alert-error", message: "The username is already taken!"});
 			}
