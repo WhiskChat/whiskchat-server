@@ -13,13 +13,14 @@ var hash = require('node_hash');
 var crypto = require('crypto');
 var redis = require('redis');
 var sockets = [];
+var scrollback = [];
 var txids = [];
 var online = 0;
 var random = require("random");
 var bbcode = require('bbcode');
 var admins = ['whiskers75', 'admin'];
 var bots = ['WhiskDiceBot'];
-var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
+var mods = ['whiskers75', 'admin', 'peapodamus', 'devinthedev'];
 var lastSendOnline = new Date(); // Throttle online requests
 var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack will insert a version here
 var alphanumeric = /^[a-z0-9]+$/i;
@@ -189,7 +190,7 @@ function handle(err) {
     }
 }
 function randomerr(type,code,string){
-    console.log("RANDOM.ORG Error: Type: "+type+", Status Code: "+code+", Response Data: "+string);
+    handle(new Error("RANDOM.ORG Error: Type: "+type+", Status Code: "+code+", Response Data: "+string));
 }
 function calculateEarns(user, msg, callback) {
     callback(null);
@@ -412,7 +413,7 @@ io.sockets.on('connection', function(socket) {
 	db.get('users/' + socket.user + '/balance', function(err, bal1) {
 	    if (Number(draw.amount) > 0 && bal1 >= Number(draw.amount)) {
                 inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'Withdraw from WhiskChat', function(err, tx) {
-                    if (typeof tx != "object") {
+                    if (typeof tx != "object" && tx.indexOf('VOUCHER') == -1) {
                         socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (" + tx + ")"});
                         return;
                     }
