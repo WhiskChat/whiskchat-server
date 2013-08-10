@@ -20,7 +20,7 @@ var bbcode = require('bbcode');
 var admins = ['whiskers75', 'admin'];
 var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
 var lastSendOnline = new Date(); //throttle online requests
-var versionString = "WhiskChat Server v1.2.2";
+var versionString = "WhiskChat Server v1.2.5";
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 
@@ -169,7 +169,7 @@ function login(username, usersocket, sess) {
     usersocket.emit('whitelist', {whitelisted: 1});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
-        usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong>' + Number(reply).toFixed(2) + ' mBTC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
+        usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong style="color: #090;">' + Number(reply).toFixed(2) + ' mBTC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     });
     console.log('user ' + username + ' just logged in! :D');
 }
@@ -210,9 +210,8 @@ io.sockets.on('connection', function(socket) {
     });
     socket.emit('joinroom', {room: 'main'});
     socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> (beta)', user: '<strong>Server</strong>', timestamp: Date.now()});
-    socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <a href="http://coinchat.org">coinchat.org</a>, © 2013 admin@glados.cc', user: '<strong>Server</strong>', timestamp: Date.now()});
-    socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. ' + online + ' users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
-    socket.emit('chat', {room: 'main', message: '<strong>NOTICE: WhiskChat has moved out of beta! The DB has been wiped. YOU WILL NEED TO RE-REGISTER YOUR ACCOUNT!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <strong><a href="http://coinchat.org">coinchat.org</a></strong>, © 2013 admin@glados.cc', user: '<strong>Server</strong>', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + online + '</strong> users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.authed = false;
     socket.ready = true;
     socket.on('login', function(data) {
@@ -313,8 +312,8 @@ io.sockets.on('connection', function(socket) {
 	    }
 	}
     });
-    socket.on('ping', function() {
-	socket.emit('ping');
+    socket.on('ping', function(ts) {
+        socket.emit('chat', {room: 'main', message: 'Pong! Client -> server ' + (Date.now() - ts) + 'ms', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
     socket.on('mute', function(mute) {
 	if (mods.indexOf(socket.user) == -1) {
@@ -386,7 +385,7 @@ io.sockets.on('connection', function(socket) {
                     return chatemit(socket, '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + stripHTML(chat.message.substr(4, chat.message.length)) + '"></iframe>', chat.room); 
                 }
                 if (chat.message.substr(0, 3) == "/yt") {
-                    return chatemit(socket, '<span style="display: inline;" id="y' + stripHTML(chat.message.substr(4, chat.message.length)) + '">YouTube Video</span> (ID: ' + stripHTML(chat.message.substr(4, chat.message.length)) + ') <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').hide()" class="btn btn-small btn-danger">Hide</button> <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '\').show()" class="btn btn-small btn-success">Show</button><iframe id="vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '" style="display: none;" width="560" height="315" src="//www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + '" frameborder="0" allowfullscreen></iframe> <script>function ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'() {$(\'#yt' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').html(data.entry["title"].$t)}</script><script type="text/javascript" src="http://gdata.youtube.com/feeds/api/videos/' + stripHTML(chat.message.substr(4, chat.message.length)) +'?v=2&alt=json-in-script&callback=ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'"></script>', chat.room); // Good luck trying to decode that :P -whiskers75
+                    return chatemit(socket, '<span style="display: inline;" id="y' + stripHTML(chat.message.substr(4, chat.message.length)) + '">YouTube Video</span> (ID: ' + stripHTML(chat.message.substr(4, chat.message.length)) + ') <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').hide()" class="btn btn-small btn-danger">Hide</button> <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '\').show()" class="btn btn-small btn-success">Show</button></br><iframe id="vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '" style="display: none;" width="560" height="315" src="//www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + '" frameborder="0" allowfullscreen></iframe> <script>function ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'() {$(\'#yt' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').html(data.entry["title"].$t)}</script><script type="text/javascript" src="http://gdata.youtube.com/feeds/api/videos/' + stripHTML(chat.message.substr(4, chat.message.length)) +'?v=2&alt=json-in-script&callback=ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'"></script>', chat.room); // Good luck trying to decode that :P -whiskers75
                 }
                 if (chat.message.substr(0,3) == "/ma") {
                     if (mods.indexOf(socket.user) == -1) {
