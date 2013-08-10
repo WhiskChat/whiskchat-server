@@ -18,6 +18,7 @@ var online = 0;
 var random = require("random");
 var bbcode = require('bbcode');
 var admins = ['whiskers75', 'admin'];
+var bots = ['WhiskDiceBot'];
 var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
 var lastSendOnline = new Date(); // Throttle online requests
 var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack will insert a version here
@@ -129,6 +130,9 @@ function chatemit(sockt, message, room, winbtc) {
 	if (mods.indexOf(sockt.user) !== -1) {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #090" title="Moderator">M</span></strong>]', winbtc: winbtc});
 	}
+        if (bots.indexOf(sockt.user) !== -1) {
+            return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #0657AF" title="Officially Verified Bot">B</span></strong>]', winbtc: winbtc});
+        }
 	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user, winbtc: winbtc});
     });
 }
@@ -177,7 +181,7 @@ function handle(err) {
     console.log('error - ' + err);
     try {
         sockets.forEach(function(socket) {
-	    socket.emit({room: 'main', message: 'Server error: ' + err, user: '<strong>Server</strong>', timestamp: Date.now()});
+	    socket.emit({room: 'main', message: '<span style="color: #e00">Server error: ' + err.stack + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
 	});
     }
     catch(e) {
