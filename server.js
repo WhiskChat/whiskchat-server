@@ -20,7 +20,7 @@ var bbcode = require('bbcode');
 var admins = ['whiskers75', 'admin'];
 var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
 var lastSendOnline = new Date(); //throttle online requests
-var versionString = "WhiskChat Server v1.2.5";
+var versionString = "WhiskChat Server v1.2.6";
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 
@@ -209,7 +209,7 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.emit('joinroom', {room: 'main'});
-    socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong> (beta)', user: '<strong>Server</strong>', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <strong><a href="http://coinchat.org">coinchat.org</a></strong>, © 2013 admin@glados.cc', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + online + '</strong> users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.authed = false;
@@ -313,7 +313,7 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.on('ping', function(ts) {
-        socket.emit('chat', {room: 'main', message: 'Pong! Client -> server ' + (Date.now() - ts) + 'ms', user: '<strong>Server</strong>', timestamp: Date.now()});
+        socket.emit('chat', {room: 'main', message: '<strong>Pong! Client -> server ' + (Date.now() - Number(ts)) + 'ms</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
     socket.on('mute', function(mute) {
 	if (mods.indexOf(socket.user) == -1) {
