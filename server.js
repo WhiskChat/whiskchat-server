@@ -20,7 +20,7 @@ var bbcode = require('bbcode');
 var admins = ['whiskers75', 'admin'];
 var mods = ['whiskers75', 'admin', 'peapodamus', 'TradeFortress', 'devinthedev'];
 var lastSendOnline = new Date(); //throttle online requests
-var versionString = "WhiskChat Server v1.2.6";
+var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack will insert a version here
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 
