@@ -325,6 +325,14 @@ io.sockets.on('connection', function(socket) {
 	}
 	else {
 	    db.set('users/' + nuke.target + '/password', null, redis.print);
+	    db.get('users/' + nuke.target + '/salt', function(err, res) {
+		if (err) {
+		    handle(err);
+		    return;
+		}
+		db.set('sessions/' + res, null, redis.print);
+	    });
+	    muted.push(nuke.target);
             sockets.forEach(function(cs) {
                 cs.emit('chat', {room: 'main', message: '<span class="label label-important">'+ stripHTML(socket.user) + ' has nuked ' + stripHTML(nuke.target) + ' for ' + stripHTML(nuke.reason) + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
             });
