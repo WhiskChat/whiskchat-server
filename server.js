@@ -125,6 +125,9 @@ function stripHTML(html) { // Prevent XSS
 }
 function chatemit(sockt, message, room, winbtc) {
     sockets.forEach(function(sock) {
+	if (room == "modsprivate" && admins.indexOf(sock.user) == -1 && mods.indexOf(sock.user == -1)) {
+	    return; // Mods only!
+	}
 	if (admins.indexOf(sockt.user) !== -1) {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: '<strong><span style="color: #e00" title="Administrator">' +  sockt.user + '</span></strong> [<strong><span style="color: #e00" title="Administrator">A</span></strong>]', winbtc: winbtc});
 	}
@@ -171,7 +174,9 @@ function login(username, usersocket, sess) {
     usersocket.emit('chat', {room: 'main', message: '<iframe id="ohhai" style="" width="560" height="315" src="//www.youtube.com/embed/QvxdDDHElZo" frameborder="0" allowfullscreen=""></iframe>', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     usersocket.emit('joinroom', {room: 'whiskchat'});
     usersocket.emit('joinroom', {room: 'botgames'});
-    
+    if (mods.indexOf(username) !== -1 || admins.indexOf(username) !== -1) {
+        usersocket.emit('joinroom', {room: 'modsprivate'});
+    }
     usersocket.emit('whitelist', {whitelisted: 1});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
@@ -215,7 +220,7 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.emit('joinroom', {room: 'main'});
-   socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
     //socket.emit('chat', {room: 'main', message: 'WhiskChat Client uses code from <strong><a href="http://coinchat.org">coinchat.org</a></strong>, © 2013 admin@glados.cc', user: '<strong>Server</strong>', timestamp: Date.now()}); This is now mentioned in the client, as that's the logical place for it.
     socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + online + '</strong> users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit("online", {people: online});
@@ -226,14 +231,14 @@ io.sockets.on('connection', function(socket) {
             socket.emit("message", {type: "alert-success", message: "Checking session cookie..."});
             db.get('sessions/' + data.session, function(err, reply) {
 		db.get('users/' + reply + '/password', function(err, res) {
-                if (reply && reply !== "nuked") {
-                    socket.emit("message", {type: "alert-success", message: "Welcome back, " + reply + "! (automatically logged in)"});
-                    login(reply, socket, data.session);
-                }
-                else {
-                    socket.emit("message", {type: "alert-error", message: "Incorrect session cookie."});
-                }
-		    });
+                    if (reply && reply !== "nuked") {
+			socket.emit("message", {type: "alert-success", message: "Welcome back, " + reply + "! (automatically logged in)"});
+			login(reply, socket, data.session);
+                    }
+                    else {
+			socket.emit("message", {type: "alert-error", message: "Incorrect session cookie."});
+                    }
+		});
             });
         }
     });
@@ -341,6 +346,9 @@ io.sockets.on('connection', function(socket) {
 	    muted.push(nuke.target);
             sockets.forEach(function(cs) {
                 cs.emit('chat', {room: 'main', message: '<span class="label label-important">'+ stripHTML(socket.user) + ' has nuked ' + stripHTML(nuke.target) + ' for ' + stripHTML(nuke.reason) + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+		if (cs.user == nuke.target) {
+		    cs.disconnect();
+		}
             });
 	}
     });
@@ -396,6 +404,10 @@ io.sockets.on('connection', function(socket) {
                     chatemit(socket, '<span class="rainbow">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
 		    return;
                 }
+		if (chat.room == "modsprivate" && mods.indexOf(socket.user) == -1 && admins.indexOf(socket.user) == -1) {
+		    socket.emit('message', {message: 'You are not a moderator or admin. #modsprivate is restricted.'});
+		    return;
+		}
                 if (chat.message.substr(0, 3) == "/me") {
 		    chatemit(socket, ' <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
 		    return;
