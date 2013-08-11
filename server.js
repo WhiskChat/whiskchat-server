@@ -320,7 +320,7 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.on('ping', function(ts) {
-        socket.emit('chat', {room: 'main', message: '<strong>Pong! Client -> server ' + (Date.now() - new Date(ts.ts).now()) + 'ms</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
+        socket.emit('chat', {room: 'main', message: '<strong>Pong! Client -> server ' + (Date.now() - ts.ts) + 'ms</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
     socket.on('mute', function(mute) {
 	if (mods.indexOf(socket.user) == -1) {
