@@ -319,6 +319,17 @@ io.sockets.on('connection', function(socket) {
 	    }
 	}
     });
+    socket.on('nuke', function(nuke) {
+	if (admins.indexOf(socket.user) == -1) {
+            socket.emit("message", {type: "alert-error", message: "Nuking is admin only!"});
+	}
+	else {
+	    db.set('users/' + nuke.target + '/password', null, redis.print);
+            sockets.forEach(function(cs) {
+                cs.emit('chat', {room: 'main', message: '<span class="label label-important">'+ stripHTML(socket.user) + ' has nuked ' + stripHTML(nuke.target) + ' for ' + stripHTML(nuke.reason) + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+            });
+	}
+    });
     socket.on('ping', function(ts) {
         socket.emit('chat', {room: 'main', message: '<strong>Pong! Client -> server ' + (Date.now() - ts.ts) + 'ms</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
