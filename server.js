@@ -290,10 +290,14 @@ io.sockets.on('connection', function(socket) {
 	    }
 	    if (data.action == "login") {
 		db.get("users/" + data.username + "/password", function(err, reply) {
-		    if (err) {
-			handle(err);
+		    if (err || reply == "nuked") {
+			if (err) {
+			    handle(err);
+			}
+			else {
+                            socket.emit("message", {type: "alert-error", message: "You have been nuked!"}); 
+			}
 		    }
-		    
 		    else {
 			db.get('users/' + data.username + '/salt', function(err, salt) {
 			    try {
@@ -326,7 +330,7 @@ io.sockets.on('connection', function(socket) {
             socket.emit("message", {type: "alert-error", message: "Nuking is admin only!"});
 	}
 	else {
-	    db.set('users/' + nuke.target + '/password', null, redis.print);
+	    db.set('users/' + nuke.target + '/password', 'nuked', redis.print);
 	    db.get('users/' + nuke.target + '/salt', function(err, res) {
 		if (err) {
 		    handle(err);
