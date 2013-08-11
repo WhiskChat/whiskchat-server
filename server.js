@@ -226,7 +226,7 @@ io.sockets.on('connection', function(socket) {
             socket.emit("message", {type: "alert-success", message: "Checking session cookie..."});
             db.get('sessions/' + data.session, function(err, reply) {
 		db.get('users/' + reply + '/password', function(err, res) {
-                if (res) {
+                if (reply && reply !== "nuked") {
                     socket.emit("message", {type: "alert-success", message: "Welcome back, " + reply + "! (automatically logged in)"});
                     login(reply, socket, data.session);
                 }
@@ -332,7 +332,7 @@ io.sockets.on('connection', function(socket) {
 		    handle(err);
 		    return;
 		}
-		db.set('sessions/' + res, null, redis.print);
+		db.set('sessions/' + res, 'nuked', redis.print);
 	    });
 	    muted.push(nuke.target);
             sockets.forEach(function(cs) {
