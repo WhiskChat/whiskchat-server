@@ -149,6 +149,7 @@ function urlify(text) {
 }
 function login(username, usersocket, sess) {
     online++;
+    io.sockets.volatile.emit("online", {people: online});
     if (sess) {
 	usersocket.emit('loggedin', {username: username, session: sess});
     }
@@ -215,8 +216,9 @@ io.sockets.on('connection', function(socket) {
     });
     socket.emit('joinroom', {room: 'main'});
     socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
-    socket.emit('chat', {room: 'main', message: 'WhiskChat uses code from <strong><a href="http://coinchat.org">coinchat.org</a></strong>, © 2013 admin@glados.cc', user: '<strong>Server</strong>', timestamp: Date.now()});
+    socket.emit('chat', {room: 'main', message: 'WhiskChat Client uses code from <strong><a href="http://coinchat.org">coinchat.org</a></strong>, © 2013 admin@glados.cc', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + online + '</strong> users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
+    socket.emit("online", {people: online});
     socket.authed = false;
     socket.ready = true;
     socket.on('login', function(data) {
