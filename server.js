@@ -421,7 +421,7 @@ io.sockets.on('connection', function(socket) {
 		    chatemit(socket, ' <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
 		    return;
                 }
-                if (chat.message.substr(0, 3) == "/ol") {
+                if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online") {
                     chatemit(socket, '<strong>Online users: </strong>' + users.join(' '), chat.room);
                     return;
                 }
