@@ -20,7 +20,7 @@ var random = require("random");
 var bbcode = require('bbcode');
 var admins = ['whiskers75', 'admin'];
 var bots = ['WhiskDiceBot'];
-var mods = ['whiskers75', 'admin', 'peapodamus', 'devinthedev', 'Diamond'];
+var mods = ['whiskers75', 'admin', 'TradeFortress', 'peapodamus', 'devinthedev', 'Diamond'];
 var users = [];
 var lastSendOnline = new Date(); // Throttle online requests
 var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack will insert a version here
@@ -274,18 +274,18 @@ io.sockets.on('connection', function(socket) {
 			    }
 			    // Generate seed for password
 			    try {
-				    var salt = Math.floor(Math.random() * 10000000000).toString();
-				    
-				    var hashed = hash.sha256(data.password, salt);
-				    
-				    db.set("users/" + data.username, true);
-				    db.set("users/" + data.username + "/password", hashed);
-				    db.set("users/" + data.username + "/salt", salt);
-				    db.set("users/" + data.username + "/email", data.email);
-				    db.set("sessions/" + salt, data.username);
-				    
-				    socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
-				    login(data.username, socket, salt);
+				var salt = Math.floor(Math.random() * 10000000000).toString();
+				
+				var hashed = hash.sha256(data.password, salt);
+				
+				db.set("users/" + data.username, true);
+				db.set("users/" + data.username + "/password", hashed);
+				db.set("users/" + data.username + "/salt", salt);
+				db.set("users/" + data.username + "/email", data.email);
+				db.set("sessions/" + salt, data.username);
+				
+				socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
+				login(data.username, socket, salt);
 			    }
 			    catch(e) {
 				console.log(e);
