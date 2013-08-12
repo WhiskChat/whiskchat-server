@@ -21,6 +21,7 @@ var bbcode = require('bbcode');
 var admins = ['whiskers75', 'admin'];
 var bots = ['WhiskDiceBot'];
 var mods = ['whiskers75', 'admin', 'peapodamus', 'devinthedev', 'Diamond'];
+var users = [];
 var lastSendOnline = new Date(); // Throttle online requests
 var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack will insert a version here
 var alphanumeric = /^[a-z0-9]+$/i;
@@ -152,6 +153,9 @@ function urlify(text) {
 }
 function login(username, usersocket, sess) {
     online++;
+    if (users.indexOf(username) == -1) {
+	users.push(username);
+    }
     io.sockets.volatile.emit("online", {people: online});
     if (sess) {
 	usersocket.emit('loggedin', {username: username, session: sess});
@@ -217,6 +221,9 @@ io.sockets.on('connection', function(socket) {
 	sockets.splice(sockets.indexOf(socket), 1);
 	if (socket.authed) {
 	    online--;
+	    if (users.indexOf(socket.user) !== -1) {
+                users.splice(users.indexOf(socket.user), 1);
+	    }
 	}
     });
     socket.emit('joinroom', {room: 'main'});
@@ -411,6 +418,10 @@ io.sockets.on('connection', function(socket) {
                 if (chat.message.substr(0, 3) == "/me") {
 		    chatemit(socket, ' <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
 		    return;
+                }
+                if (chat.message.substr(0, 3) == "/ol") {
+                    chatemit(socket, '<strong>Online users: </strong>' + users.join(' '), chat.room);
+                    return;
                 }
 		if (chat.message.substr(0, 4) == "/spt") {
                     chatemit(socket, '<iframe src="https://embed.spotify.com/?uri=' + stripHTML(chat.message.substr(5, chat.message.length)) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room);
