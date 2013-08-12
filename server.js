@@ -153,8 +153,9 @@ function urlify(text) {
     });
 }
 function login(username, usersocket, sess) {
-    online++;
-    users.push(username);
+    if (users.indexOf(username) == -1) {
+	users.push(username);
+    }
     io.sockets.volatile.emit("online", {people: online});
     if (sess) {
 	usersocket.emit('loggedin', {username: username, session: sess});
@@ -214,22 +215,29 @@ io.sockets.on('connection', function(socket) {
 	io.sockets.volatile.emit("online", {people: online});
 	lastSendOnline = new Date();
     } else {
-	socket.emit("online", {people: online});
+	socket.emit("online", {people: users.length});
     }
     socket.on('disconnect', function() {
 	sockets.splice(sockets.indexOf(socket), 1);
 	if (socket.authed) {
-	    online--;
-	    if (users.indexOf(socket.user) !== -1) {
+	    var tmp = false;
+	    setTimeout(function() {
+	    sockets.forEach(function(so) {
+		if (users.indexOf(so.user) !== -1) {
+		    tmp = true;
+		}
+	    });
+	    if (!tmp) {
                 users.splice(users.indexOf(socket.user), 1);
 	    }
+		}, 1000);
 	}
     });
     socket.emit('joinroom', {room: 'main'});
     socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
     //socket.emit('chat', {room: 'main', message: 'WhiskChat Client uses code from <strong><a href="http://coinchat.org">coinchat.org</a></strong>, © 2013 admin@glados.cc', user: '<strong>Server</strong>', timestamp: Date.now()}); This is now mentioned in the client, as that's the logical place for it.
-    socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + online + '</strong> users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
-    socket.emit("online", {people: online});
+    socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + users.length + '</strong> users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
+    socket.emit("online", {people: users.length});
     socket.authed = false;
     socket.ready = true;
     socket.on('login', function(data) {
@@ -422,7 +430,7 @@ io.sockets.on('connection', function(socket) {
 		    return;
                 }
                 if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online") {
-                    chatemit(socket, '<strong>Online users: </strong>' + users.join(' '), chat.room);
+                    chatemit(socket, '<strong>' + users.length + ' online users: </strong>' + users.join(', '), chat.room);
                     return;
                 }
 		if (chat.message.substr(0, 4) == "/spt") {
