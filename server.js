@@ -274,8 +274,7 @@ io.sockets.on('connection', function(socket) {
 			    }
 			    // Generate seed for password
 			    try {
-				crypto.randomBytes(12, function(ex, buf){
-				    var salt = buf.toString('hex');
+				    var salt = Math.floor(Math.random() * 10000000000).toString();
 				    
 				    var hashed = hash.sha256(data.password, salt);
 				    
@@ -287,7 +286,6 @@ io.sockets.on('connection', function(socket) {
 				    
 				    socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
 				    login(data.username, socket, salt);
-				});
 			    }
 			    catch(e) {
 				console.log(e);
