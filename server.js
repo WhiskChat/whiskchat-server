@@ -288,7 +288,7 @@ io.sockets.on('connection', function(socket) {
 				login(data.username, socket, salt);
 			    }
 			    catch(e) {
-				console.log(e);
+				console.log(e.stack);
                                 return socket.emit("message", {type: "alert-error", message: "We couldn't hash your password. Please try again."});
 			    }
 			} else {
@@ -327,7 +327,7 @@ io.sockets.on('connection', function(socket) {
                                 }
                             }
                             catch(e) {
-				console.log(e);
+				console.log(e.stack);
                                 return socket.emit("message", {type: "alert-error", message: "Crypto error, please retry!"});
                             }
 			    
