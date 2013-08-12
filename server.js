@@ -290,6 +290,7 @@ io.sockets.on('connection', function(socket) {
 				});
 			    }
 			    catch(e) {
+				console.log(e);
                                 return socket.emit("message", {type: "alert-error", message: "We couldn't hash your password. Please try again."});
 			    }
 			} else {
@@ -328,6 +329,7 @@ io.sockets.on('connection', function(socket) {
                                 }
                             }
                             catch(e) {
+				console.log(e);
                                 return socket.emit("message", {type: "alert-error", message: "Crypto error, please retry!"});
                             }
 			    
