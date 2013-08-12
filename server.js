@@ -154,9 +154,7 @@ function urlify(text) {
 }
 function login(username, usersocket, sess) {
     online++;
-    if (users.indexOf(username) == -1) {
-	users.push(username);
-    }
+    users.push(username);
     io.sockets.volatile.emit("online", {people: online});
     if (sess) {
 	usersocket.emit('loggedin', {username: username, session: sess});
