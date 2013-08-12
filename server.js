@@ -260,7 +260,7 @@ io.sockets.on('connection', function(socket) {
 	if(data && data.action){
 	    if(data.action == "register"){
 		if(data.username && data.password && data.password2 && data.email){
-		    if(data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>" || alphanumeric.test(data.username)){
+		    if(data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>"){
 			return socket.emit("message", {type: "alert-error", message: "Username must be between 3 and 16 characters, must be alphanumeric and cannot contain HTML."});
 		    }
 		    if(data.username.indexOf('<') !== -1 || data.username.indexOf('>') !== -1)
