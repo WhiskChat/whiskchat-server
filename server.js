@@ -364,10 +364,13 @@ io.sockets.on('connection', function(socket) {
         socket.emit('chat', {room: 'main', message: '<strong>Pong! Client -> server ' + (Date.now() - ts.ts) + 'ms</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
     socket.on('mute', function(mute) {
-	if (mods.indexOf(socket.user) == -1) {
+	if (mods.indexOf(socket.user) == -1 && admins.indexOf(socket.user) == -1) {
             socket.emit("message", {type: "alert-error", message: "You are not a moderator!"});
 	}
 	else {
+	    if (mods.indexOf(mute.target) !== -1 && admins.indexOf(socket.user) == -1) {
+                return socket.emit("message", {type: "alert-error", message: "You must be an admin to affect mutes for that person."});
+	    }
 	    if (muted.indexOf(mute.target) == -1) {
 		muted.push(mute.target);
 	    }
@@ -521,15 +524,15 @@ io.sockets.on('connection', function(socket) {
 console.log('info - listening');
 process.on('SIGTERM', function() {
     sockets.forEach(function(cs) {
-        cs.emit('chat', {room: 'main', message: '<span class="label label-important">Server stopping! (most likely just rebooting)</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+        cs.emit('chat', {room: 'main', message: '<span style="color: #e00;">Server stopping! (most likely just rebooting)</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
     setTimeout(function() {
 	process.exit(0);
-    }, 1500);
+    }, 3500);
 });
 process.on('uncaughtException', function(err) {
     sockets.forEach(function(cs) {
-	cs.emit('chat', {room: 'main', message: '<span class="label label-important">Server error: ' + err + '!</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+	cs.emit('chat', {room: 'main', message: '<span style="color: #e00;">Server error: ' + err.stack + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
     console.log('error - ' + err + err.stack);
 });
