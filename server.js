@@ -215,7 +215,7 @@ io.sockets.on('connection', function(socket) {
 	io.sockets.volatile.emit("online", {people: online});
 	lastSendOnline = new Date();
     } else {
-	socket.emit("online", {people: users.length});
+	socket.emit("online", {people: users.length, array: users});
     }
     socket.on('disconnect', function() {
 	sockets.splice(sockets.indexOf(socket), 1);
@@ -237,7 +237,7 @@ io.sockets.on('connection', function(socket) {
     socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
     //socket.emit('chat', {room: 'main', message: 'WhiskChat Client uses code from <strong><a href="http://coinchat.org">coinchat.org</a></strong>, © 2013 admin@glados.cc', user: '<strong>Server</strong>', timestamp: Date.now()}); This is now mentioned in the client, as that's the logical place for it.
     socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + users.length + '</strong> users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
-    socket.emit("online", {people: users.length});
+    socket.emit("online", {people: users.length, array: users});
     socket.authed = false;
     socket.ready = true;
     socket.on('login', function(data) {
