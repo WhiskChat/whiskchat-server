@@ -156,7 +156,7 @@ function login(username, usersocket, sess) {
     if (users.indexOf(username) == -1) {
 	users.push(username);
     }
-    io.sockets.volatile.emit("online", {people: online});
+    io.sockets.volatile.emit("online", {people: online, array: users});
     if (sess) {
 	usersocket.emit('loggedin', {username: username, session: sess});
     }
