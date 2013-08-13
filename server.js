@@ -14,6 +14,7 @@ var crypto = require('crypto');
 var redis = require('redis');
 var alphanumeric = /^[a-z0-9]+$/i; // Noone remove this.
 var sockets = [];
+var lastip = '';
 var scrollback = [];
 var txids = [];
 var online = 0;
@@ -192,7 +193,7 @@ function login(username, usersocket, sess) {
 	usersocket.emit('balance', {balance: reply});
         usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong style="color: #090;">' + Number(reply).toFixed(2) + ' mBTC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     });
-    console.log('user ' + username + ' just logged in! :D');
+    console.log(username + ' logged in from IP ' + usersocket.address());
 }
 function handle(err) {
     console.log('error - ' + err);
@@ -269,6 +270,10 @@ io.sockets.on('connection', function(socket) {
 		    if(data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>"){
 			return socket.emit("message", {type: "alert-error", message: "Username must be between 3 and 16 characters, must be alphanumeric and cannot contain HTML."});
 		    }
+		    if (socket.address() == lastip) {
+                        return socket.emit("message", {type: "alert-error", message: "Spambots are not allowed."});
+		    }
+		    lastip = socket.address();
 		    if(data.username.indexOf('<') !== -1 || data.username.indexOf('>') !== -1)
 		    {
 			return socket.emit("message", {type: "alert-error", message: "HTML Usernames are not permitted"});
