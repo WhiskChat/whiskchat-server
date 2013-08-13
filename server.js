@@ -194,13 +194,13 @@ function login(username, usersocket, sess) {
 	usersocket.emit('balance', {balance: reply});
         usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong style="color: #090;">' + Number(reply).toFixed(2) + ' mBTC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     });
-    console.log(username + ' logged in from IP ' + usersocket.handshake.address);
+    console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
 }
 function handle(err) {
     console.log('error - ' + err);
     try {
         sockets.forEach(function(socket) {
-	    socket.emit({room: 'main', message: '<span style="color: #e00">Server error: ' + err.stack + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+            socket.emit({room: 'main', message: '<span style="color: #e00">Server error: ' + err.stack.replace(/\n/g,'</br>') + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
 	});
     }
     catch(e) {
@@ -271,10 +271,10 @@ io.sockets.on('connection', function(socket) {
 		    if(data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>"){
 			return socket.emit("message", {type: "alert-error", message: "Username must be between 3 and 16 characters, must be alphanumeric and cannot contain HTML."});
 		    }
-		    if (lastip.indexOf(socket.handshake.address) !== -1 || knownspambots.indexOf(socket.handshake.address) !== -1) {
+		    if (lastip.indexOf(socket.handshake.address.address) !== -1 || knownspambots.indexOf(socket.handshake.address.address) !== -1) {
                         return socket.emit("message", {type: "alert-error", message: "You cannot register twice."});
 		    }
-		    lastip.push(socket.handshake.address);
+		    lastip.push(socket.handshake.address.address);
 		    if(data.username.indexOf('<') !== -1 || data.username.indexOf('>') !== -1)
 		    {
 			return socket.emit("message", {type: "alert-error", message: "HTML Usernames are not permitted"});
