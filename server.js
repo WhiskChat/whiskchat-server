@@ -130,6 +130,12 @@ function chatemit(sockt, message, room, winbtc) {
 	if (room == "modsprivate" && admins.indexOf(sock.user) == -1 && mods.indexOf(sock.user == -1)) {
 	    return; // Mods only!
 	}
+	if (room.indexOf(':') !== -1 && sock.user != room.split(':')[1] && sock.user != room.split(':')[0]) {
+	    return;
+	}
+        if (room.indexOf(':') !== -1 && (sock.user == room.split(':')[1] && sock.user == room.split(':')[0])) {
+            sock.emit('joinroom', {room: room});
+        }
 	if (admins.indexOf(sockt.user) !== -1) {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: '<strong><span style="color: #e00" title="Administrator">' +  sockt.user + '</span></strong> [<strong><span style="color: #e00" title="Administrator">A</span></strong>]', winbtc: winbtc});
 	}
@@ -222,15 +228,15 @@ io.sockets.on('connection', function(socket) {
 	if (socket.authed) {
 	    var tmp = false;
 	    setTimeout(function() {
-	    sockets.forEach(function(so) {
-		if (users.indexOf(so.user) !== -1) {
-		    tmp = true;
+		sockets.forEach(function(so) {
+		    if (users.indexOf(so.user) !== -1) {
+			tmp = true;
+		    }
+		});
+		if (!tmp) {
+                    users.splice(users.indexOf(socket.user), 1);
 		}
-	    });
-	    if (!tmp) {
-                users.splice(users.indexOf(socket.user), 1);
-	    }
-		}, 1000);
+	    }, 1000);
 	}
     });
     socket.emit('joinroom', {room: 'main'});
