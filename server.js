@@ -161,9 +161,7 @@ function urlify(text) {
     });
 }
 function login(username, usersocket, sess) {
-    if (users.indexOf(username) == -1) {
-	users.push(username);
-    }
+    
     io.sockets.volatile.emit("online", {people: users.length, array: users});
     if (sess) {
 	usersocket.emit('loggedin', {username: username, session: sess});
@@ -171,7 +169,7 @@ function login(username, usersocket, sess) {
     else {
         usersocket.emit('loggedin', {username: username});
     }
-    usersocket.authed = true;
+    
     usersocket.emit('chat', {room: 'main', message: 'Signed in as ' + username + '!', user: '<strong>Server</strong>', timestamp: Date.now()});
     db.get('motd', function(err, reply) {
 	if (reply) {
@@ -196,10 +194,23 @@ function login(username, usersocket, sess) {
     });
     usersocket.version = 'Unidentified client/bot';
     usersocket.quitmsg = 'Disconnected from server';
+    usersocket.authed = true;
     setTimeout(function() {
+        var tmp5 = false;
+        sockets.forEach(function(so) {
+            if (usersocket.user == so.user) {
+                tmp5 = true;
+            }
+        });
+        if (tmp5) {
+            usersocket.version = 'Reconnected after drop (' + usersocket.version + ')';
+        }
+        if (users.indexOf(username) == -1) {
+            users.push(username);
+        }
 	chatemit(usersocket, '!; connect ' + usersocket.version, 'main');
-    }, 1500);
-    console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
+        console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
+    }, 2000);
 }
 function handle(err) {
     console.log('error - ' + err);
@@ -233,8 +244,7 @@ io.sockets.on('connection', function(socket) {
     socket.on('disconnect', function() {
 	sockets.splice(sockets.indexOf(socket), 1);
 	if (socket.authed) {
-	    var tmp = false;
-            chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
+	    var tmp = false; 
 	    setTimeout(function() {
 		sockets.forEach(function(so) {
 		    if (users.indexOf(so.user) !== -1) {
@@ -243,6 +253,7 @@ io.sockets.on('connection', function(socket) {
 		});
 		if (!tmp) {
                     users.splice(users.indexOf(socket.user), 1);
+                    chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
 		}
 		io.sockets.emit("online", {people: users.length, array: users});
 	    }, 1000);
