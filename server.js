@@ -194,8 +194,8 @@ function login(username, usersocket, sess) {
 	usersocket.emit('balance', {balance: reply});
         usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong style="color: #090;">' + Number(reply).toFixed(2) + ' mBTC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     });
-    usersocket.version = 'Unidentified client';
-    usersocket.quitmsg = 'Unidentified quit message';
+    usersocket.version = 'Unidentified client/bot';
+    usersocket.quitmsg = 'Disconnected from server';
     setTimeout(function() {
 	chatemit(usersocket, '!; connect ' + usersocket.version, 'main');
     }, 1500);
@@ -234,6 +234,7 @@ io.sockets.on('connection', function(socket) {
 	sockets.splice(sockets.indexOf(socket), 1);
 	if (socket.authed) {
 	    var tmp = false;
+            chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
 	    setTimeout(function() {
 		sockets.forEach(function(so) {
 		    if (users.indexOf(so.user) !== -1) {
@@ -243,7 +244,6 @@ io.sockets.on('connection', function(socket) {
 		if (!tmp) {
                     users.splice(users.indexOf(socket.user), 1);
 		}
-		chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
 	    }, 1000);
 	}
     });
