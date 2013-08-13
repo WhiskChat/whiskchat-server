@@ -225,7 +225,7 @@ io.sockets.on('connection', function(socket) {
     sockets.push(socket);
     
     if(lastSendOnline.getTime() < new Date().getTime() - 2.5 * 1000){
-	io.sockets.volatile.emit("online", {people: users.length, array: users});
+	io.sockets.emit("online", {people: users.length, array: users});
 	lastSendOnline = new Date();
     } else {
 	socket.emit("online", {people: users.length, array: users});
@@ -244,6 +244,7 @@ io.sockets.on('connection', function(socket) {
 		if (!tmp) {
                     users.splice(users.indexOf(socket.user), 1);
 		}
+		io.sockets.emit("online", {people: users.length, array: users});
 	    }, 1000);
 	}
     });
