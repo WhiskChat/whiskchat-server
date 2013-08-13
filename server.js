@@ -196,15 +196,6 @@ function login(username, usersocket, sess) {
     usersocket.quitmsg = 'Disconnected from server';
     usersocket.authed = true;
     setTimeout(function() {
-        var tmp5 = false;
-        sockets.forEach(function(so) {
-            if (usersocket.user == so.user) {
-                tmp5 = true;
-            }
-        });
-        if (tmp5) {
-            usersocket.version = 'Reconnected after drop (' + usersocket.version + ')';
-        }
         if (users.indexOf(username) == -1) {
             users.push(username);
         }
