@@ -194,6 +194,11 @@ function login(username, usersocket, sess) {
 	usersocket.emit('balance', {balance: reply});
         usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong style="color: #090;">' + Number(reply).toFixed(2) + ' mBTC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     });
+    usersocket.version = 'Unidentified client';
+    usersocket.quitmsg = 'Unidentified quit message';
+    setTimeout(function() {
+	chatemit(usersocket, '!; connect ' + usersocket.version, 'main');
+    }, 1500);
     console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
 }
 function handle(err) {
@@ -238,6 +243,7 @@ io.sockets.on('connection', function(socket) {
 		if (!tmp) {
                     users.splice(users.indexOf(socket.user), 1);
 		}
+		chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
 	    }, 1000);
 	}
     });
@@ -440,6 +446,14 @@ io.sockets.on('connection', function(socket) {
                 if (chat.message.substr(0, 3) == "/me") {
 		    chatemit(socket, ' <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
 		    return;
+                }
+                if (chat.message.substr(0, 10) == '!; connect') {
+		    socket.version = chat.message.substr(11, chat.message.length);
+		    return;
+		}
+                if (chat.message.substr(0, 11) == '!; quitchat') {
+                    socket.quitmsg = chat.message.substr(12, chat.message.length);
+                    return;
                 }
                 if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online") {
                     chatemit(socket, '<strong>' + users.length + ' online users: </strong>' + users.join(', '), chat.room);
