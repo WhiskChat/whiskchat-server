@@ -191,6 +191,7 @@ function login(username, usersocket, sess) {
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
         usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong style="color: #090;">' + Number(reply).toFixed(2) + ' mBTC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
+        usersocket.emit('chat', {room: 'main', message: "Ad: <iframe data-aa='5513' src='//ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'Advertisement', timestamp: Date.now()});
     });
     usersocket.version = 'Unidentified client/bot';
     usersocket.quitmsg = 'Disconnected from server';
@@ -225,9 +226,9 @@ db.on('ready', function() {
 });
 setTimeout(function() {
     sockets.forEach(function(ads) {
-        ads.emit('chatad', {ad: "<iframe data-aa='5513' src='//ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>"});
+        ads.emit('chat', {room: 'main', message: "<iframe data-aa='5513' src='//ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'Advertisement', timestamp: Date.now()});
     });
-}, 300000);
+}, 180000);
 io.sockets.on('connection', function(socket) {
     sockets.push(socket);
     
@@ -282,7 +283,7 @@ io.sockets.on('connection', function(socket) {
 	if(data && data.action){
 	    if(data.action == "register"){
 		if(data.username && data.password && data.password2 && data.email){
-		    if(data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>"){
+		    if(data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>" || alphanumeric.test(data.username) == false){
 			return socket.emit("message", {type: "alert-error", message: "Username must be between 3 and 16 characters, must be alphanumeric and cannot contain HTML."});
 		    }
 		    if (lastip.indexOf(socket.handshake.address.address) !== -1 || knownspambots.indexOf(socket.handshake.address.address) !== -1) {
