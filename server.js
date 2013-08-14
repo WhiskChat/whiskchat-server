@@ -15,6 +15,7 @@ var redis = require('redis');
 var alphanumeric = /^[a-z0-9]+$/i; // Noone remove this.
 var sockets = [];
 var lastip = [];
+var emitAd = true;
 var knownspambots = [];
 var scrollback = [];
 var txids = [];
@@ -225,9 +226,12 @@ db.on('ready', function() {
     console.log('info - DB connected');
 });
 setInterval(function() {
+    if (emitAd) {
     sockets.forEach(function(ads) {
         ads.emit('chat', {room: 'main', message: "<iframe data-aa='5513' src='//ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'Advertisement', timestamp: Date.now()});
     });
+	emitAd = false;
+    }
 }, 600000);
 io.sockets.on('connection', function(socket) {
     sockets.push(socket);
@@ -440,6 +444,7 @@ io.sockets.on('connection', function(socket) {
                 setTimeout(function() {
                     socket.ready = true;
                 }, 800);
+		emitAd = true;
                 if (chat.message.substr(0, 1) == "\\") {
                     chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
 		    return;
