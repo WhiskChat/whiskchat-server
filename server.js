@@ -236,7 +236,7 @@ setInterval(function() {
 setInterval(function() {
     if (emitAd) {
         sockets.forEach(function(ads) {
-            ads.emit('chat', {room: 'main', message: '<iframe frameborder="0" src="https://bitads.net/gimg.php?id=148" style="overflow:hidden;width:468px;height:60px;"></iframe><div><a href="https://bitads.net/?p=bid&id=148">Advertise here!</a></div>', user: 'Advertisement', timestamp: Date.now()});
+            ads.emit('chat', {room: 'main', message: '<center><iframe frameborder="0" src="https://bitads.net/gimg.php?id=148" style="overflow:hidden;width:468px;height:60px;"></iframe><div><a href="https://bitads.net/?p=bid&id=148">Advertise here!</a></div><center>', user: 'Advertisement', timestamp: Date.now()});
         });
         emitAd = false;
     }
