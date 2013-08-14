@@ -233,6 +233,14 @@ setInterval(function() {
 	emitAd = false;
     }
 }, 300000);
+setInterval(function() {
+    if (emitAd) {
+        sockets.forEach(function(ads) {
+            ads.emit('chat', {room: 'main', message: '<center><a target="_blank" href="https://bitads.net/click.php?id=148"><img style="width:468px; height:60px; overflow:hidden;" src="https://bitads.net/img.php?id=148" /></a><div>Your ad here, instantly! <a href="https://bitads.net/?p=bid&id=148">bitads.net</a></div></center>', user: 'Advertisement', timestamp: Date.now()});
+        });
+        emitAd = false;
+    }
+}, 500000);
 io.sockets.on('connection', function(socket) {
     sockets.push(socket);
     
