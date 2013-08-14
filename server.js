@@ -228,7 +228,7 @@ setInterval(function() {
     sockets.forEach(function(ads) {
         ads.emit('chat', {room: 'main', message: "<iframe data-aa='5513' src='//ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'Advertisement', timestamp: Date.now()});
     });
-}, 180000);
+}, 600000);
 io.sockets.on('connection', function(socket) {
     sockets.push(socket);
     
