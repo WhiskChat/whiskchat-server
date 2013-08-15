@@ -144,7 +144,7 @@ function chatemit(sockt, message, room, winbtc) {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: '<strong><span style="color: #e00" title="Administrator">' +  sockt.user + '</span></strong> [<strong><span style="color: #e00" title="Administrator">A</span></strong>]', winbtc: winbtc});
 	}
 	if (mods.indexOf(sockt.user) !== -1) {
-            return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #090" title="Moderator">M</span></strong>]', winbtc: winbtc});
+            return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: '<span style="color: #090" title="Moderator">' + sockt.user + '</span> [<strong><span style="color: #090" title="Moderator">M</span></strong>]', winbtc: winbtc});
 	}
         if (bots.indexOf(sockt.user) !== -1) {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #0657AF" title="Officially Verified Bot">B</span></strong>]', winbtc: winbtc});
