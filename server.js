@@ -131,6 +131,9 @@ function stripHTML(html) { // Prevent XSS
 }
 function chatemit(sockt, message, room, winbtc) {
     sockets.forEach(function(sock) {
+	if (!sock.authed) {
+	    return;
+	}
 	if (room == "modsprivate" && admins.indexOf(sock.user) == -1 && mods.indexOf(sock.user == -1)) {
 	    return; // Mods only!
 	}
@@ -257,6 +260,7 @@ io.sockets.on('connection', function(socket) {
     socket.on('disconnect', function() {
 	sockets.splice(sockets.indexOf(socket), 1);
 	if (socket.authed) {
+            chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
 	    var tmp = false; 
 	    setTimeout(function() {
 		sockets.forEach(function(so) {
@@ -266,7 +270,6 @@ io.sockets.on('connection', function(socket) {
 		});
 		if (!tmp) {
                     users.splice(users.indexOf(socket.user), 1);
-                    chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
 		}
 		io.sockets.emit("online", {people: users.length, array: users});
 	    }, 1000);
