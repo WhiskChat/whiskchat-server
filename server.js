@@ -160,9 +160,9 @@ function chatemit(sockt, message, room, winbtc) {
         if (bots.indexOf(sockt.user) !== -1) {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #0657AF" title="Officially Verified Bot">B</span></strong>]', winbtc: winbtc});
         }
-        if (pinks.indexOf(sockt.user) !== -1) {
+        /*if (pinks.indexOf(sockt.user) !== -1) {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #ff0088" title="Pink Panther">P</span></strong>]', winbtc: winbtc});
-        }
+        }*/
         if (scams.indexOf(sockt.user) !== -1) {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #e00" title="SCAMMER! DO NOT TIP OR TRADE WITH">✘</span></strong>]', winbtc: winbtc});
         }
@@ -211,6 +211,11 @@ function login(username, usersocket, sess) {
 	usersocket.emit('balance', {balance: reply});
         usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong style="color: #090;">' + Number(reply).toFixed(2) + ' mBTC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
         usersocket.emit('chat', {room: 'main', message: "Ad: <iframe data-aa='5513' src='//ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'Advertisement', timestamp: Date.now()});
+    });
+    db.get('users/' + username + '/tag', function(err, reply) {
+	if (reply) {
+	    usersocket.tag = reply;
+	}
     });
     usersocket.version = 'Unidentified client/bot';
     usersocket.quitmsg = 'Disconnected from server';
