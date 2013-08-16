@@ -180,11 +180,13 @@ function login(username, usersocket, sess) {
     usersocket.emit('chat', {room: 'main', message: '<iframe id="ohhai" style="" width="560" height="315" src="//www.youtube.com/embed/QvxdDDHElZo" frameborder="0" allowfullscreen=""></iframe>', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     usersocket.emit('joinroom', {room: 'whiskchat'});
     usersocket.emit('joinroom', {room: 'botgames'});
-    usersocket.emit('whitelist', {whitelisted: 1});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
         usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong style="color: #090;">' + Number(reply).toFixed(2) + ' mBTC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
         usersocket.emit('chat', {room: 'main', message: "Ad: <iframe data-aa='5513' src='//ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'Advertisement', timestamp: Date.now()});
+    });
+    db.get('users/' + username + '/rep', function(err, rep) {
+        usersocket.emit('whitelist', {whitelisted: Number(rep)});
     });
     db.get('users/' + username + '/tag', function(err, reply) {
 	if (reply) {
@@ -584,6 +586,33 @@ io.sockets.on('connection', function(socket) {
 	});
     });
     socket.on('tip', function(tip) {
+	if (tip.rep) {
+            db.get('users/' + tip.user, function(err, exists) {
+                if (exists) {
+                    db.get('users/' + socket.user + '/balance', function(err, bal1) {
+                        db.get('users/' + tip.user + '/rep', function(err, bal2) {
+                            if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
+                                db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
+                                db.set('users/' + tip.user + '/rep', Number(bal2) + Number(tip.tip), redis.print);
+                                sockets.forEach(function(cs) {
+                                    cs.emit('tip', {room: tip.room, target: stripHTML(tip.user) + "'s reputation", amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
+                                    if (cs.user == socket.user) {
+                                        cs.emit('balance', {balance: Number(bal1) - Number(tip.tip)});
+                                    }
+                                    if (cs.user == tip.user) {
+                                        cs.emit('whitelist', {whitelisted: Number(bal2) + Number(tip.tip)});
+                                    }
+                                });
+                            }
+                            else {
+                                socket.emit('message', {type: "alert-error", message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."});
+                            }
+                        });
+                    });
+                }
+            });
+        }
+	else {
         db.get('users/' + tip.user, function(err, exists) {
             if (exists) {
                 db.get('users/' + socket.user + '/balance', function(err, bal1) {
@@ -608,6 +637,7 @@ io.sockets.on('connection', function(socket) {
                 });
             }
 	});
+	}
     });
     socket.on('getbalance', function() {
         db.get('users/' + socket.user + '/balance', function(err, balance) {
