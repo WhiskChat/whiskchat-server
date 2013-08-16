@@ -23,12 +23,7 @@ var txids = [];
 var online = 0;
 var random = require("random");
 var bbcode = require('bbcode');
-var scams = [];
-var admins = ['whiskers75', 'admin', 'Diamond'];
-var bots = ['WhiskDiceBot', 'devfaucet'];
-var pinks = ['xParaDoX'];
-var mods = ['whiskers75', 'admin', 'TradeFortress', 'peapodamus', 'devinthedev', 'Diamond'];
-var users = [];
+
 var lastSendOnline = new Date(); // Throttle online requests
 var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack will insert a version here
 var alphanumeric = /^[a-z0-9]+$/i;
@@ -139,7 +134,7 @@ function chatemit(sockt, message, room, winbtc) {
 	if (!room) {
 	    room = "main";
 	}
-	if (room == "modsprivate" && admins.indexOf(sock.user) == -1 && mods.indexOf(sock.user) == -1) {
+	if (room == "modsprivate" && sock.rank !== "mod" && sock.rank !== "admin") {
 	    return; // Mods only!
 	}
 	if (room.indexOf(':') !== -1 && sock.user != room.split(':')[1] && sock.user != room.split(':')[0]) {
@@ -148,25 +143,6 @@ function chatemit(sockt, message, room, winbtc) {
         if (room.indexOf(':') !== -1 && (sock.user == room.split(':')[1] && sock.user == room.split(':')[0])) {
             sock.emit('joinroom', {room: room});
         }
-	/*
-        if (sockt.user == "Diamond") {
-            return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: '<strong><span style="color: #e00" title="Administrator">' +  sockt.user + '</span></strong> [<strong><span style="color: #e00" title="Administrator">A</span></strong>] [<strong><span style="color: blue" title="Donator">D</span></strong>]', winbtc: winbtc});
-        }
-	if (admins.indexOf(sockt.user) !== -1) {
-            return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: '<strong><span style="color: #e00" title="Administrator">' +  sockt.user + '</span></strong> [<strong><span style="color: #e00" title="Administrator">A</span></strong>]', winbtc: winbtc});
-	}
-	if (mods.indexOf(sockt.user) !== -1) {
-            return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: '<span style="color: #090" title="Moderator">' + sockt.user + '</span> [<strong><span style="color: #090" title="Moderator">M</span></strong>]', winbtc: winbtc});
-	}
-        if (bots.indexOf(sockt.user) !== -1) {
-            return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #0657AF" title="Officially Verified Bot">B</span></strong>]', winbtc: winbtc});
-        }
-        if (pinks.indexOf(sockt.user) !== -1) {
-            return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #ff0088" title="Pink Panther">P</span></strong>]', winbtc: winbtc});
-        }
-        if (scams.indexOf(sockt.user) !== -1) {
-            return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #e00" title="SCAMMER! DO NOT TIP OR TRADE WITH">✘</span></strong>]', winbtc: winbtc});
-        }*/
 	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.pretag + sockt.user + sockt.tag, winbtc: winbtc});
     });
 }
@@ -204,9 +180,6 @@ function login(username, usersocket, sess) {
     usersocket.emit('chat', {room: 'main', message: '<iframe id="ohhai" style="" width="560" height="315" src="//www.youtube.com/embed/QvxdDDHElZo" frameborder="0" allowfullscreen=""></iframe>', user: '<strong>MOTD</strong>', timestamp: Date.now()});
     usersocket.emit('joinroom', {room: 'whiskchat'});
     usersocket.emit('joinroom', {room: 'botgames'});
-    if (mods.indexOf(username) !== -1 || admins.indexOf(username) !== -1) {
-        usersocket.emit('joinroom', {room: 'modsprivate'});
-    }
     usersocket.emit('whitelist', {whitelisted: 1});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
@@ -221,6 +194,14 @@ function login(username, usersocket, sess) {
     db.get('users/' + username + '/pretag', function(err, reply) {
         if (reply) {
             usersocket.pretag = reply;
+        }
+    });
+    db.get('users/' + username + '/rank', function(err, reply) {
+        if (reply) {
+            usersocket.rank = reply;
+	    if (reply == "admin" || reply == "mod") {
+		usersocket.emit('joinroom', {room: 'modsprivate'});
+	    }
         }
     });
     usersocket.version = 'Unidentified client/bot';
@@ -314,6 +295,7 @@ io.sockets.on('connection', function(socket) {
     socket.ready = true;
     socket.tag = '';
     socket.pretag = '';
+    socket.rank = '';
     socket.on('login', function(data) {
         if (data && data.session) {
             socket.emit("message", {type: "alert-success", message: "Checking session cookie..."});
@@ -428,7 +410,7 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.on('nuke', function(nuke) {
-	if (admins.indexOf(socket.user) == -1) {
+	if (socket.rank !== 'admin') {
             socket.emit("message", {type: "alert-error", message: "Nuking is admin only!"});
 	}
 	else {
@@ -453,13 +435,10 @@ io.sockets.on('connection', function(socket) {
         socket.emit('chat', {room: 'main', message: '<strong>Pong! Client -> server ' + (Date.now() - ts.ts) + 'ms</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
     socket.on('mute', function(mute) {
-	if (mods.indexOf(socket.user) == -1 && admins.indexOf(socket.user) == -1) {
+	if (socket.rank !== 'mod' && socket.rank !== 'admin') {
             socket.emit("message", {type: "alert-error", message: "You are not a moderator!"});
 	}
 	else {
-	    if (mods.indexOf(mute.target) !== -1 && admins.indexOf(socket.user) == -1) {
-                return socket.emit("message", {type: "alert-error", message: "You must be an admin to affect mutes for that person."});
-	    }
 	    if (muted.indexOf(mute.target) == -1) {
 		muted.push(mute.target);
 	    }
@@ -504,7 +483,7 @@ io.sockets.on('connection', function(socket) {
                 chatemit(socket, '<span class="rainbow">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
 		return;
             }
-	    if (chat.room == "modsprivate" && mods.indexOf(socket.user) == -1 && admins.indexOf(socket.user) == -1) {
+	    if (chat.room == "modsprivate" && socket.rank !== 'mod' && socket.rank !== 'admin') {
 		socket.emit('message', {message: 'You are not a moderator or admin. #modsprivate is restricted.'});
 		return;
 	    }
@@ -562,12 +541,11 @@ io.sockets.on('connection', function(socket) {
                 return chatemit(socket, '<iframe width="400" height="225" src="http://www.youtube.com/embed/' + chat.yt + '" frameborder="0" allowfullscreen></iframe>', chat.room);
             }
             if (chat.message.substr(0,3) == "/ma") {
-                if (mods.indexOf(socket.user) == -1) {
-                    socket.emit("message", {type: "alert-error", message: "You are not a moderator!"});
+                if (socket.rank !== 'mod' && socket.rank !== 'admin') {
+                    socket.emit("message", {type: "alert-error", message: "You do not have permissions to speak in the MOD ACTION VOICE."});
+		    return;
 		}
-                else {
-                    return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', chat.room);
-		}
+		return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', chat.room);
             }
 	    bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		/* link links */
