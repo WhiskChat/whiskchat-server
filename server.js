@@ -166,7 +166,7 @@ function chatemit(sockt, message, room, winbtc) {
         if (scams.indexOf(sockt.user) !== -1) {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #e00" title="SCAMMER! DO NOT TIP OR TRADE WITH">✘</span></strong>]', winbtc: winbtc});
         }
-	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user, winbtc: winbtc});
+	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + sockt.tag, winbtc: winbtc});
     });
 }
 function urlify(text) {
@@ -301,6 +301,7 @@ io.sockets.on('connection', function(socket) {
     socket.emit("online", {people: users.length, array: users});
     socket.authed = false;
     socket.ready = true;
+    socket.tag = '';
     socket.on('login', function(data) {
         if (data && data.session) {
             socket.emit("message", {type: "alert-success", message: "Checking session cookie..."});
