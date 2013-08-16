@@ -249,7 +249,7 @@ db.on('ready', function() {
 setInterval(function() {
     if (emitAd) {
 	sockets.forEach(function(ads) {
-            ads.emit('chat', {room: 'main', message: "<iframe data-aa='5513' src='//ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'AnonymousAds', timestamp: Date.now()});
+            ads.emit('chat', {room: 'main', message: "<iframe data-aa='5513' src='http://ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'AnonymousAds', timestamp: Date.now()});
 	});
 	emitAd = false;
     }
@@ -478,7 +478,7 @@ io.sockets.on('connection', function(socket) {
             socket.ready = false;
             setTimeout(function() {
                 socket.ready = true;
-            }, 800);
+            }, 500);
 	    emitAd = true;
             if (chat.message.substr(0, 1) == "\\") {
                 chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
@@ -506,9 +506,13 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online") {
-                chatemit(socket, '<strong>' + users.length + ' online users: </strong>' + users.join(', '), chat.room);
+                socket.emit('message', {message: '<strong>' + users.length + ' online users: </strong>' + users.join(', ')});
                 return;
             }
+	    if (chat.message.substr(0, 5) == "/ping") {
+                chatemit(socket, users.join(', ') + ': ' + stripHTML(chat.message.substr(6, chat.message.length)), chat.room);
+                return;
+	    }
 	    if (chat.message.substr(0, 4) == "/spt") {
                 chatemit(socket, '<iframe src="https://embed.spotify.com/?uri=' + stripHTML(chat.message.substr(5, chat.message.length)) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room);
 		return;
