@@ -15,6 +15,7 @@ var redis = require('redis');
 var alphanumeric = /^[a-z0-9]+$/i; // Noone remove this.
 var sockets = [];
 var lastip = [];
+var bitaddr = require('bitcoin-address');
 var emitAd = true;
 var knownspambots = [];
 var scrollback = [];
@@ -525,14 +526,20 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.on('withdraw', function(draw) {
+	if (bitaddr.verify(draw.address)) {
+	    draw.fees = 0.5;
+	}
+	else {
+	    draw.fees = 0;
+	}
 	db.get('users/' + socket.user + '/balance', function(err, bal1) {
-	    if (Number(draw.amount) > 0 && bal1 >= Number(draw.amount)) {
+	    if (Number(draw.amount) > 0 && bal1 >= Number(draw.amount + draw.fees)) {
                 inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'Withdraw from WhiskChat', function(err, tx) {
                     if (typeof tx != "object" && tx.indexOf('VOUCHER') == -1) {
                         socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (" + tx + ")"});
                         return;
                     }
-		    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(draw.amount), function(err, res) {
+		    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(draw.amount + draw.fees), function(err, res) {
 			console.log('withdraw tx sent: ' + tx);
 			socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " completed."});
 			socket.emit('balance', {balance: Number(bal1) - Number(draw.amount)});
@@ -540,7 +547,7 @@ io.sockets.on('connection', function(socket) {
                 });
 	    }
 	    else {
-		socket.emit('message', {type: "alert-error", message: "You do not have enough mBTC to do that."});
+		socket.emit('message', {type: "alert-error", message: "You do not have enough mBTC to do that. (there is a 0.5mBTC fee for non-Inputs transactions)"});
 	    }
 	});
     });
