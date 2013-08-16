@@ -139,7 +139,7 @@ function chatemit(sockt, message, room, winbtc) {
 	if (!room) {
 	    room = "main";
 	}
-	if (room == "modsprivate" && admins.indexOf(sock.user) == -1 && mods.indexOf(sock.user == -1)) {
+	if (room == "modsprivate" && admins.indexOf(sock.user) == -1 && mods.indexOf(sock.user) == -1) {
 	    return; // Mods only!
 	}
 	if (room.indexOf(':') !== -1 && sock.user != room.split(':')[1] && sock.user != room.split(':')[0]) {
