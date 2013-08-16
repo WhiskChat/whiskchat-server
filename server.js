@@ -521,7 +521,7 @@ io.sockets.on('connection', function(socket) {
                 if (stripHTML(chat.message.substr(5, chat.message.length))) {
 		    return chatemit(socket, '<strong>BTC conversion of ' + stripHTML(chat.message.substr(5, chat.message.length)) + '</strong>: <img src="http://btcticker.appspot.com/mtgox/' + stripHTML(chat.message.substr(5, chat.message.length)) + '.png"></img>', chat.room);
 		}
-                return chatemit(socket, '<strong>BTC conversion of 1 BTC to USD: </strong>: <img src="http://btcticker.appspot.com/mtgox/1btc.png"></img>', chat.room);
+                return chatemit(socket, '<strong>BTC conversion of 1 BTC to USD: </strong> <img src="http://btcticker.appspot.com/mtgox/1btc.png"></img>', chat.room);
             }
             if (chat.message.substr(0, 3) == "/sc") {
                 if (stripHTML(chat.message.substr(4, chat.message.length)) == '') {
@@ -539,7 +539,7 @@ io.sockets.on('connection', function(socket) {
 		if (chat.yt == '') {
 		    return socket.emit('message', {message: 'Syntax: /yt (youtube link)'});
 		}
-                return chatemit(socket, '<iframe width="400" height="225" src="http://www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + '" frameborder="0" allowfullscreen></iframe>', chat.room);
+                return chatemit(socket, '<iframe width="400" height="225" src="http://www.youtube.com/embed/' + chat.yt + '" frameborder="0" allowfullscreen></iframe>', chat.room);
             }
             if (chat.message.substr(0,3) == "/ma") {
                 if (mods.indexOf(socket.user) == -1) {
