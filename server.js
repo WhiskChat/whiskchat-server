@@ -212,6 +212,9 @@ function login(username, usersocket, sess) {
         if (users.indexOf(username) == -1) {
             users.push(username);
         }
+	if (muted.indexOf(username) !== -1) {
+	    return;
+	}
 	chatemit(usersocket, '!; connect ' + usersocket.version, 'main');
         console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
     }, 2000);
@@ -264,7 +267,9 @@ io.sockets.on('connection', function(socket) {
     socket.on('disconnect', function() {
 	sockets.splice(sockets.indexOf(socket), 1);
 	if (socket.authed) {
-            chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
+            if (muted.indexOf(socket.user) == -1) {
+                chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
+            }
 	    var tmp = false; 
 	    setTimeout(function() {
 		sockets.forEach(function(so) {
@@ -363,7 +368,7 @@ io.sockets.on('connection', function(socket) {
 			    handle(err);
 			}
 			else {
-                            socket.emit("message", {type: "alert-error", message: "You have been nuked!"}); 
+                            socket.emit("message", {type: "alert-error", message: "You have been banned. To appeal, open an issue at https://github.com/WhiskTech/whiskchat-server/issues and tag it 'Ban Appeal'."}); 
 			}
 		    }
 		    else {
