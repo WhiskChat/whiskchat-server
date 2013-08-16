@@ -148,6 +148,7 @@ function chatemit(sockt, message, room, winbtc) {
         if (room.indexOf(':') !== -1 && (sock.user == room.split(':')[1] && sock.user == room.split(':')[0])) {
             sock.emit('joinroom', {room: room});
         }
+	/*
         if (sockt.user == "Diamond") {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: '<strong><span style="color: #e00" title="Administrator">' +  sockt.user + '</span></strong> [<strong><span style="color: #e00" title="Administrator">A</span></strong>] [<strong><span style="color: blue" title="Donator">D</span></strong>]', winbtc: winbtc});
         }
@@ -160,13 +161,13 @@ function chatemit(sockt, message, room, winbtc) {
         if (bots.indexOf(sockt.user) !== -1) {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #0657AF" title="Officially Verified Bot">B</span></strong>]', winbtc: winbtc});
         }
-        /*if (pinks.indexOf(sockt.user) !== -1) {
+        if (pinks.indexOf(sockt.user) !== -1) {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #ff0088" title="Pink Panther">P</span></strong>]', winbtc: winbtc});
-        }*/
+        }
         if (scams.indexOf(sockt.user) !== -1) {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #e00" title="SCAMMER! DO NOT TIP OR TRADE WITH">✘</span></strong>]', winbtc: winbtc});
-        }
-	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + sockt.tag, winbtc: winbtc});
+        }*/
+	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.pretag + sockt.user + sockt.tag, winbtc: winbtc});
     });
 }
 function urlify(text) {
@@ -216,6 +217,11 @@ function login(username, usersocket, sess) {
 	if (reply) {
 	    usersocket.tag = reply;
 	}
+    });
+    db.get('users/' + username + '/pretag', function(err, reply) {
+        if (reply) {
+            usersocket.pretag = reply;
+        }
     });
     usersocket.version = 'Unidentified client/bot';
     usersocket.quitmsg = 'Disconnected from server';
@@ -307,6 +313,7 @@ io.sockets.on('connection', function(socket) {
     socket.authed = false;
     socket.ready = true;
     socket.tag = '';
+    socket.pretag = '';
     socket.on('login', function(data) {
         if (data && data.session) {
             socket.emit("message", {type: "alert-success", message: "Checking session cookie..."});
