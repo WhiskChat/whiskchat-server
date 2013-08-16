@@ -113,7 +113,7 @@ app.get('/inputs', function(req, resp) {
                         so.emit('chat', {room: 'main', message: '<strong>' + req.query.note + ' deposited ' + req.query.amount * 1000 + ' mBTC using Inputs.io!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
 			if (so.user == req.query.note) {
                             so.emit('balance', {balance: Number(reply) + Number(req.query.amount * 1000)});
-                            so.emit('chat', {room: 'main', message: 'You deposited ' + req.query.amount * 1000 + ' mBTC!', user: '<strong>Server</strong>', timestamp: Date.now()});
+                            so.emit('message', {message: 'You deposited ' + req.query.amount * 1000 + ' mBTC! Credited to your account.'});
 			    console.log('info - deposited ' + req.query.amount + ' into ' + req.query.note + '\'s account');
 			}
 		    });
@@ -213,6 +213,9 @@ function login(username, usersocket, sess) {
     usersocket.quitmsg = 'Disconnected from server';
     usersocket.authed = true;
     setTimeout(function() {
+	if (users.indexOf(username) !== -1) {
+	    return;
+	}
         if (users.indexOf(username) == -1) {
             users.push(username);
         }
@@ -246,7 +249,7 @@ db.on('ready', function() {
 setInterval(function() {
     if (emitAd) {
 	sockets.forEach(function(ads) {
-            ads.emit('chat', {room: 'main', message: "<iframe data-aa='5513' src='//ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'Advertisement', timestamp: Date.now()});
+            ads.emit('chat', {room: 'main', message: "<iframe data-aa='5513' src='//ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'AnonymousAds', timestamp: Date.now()});
 	});
 	emitAd = false;
     }
@@ -254,7 +257,8 @@ setInterval(function() {
 setInterval(function() {
     if (emitAd) {
         sockets.forEach(function(ads) {
-            ads.emit('chat', {room: 'main', message: '<iframe frameborder="0" src="https://bitads.net/gimg.php?id=148" style="overflow:hidden;width:468px;height:60px;"></iframe><div><a href="https://bitads.net/?p=bid&id=148">Advertise here!</a></div>', user: 'Advertisement', timestamp: Date.now()});
+            ads.emit('chat', {room: 'main', message: '<center><iframe frameborder="0" src="https://bitads.net/gimg.php?id=148" style="overflow:hidden;width:468px;height:60px;"></iframe></center>', user: 'bitads', timestamp: Date.now()});
+            ads.emit('chat', {room: 'main', message: '<strong><a href="https://bitads.net/?p=bid&id=148">Advertise on WhiskChat!</a></strong>', user: 'Advertising', timestamp: Date.now()});
         });
         emitAd = false;
     }
@@ -271,9 +275,6 @@ io.sockets.on('connection', function(socket) {
     socket.on('disconnect', function() {
 	sockets.splice(sockets.indexOf(socket), 1);
 	if (socket.authed) {
-            if (muted.indexOf(socket.user) == -1) {
-                chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
-            }
 	    var tmp = false; 
 	    setTimeout(function() {
 		sockets.forEach(function(so) {
@@ -282,15 +283,17 @@ io.sockets.on('connection', function(socket) {
 		    }
 		});
 		if (!tmp) {
+                    if (muted.indexOf(socket.user) == -1) {
+                        chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
+                    }
                     users.splice(users.indexOf(socket.user), 1);
 		}
 		io.sockets.emit("online", {people: users.length, array: users});
-	    }, 1000);
+	    }, 5000);
 	}
     });
     socket.emit('joinroom', {room: 'main'});
     socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
-    //socket.emit('chat', {room: 'main', message: 'WhiskChat Client uses code from <strong><a href="http://coinchat.org">coinchat.org</a></strong>, © 2013 admin@glados.cc', user: '<strong>Server</strong>', timestamp: Date.now()}); This is now mentioned in the client, as that's the logical place for it.
     socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + users.length + '</strong> users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit("online", {people: users.length, array: users});
     socket.authed = false;
@@ -367,34 +370,39 @@ io.sockets.on('connection', function(socket) {
 	    }
 	    if (data.action == "login") {
 		db.get("users/" + data.username + "/password", function(err, reply) {
-		    if (err || reply == "nuked") {
+		    if (err || reply == "nuked" || reply == null) {
 			if (err) {
 			    handle(err);
 			}
 			else {
-                            socket.emit("message", {type: "alert-error", message: "You have been banned. To appeal, open an issue at https://github.com/WhiskTech/whiskchat-server/issues and tag it 'Ban Appeal'."}); 
+			    if (reply == "nuked") {
+				socket.emit("message", {type: "alert-error", message: "You have been banned. To appeal, open an issue at https://github.com/WhiskTech/whiskchat-server/issues and tag it 'Ban Appeal'."});
+			    }
+			    else {
+                                socket.emit("message", {type: "alert-error", message: "User does not exist."});
+			    }
 			}
 		    }
 		    else {
 			db.get('users/' + data.username + '/salt', function(err, salt) {
 			    try {
-				if (hash.sha256(data.password, salt) == reply) {
-                                    socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
-				    db.set("sessions/" + salt, data.username);
-				    login(data.username, socket, salt);
+				if (salt == null) {
+				    socket.emit("message", {type: "alert-error", message: "User does not exist."});
 				}
 				else {
-                                    if (reply == null) {
-                                        socket.emit("message", {type: "alert-error", message: "User does not exist."});
-                                    }
-                                    else {
-                                        socket.emit("message", {type: "alert-error", message: "Incorrect password."});
-                                    }
-                                }
+				    if (hash.sha256(data.password, salt) == reply) {
+					socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
+					db.set("sessions/" + salt, data.username);
+					login(data.username, socket, salt);
+				    }
+				    else {
+					socket.emit("message", {type: "alert-error", message: "Incorrect password."});
+				    }
+				}
                             }
                             catch(e) {
 				console.log(e.stack);
-                                return socket.emit("message", {type: "alert-error", message: "Crypto error, please retry!"});
+                                return socket.emit("message", {type: "alert-error", message: "Error logging you in."});
                             }
 			    
 			});
@@ -418,7 +426,7 @@ io.sockets.on('connection', function(socket) {
 	    });
 	    muted.push(nuke.target);
             sockets.forEach(function(cs) {
-                cs.emit('chat', {room: 'main', message: '<span class="label label-important">'+ stripHTML(socket.user) + ' has nuked ' + stripHTML(nuke.target) + ' for ' + stripHTML(nuke.reason) + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+                cs.emit('chat', {room: 'main', message: '<span class="label label-important">'+ stripHTML(socket.user) + ' has nuked ' + stripHTML(nuke.target) + ' ' + (nuke.reason ? 'for ' + stripHTML(nuke.reason) : '') + '!</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
 		if (cs.user == nuke.target) {
 		    cs.disconnect();
 		}
@@ -457,85 +465,97 @@ io.sockets.on('connection', function(socket) {
             socket.emit('chat', {room: 'main', message: 'Please log in or register to chat!', user: '<strong>Server</strong>', timestamp: Date.now()});
 	}
 	else {
-            sockets.forEach(function(cs) {
-		if (muted.indexOf(socket.user) !== -1) {
-                    socket.volatile.emit("message", {type: "alert-error", message: "You have been muted!"});
-		    return;
-                }
-		if (chat.message.length < 2) {
-		    return;
+	    if (muted.indexOf(socket.user) !== -1) {
+                socket.volatile.emit("message", {type: "alert-error", message: "You have been muted!"});
+		return;
+            }
+	    if (chat.message.length < 2) {
+		return;
+	    }
+	    if (!socket.ready) {
+		return;
+	    }
+            socket.ready = false;
+            setTimeout(function() {
+                socket.ready = true;
+            }, 800);
+	    emitAd = true;
+            if (chat.message.substr(0, 1) == "\\") {
+                chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
+		return;
+	    }
+            if (chat.message.substr(0, 1) == "|") {
+                chatemit(socket, '<span class="rainbow">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
+		return;
+            }
+	    if (chat.room == "modsprivate" && mods.indexOf(socket.user) == -1 && admins.indexOf(socket.user) == -1) {
+		socket.emit('message', {message: 'You are not a moderator or admin. #modsprivate is restricted.'});
+		return;
+	    }
+            if (chat.message.substr(0, 3) == "/me") {
+		chatemit(socket, ' <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
+		return;
+            }
+            if (chat.message.substr(0, 10) == '!; connect') {
+		socket.version = chat.message.substr(11, chat.message.length);
+		return;
+	    }
+            if (chat.message.substr(0, 11) == '!; quitchat') {
+                socket.quitmsg = chat.message.substr(12, chat.message.length);
+		socket.disconnect();
+                return;
+            }
+            if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online") {
+                chatemit(socket, '<strong>' + users.length + ' online users: </strong>' + users.join(', '), chat.room);
+                return;
+            }
+	    if (chat.message.substr(0, 4) == "/spt") {
+                chatemit(socket, '<iframe src="https://embed.spotify.com/?uri=' + stripHTML(chat.message.substr(5, chat.message.length)) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room);
+		return;
+	    }
+	    if (chat.message.substr(0, 4) == "!moo") {
+		socket.emit('message', {message: '-.-'});
+                return;
+	    }
+            if (chat.message.substr(0, 4) == "/btc") {
+                if (stripHTML(chat.message.substr(5, chat.message.length))) {
+		    return chatemit(socket, '<strong>BTC conversion of ' + stripHTML(chat.message.substr(5, chat.message.length)) + '</strong>: <img src="http://btcticker.appspot.com/mtgox/' + stripHTML(chat.message.substr(5, chat.message.length)) + '.png"></img>', chat.room);
 		}
-		if (!socket.ready) {
-		    return;
+                return chatemit(socket, '<strong>BTC conversion of 1 BTC to USD: </strong>: <img src="http://btcticker.appspot.com/mtgox/1btc.png"></img>', chat.room);
+            }
+            if (chat.message.substr(0, 3) == "/sc") {
+                if (stripHTML(chat.message.substr(4, chat.message.length)) == '') {
+		    return socket.emit('message', {message: 'Syntax: /sc (soundcloud id)'});
 		}
-                socket.ready = false;
-                setTimeout(function() {
-                    socket.ready = true;
-                }, 800);
-		emitAd = true;
-                if (chat.message.substr(0, 1) == "\\") {
-                    chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
-		    return;
+                return chatemit(socket, '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + stripHTML(chat.message.substr(4, chat.message.length)) + '"></iframe>', chat.room); 
+            }
+            if (chat.message.substr(0, 3) == "/yt") {
+                if (stripHTML(chat.message.substr(4, chat.message.length)).indexOf('youtube.com') !== -1) {
+                    chat.yt = stripHTML(chat.message.substr(4, chat.message.length)).match(/(\?|&)v=([^&]+)/).pop();
 		}
-                if (chat.message.substr(0, 1) == "|") {
-                    chatemit(socket, '<span class="rainbow">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
-		    return;
-                }
-		if (chat.room == "modsprivate" && mods.indexOf(socket.user) == -1 && admins.indexOf(socket.user) == -1) {
-		    socket.emit('message', {message: 'You are not a moderator or admin. #modsprivate is restricted.'});
-		    return;
+		else {
+                    chat.yt = stripHTML(chat.message.substr(4, chat.message.length));
 		}
-                if (chat.message.substr(0, 3) == "/me") {
-		    chatemit(socket, ' <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
-		    return;
-                }
-                if (chat.message.substr(0, 10) == '!; connect') {
-		    socket.version = chat.message.substr(11, chat.message.length);
-		    return;
+		if (chat.yt == '') {
+		    return socket.emit('message', {message: 'Syntax: /yt (youtube link)'});
 		}
-                if (chat.message.substr(0, 11) == '!; quitchat') {
-                    socket.quitmsg = chat.message.substr(12, chat.message.length);
-                    return;
-                }
-                if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online") {
-                    chatemit(socket, '<strong>' + users.length + ' online users: </strong>' + users.join(', '), chat.room);
-                    return;
-                }
-		if (chat.message.substr(0, 4) == "/spt") {
-                    chatemit(socket, '<iframe src="https://embed.spotify.com/?uri=' + stripHTML(chat.message.substr(5, chat.message.length)) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room);
-		    return;
+                return chatemit(socket, '<iframe width="400" height="225" src="http://www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + '" frameborder="0" allowfullscreen></iframe>', chat.room);
+            }
+            if (chat.message.substr(0,3) == "/ma") {
+                if (mods.indexOf(socket.user) == -1) {
+                    socket.emit("message", {type: "alert-error", message: "You are not a moderator!"});
 		}
-		if (chat.message.substr(0, 4) == "!moo") {
-                    return;
+                else {
+                    return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', chat.room);
 		}
-                if (chat.message.substr(0, 4) == "/btc") {
-                    if (stripHTML(chat.message.substr(5, chat.message.length))) {
-			return chatemit(socket, '<strong>BTC conversion of ' + stripHTML(chat.message.substr(5, chat.message.length)) + '</strong>: <img src="http://btcticker.appspot.com/mtgox/' + stripHTML(chat.message.substr(5, chat.message.length)) + '.png"></img>', chat.room);
-		    }
-                    return chatemit(socket, '<strong>BTC conversion of 1 BTC to USD: </strong>: <img src="http://btcticker.appspot.com/mtgox/1btc.png"></img>', chat.room);
-                }
-                if (chat.message.substr(0, 3) == "/sc") {
-                    return chatemit(socket, '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + stripHTML(chat.message.substr(4, chat.message.length)) + '"></iframe>', chat.room); 
-                }
-                if (chat.message.substr(0, 3) == "/yt") {
-                    return chatemit(socket, '<span style="display: inline;" id="y' + stripHTML(chat.message.substr(4, chat.message.length)) + '">YouTube Video</span> (ID: ' + stripHTML(chat.message.substr(4, chat.message.length)) + ') <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').hide()" class="btn btn-small btn-danger">Hide</button> <button onclick="$(\'#vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '\').show()" class="btn btn-small btn-success">Show</button></br><iframe id="vid' + stripHTML(chat.message.substr(4, chat.message.length)) + '" style="display: none;" width="560" height="315" src="//www.youtube.com/embed/' + stripHTML(chat.message.substr(4, chat.message.length)) + '" frameborder="0" allowfullscreen></iframe> <script>function ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'() {$(\'#yt' + stripHTML(chat.message.substr(4, chat.message.length)) +'\').html(data.entry["title"].$t)}</script><script type="text/javascript" src="http://gdata.youtube.com/feeds/api/videos/' + stripHTML(chat.message.substr(4, chat.message.length)) +'?v=2&alt=json-in-script&callback=ytcallback' + stripHTML(chat.message.substr(4, chat.message.length)) +'"></script>', chat.room); // Good luck trying to decode that :P -whiskers75
-                }
-                if (chat.message.substr(0,3) == "/ma") {
-                    if (mods.indexOf(socket.user) == -1) {
-                        socket.emit("message", {type: "alert-error", message: "You are not a moderator!"});
-		    }
-                    else {
-                        return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', chat.room);
-		    }
-                }
-		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
-		    /* link links */
-                    parsedcode = urlify(parsedcode);
-		    if (!chat.room) {
-			chat.room = 'main';
-		    }
-		    chatemit(socket, parsedcode, chat.room);
-		});
+            }
+	    bbcode.parse(stripHTML(chat.message), function(parsedcode) {
+		/* link links */
+                parsedcode = urlify(parsedcode);
+		if (!chat.room) {
+		    chat.room = 'main';
+		}
+		chatemit(socket, parsedcode, chat.room);
 	    });
 	}
     });
