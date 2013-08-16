@@ -135,6 +135,9 @@ function chatemit(sockt, message, room, winbtc) {
 	if (!sock.authed) {
 	    return;
 	}
+	if (!room) {
+	    room = "main";
+	}
 	if (room == "modsprivate" && admins.indexOf(sock.user) == -1 && mods.indexOf(sock.user == -1)) {
 	    return; // Mods only!
 	}
@@ -519,8 +522,10 @@ io.sockets.on('connection', function(socket) {
 		bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		    /* link links */
                     parsedcode = urlify(parsedcode);
+		    if (!chat.room) {
+			chat.room = 'main';
+		    }
 		    chatemit(socket, parsedcode, chat.room);
-		    
 		});
 	    });
 	}
