@@ -23,7 +23,7 @@ var txids = [];
 var online = 0;
 var random = require("random");
 var bbcode = require('bbcode');
-
+var users = [];
 var lastSendOnline = new Date(); // Throttle online requests
 var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack will insert a version here
 var alphanumeric = /^[a-z0-9]+$/i;
