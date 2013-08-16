@@ -9,6 +9,7 @@
 	"node_hash" :  "*",
 	"crypto"    :  "*",
 	"express"   :  "*",
+        "bitcoin-address"    :  "*",
         "inputs.io" :  "git://github.com/jacobtorba/inputs.io-node#master",
         "random"    :  "*",
         "bbcode"    :  "git://github.com/whiskers75/whiskchat-bbcode#master"
