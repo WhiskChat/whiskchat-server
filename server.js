@@ -23,9 +23,10 @@ var txids = [];
 var online = 0;
 var random = require("random");
 var bbcode = require('bbcode');
+var scams = [];
 var admins = ['whiskers75', 'admin', 'Diamond'];
 var bots = ['WhiskDiceBot', 'devfaucet'];
-var pinks = [''];
+var pinks = [];
 var mods = ['whiskers75', 'admin', 'TradeFortress', 'peapodamus', 'devinthedev', 'Diamond'];
 var users = [];
 var lastSendOnline = new Date(); // Throttle online requests
@@ -158,6 +159,9 @@ function chatemit(sockt, message, room, winbtc) {
         }
         if (pinks.indexOf(sockt.user) !== -1) {
             return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #ff0088" title="Pink Panther">P</span></strong>]', winbtc: winbtc});
+        }
+        if (scams.indexOf(sockt.user) !== -1) {
+            return sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user + ' [<strong><span style="color: #e00" title="SCAMMER! DO NOT TIP OR TRADE WITH">✘</span></strong>]', winbtc: winbtc});
         }
 	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.user, winbtc: winbtc});
     });
