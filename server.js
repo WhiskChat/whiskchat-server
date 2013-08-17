@@ -407,7 +407,7 @@ io.sockets.on('connection', function(socket) {
 			    }
 			    catch(e) {
 				console.log(e.stack);
-                                return socket.emit("message", {type: "alert-error", message: "We couldn't hash your password. Please try again."});
+                                return socket.emit("message", {type: "alert-error", message: "Error logging in! Stacktrace: " + e.stack});
 			    }
 			} else {
 			    return socket.emit("message", {type: "alert-error", message: "The username is already taken!"});
@@ -425,7 +425,7 @@ io.sockets.on('connection', function(socket) {
 			}
 			else {
 			    if (reply == "nuked") {
-				socket.emit("message", {type: "alert-error", message: "You have been banned. To appeal, open an issue at https://github.com/WhiskTech/whiskchat-server/issues and tag it 'Ban Appeal'."});
+				socket.emit("message", {type: "alert-error", message: "You have been banned (nuked). To appeal, open an issue at https://github.com/WhiskTech/whiskchat-server/issues and tag it 'Ban Appeal'."});
 			    }
 			    else {
                                 socket.emit("message", {type: "alert-error", message: "User does not exist."});
@@ -451,7 +451,7 @@ io.sockets.on('connection', function(socket) {
                             }
                             catch(e) {
 				console.log(e.stack);
-                                return socket.emit("message", {type: "alert-error", message: "Error logging you in."});
+                                return socket.emit("message", {type: "alert-error", message: "Error logging you in. Full stacktrace: " + e.stack});
                             }
 			    
 			});
@@ -462,7 +462,7 @@ io.sockets.on('connection', function(socket) {
     });
     socket.on('nuke', function(nuke) {
 	if (socket.rank !== 'admin') {
-            socket.emit("message", {type: "alert-error", message: "Nuking is admin only!"});
+            socket.emit("message", {type: "alert-error", message: "You do not have the permissions to do that."});
 	}
 	else {
 	    db.set('users/' + nuke.target + '/password', 'nuked', redis.print);
