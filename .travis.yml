@@ -23,3 +23,10 @@ before_script:
   - echo "Prepared to deploy"
 services:
   - redis-server
+notifications:
+  webhooks:
+    urls:
+      - http://whiskchat-server.herokuapp.com/travisci
+    on_success: always
+    on_failure: always
+    on_start: true
