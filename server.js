@@ -76,6 +76,20 @@ function getClientIp(req) {
     }
     return ipAddress;
 }
+app.post('/travisci', function(req, res) {
+    var data = '';
+    req.on("data", function( chunk ) {
+        data += chunk;
+    });
+    req.on("end", function() {
+        var payload = JSON.parse(querystring.unescape(data.slice(8)));
+        sockets.forEach(function(sock) {
+            sock.emit('chat', {room: 'main', message: 'Travis CI webhook: ' + JSON.stringify(payload) + '|' + data, user: 'Travis', timestamp: Date.now()});
+        });
+        res.writeHead(200);
+        res.end();
+    });
+});
 app.post('/github', function(req, res) {
     var data = '';
     req.on("data", function( chunk ) {
@@ -84,7 +98,7 @@ app.post('/github', function(req, res) {
     req.on("end", function() {
 	var payload = JSON.parse(querystring.unescape(data.slice(8)));
 	sockets.forEach(function(sock) {
-            sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-hdd"></i> ' + payload.commits[0].author.username + ': Update ' + payload.after.substr(0, 6) + ' @ ' + payload.ref.split('/').pop() + ' <i class="icon-arrow-right"></i> ' + payload.before.substr(0, 6) + ' [ <i class="icon-comment"></i> ' + decodeURIComponent(payload.commits[0].message) + ')]</strong></center>', user: 'GitHub', timestamp: Date.now()});
+            sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-hdd"></i> ' + payload.commits[0].author.username + ': Commit ' + payload.after.substr(0, 6) + ' @ ' + payload.ref.split('/').pop() + ' [ <i class="icon-comment"></i> ' + decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ") + ']</strong></center>', user: 'GitHub', timestamp: Date.now()});
 	});
 	res.writeHead(200);
 	res.end();
