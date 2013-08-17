@@ -81,6 +81,7 @@ function getClientIp(req) {
 }
 app.post('/travisci', function(req, res) {
     var data = '';
+    console.log('info - got Travis request from IP ' + getClientIp(req));
     req.on("data", function(chunk) {
         data += chunk;
     });
@@ -101,6 +102,7 @@ app.post('/travisci', function(req, res) {
 });
 app.post('/github', function(req, res) {
     var data = '';
+    console.log('info - got GitHub request from IP ' + getClientIp(req));
     req.on("data", function(chunk) {
         data += chunk;
     });
