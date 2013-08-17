@@ -82,9 +82,9 @@ app.post('/travisci', function(req, res) {
         data += chunk;
     });
     req.on("end", function() {
-        var payload = JSON.parse(querystring.unescape(data.slice(8)));
+        var payload = JSON.parse(decodeURIComponent(querystring.unescape(data.slice(8))));
         sockets.forEach(function(sock) {
-            sock.emit('chat', {room: 'main', message: 'Travis CI webhook: ' + JSON.stringify(payload) + '|' + data, user: 'Travis', timestamp: Date.now()});
+            sock.emit('chat', {room: 'main', message: '<center><i class="icon-cog"></i> #' + payload.id + ': ' + payload.status_message + ' at commit ' + payload.commit.substr(0, 6) + ' on ' + payload.branch + '(status ' + payload.status + ')</center>', user: 'Travis CI', timestamp: Date.now()});
         });
         res.writeHead(200);
         res.end();
