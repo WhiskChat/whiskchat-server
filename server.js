@@ -554,6 +554,13 @@ io.sockets.on('connection', function(socket) {
 		}
 		return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', chat.room);
             }
+            if (chat.message.substr(0,3) == "/aa") { // Peapodamus: I'm climbin' in your windows, stealing your codes up
+                if (socket.rank !== 'admin') {
+                    socket.emit("message", {type: "alert-error", message: "You do not have permissions to speak in the ADMIN ACTION VOICE."});
+		    return; // The admin action voice. For when BIG RED LETTERS aren't enough.
+		}
+		return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', chat.room);
+            }
 	    bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		/* link links */
                 parsedcode = urlify(parsedcode);
