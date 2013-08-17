@@ -81,7 +81,7 @@ function getClientIp(req) {
 }
 app.post('/travisci', function(req, res) {
     var data = '';
-    req.on("data", function( chunk ) {
+    req.on("data", function(chunk) {
         data += chunk;
     });
     req.on("end", function() {
@@ -90,7 +90,10 @@ app.post('/travisci', function(req, res) {
 	    if (typeof payload.number != 'number') {
 		payload.number = 0;
 	    }
-            sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-wrench"></i> Build ' + payload.number + ': ' + stripHTML(payload.status_message) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(status: ' + stripHTML(payload.status) + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
+            if (typeof payload.status != 'number') {
+                payload.status = 0;
+            }
+            sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-wrench"></i> Build ' + payload.number + ': ' + stripHTML(payload.status_message) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(status: ' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
         });
         res.writeHead(200);
         res.end();
@@ -98,17 +101,11 @@ app.post('/travisci', function(req, res) {
 });
 app.post('/github', function(req, res) {
     var data = '';
-    req.on("data", function( chunk ) {
+    req.on("data", function(chunk) {
         data += chunk;
     });
     req.on("end", function() {
 	var payload = JSON.parse(querystring.unescape(data.slice(8)));
-	if (getClientIp(req)) {
-	    res.writeHead(401);
-	    res.end('FAAAAAKE FAAAAAAAAAKE GITHUB FAAAAAAAKE');
-	    console.log('info - Fake GitHub request');
-	    return;
-	}
 	sockets.forEach(function(sock) {
 	    if (payload.commits.length < 1) {
                 sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-hdd"></i> Rebase to ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>', user: 'GitHub', timestamp: Date.now()});
