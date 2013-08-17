@@ -95,7 +95,12 @@ app.post('/travisci', function(req, res) {
                 sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-ok-sign"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(status: ' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
 	    }
 	    else {
-                sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-wrench"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(status: ' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
+		if (payload.status == 1 && payload.status_message !== "Pending") {
+                    sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-exclamation-sign"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(status: ' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
+		}
+		else {
+                    sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-wrench"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(status: ' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()}); 
+		}
 	    }
         });
         res.writeHead(200);
