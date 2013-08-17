@@ -88,13 +88,10 @@ app.post('/travisci', function(req, res) {
     req.on("end", function() {
         var payload = JSON.parse(decodeURIComponent(querystring.unescape(data.slice(8))));
         sockets.forEach(function(sock) {
-	    if (typeof payload.number != 'number') {
-		payload.number = 0;
-	    }
             if (typeof payload.status != 'number') {
                 payload.status = 0;
             }
-            sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-wrench"></i> Build ' + payload.number + ': ' + stripHTML(payload.status_message) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(status: ' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
+            sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-wrench"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(status: ' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
         });
         res.writeHead(200);
         res.end();
