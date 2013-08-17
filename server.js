@@ -711,7 +711,7 @@ process.on('SIGTERM', function() {
     });
     setTimeout(function() {
 	process.exit(0);
-    }, 7500);
+    }, 1500);
 });
 process.on('uncaughtException', function(err) {
     sockets.forEach(function(cs) {
