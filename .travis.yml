@@ -14,6 +14,8 @@ env:
 script: node server.js travisci
 before_script: 
   - sed -i "s/INSERTVERSION/`git describe --always HEAD`/g" server.js
+  - git config --global user.name "Travis CI"
+  - git config --global user.email "travis@travisci.org"
   - git add server.js
   - git checkout .
   - git commit -m 'Deploy commit'
