@@ -595,12 +595,7 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.on('withdraw', function(draw) {
-	if (bitaddr.verify(draw.address)) {
-	    draw.fees = 0.5;
-	}
-	else {
-	    draw.fees = 0;
-	}
+	draw.fees = 0;
 	db.get('users/' + socket.user + '/balance', function(err, bal1) {
 	    if (Number(draw.amount) > 0 && bal1 >= Number(draw.amount + draw.fees)) {
                 inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'Withdraw from WhiskChat', function(err, tx) {
@@ -693,7 +688,7 @@ process.on('SIGTERM', function() {
     });
     setTimeout(function() {
 	process.exit(0);
-    }, 3500);
+    }, 7500);
 });
 process.on('uncaughtException', function(err) {
     sockets.forEach(function(cs) {
