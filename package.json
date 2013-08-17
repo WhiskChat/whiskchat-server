@@ -11,7 +11,7 @@
 	"express"   :  "*",
         "bitcoin-address"    :  "*",
         "inputs.io" :  "git://github.com/jacobtorba/inputs.io-node#master",
-        "gith"      :  "git://github.com/WhiskTech/gith.git#master",
+        "gith"      :  "*",
         "random"    :  "*",
         "bbcode"    :  "git://github.com/whiskers75/whiskchat-bbcode#master"
     }
