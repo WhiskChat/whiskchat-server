@@ -19,6 +19,7 @@ var bitaddr = require('bitcoin-address');
 var emitAd = true;
 var knownspambots = [];
 var scrollback = [];
+var gith = require('gith').create(app);
 var txids = [];
 var online = 0;
 var random = require("random");
@@ -263,6 +264,11 @@ setInterval(function() {
         emitAd = false;
     }
 }, 400000);
+gith({
+    repo: 'WhiskTech/whiskchat-server'
+}).on('all', function(payload) {
+    console.log('Got payload: ' + payload);
+});
 io.sockets.on('connection', function(socket) {
     sockets.push(socket);
     
