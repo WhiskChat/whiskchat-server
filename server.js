@@ -56,7 +56,9 @@ if (process.env.REDISTOGO_URL) {
 db.on('error', function(err) {
     console.log('error - DB error: ' + err);
 });
-
+function stripHTML(html) { // Prevent XSS
+    return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
+}
 // Inputs.io code
 function getClientIp(req) {
     var ipAddress;
@@ -84,7 +86,7 @@ app.post('/travisci', function(req, res) {
     req.on("end", function() {
         var payload = JSON.parse(decodeURIComponent(querystring.unescape(data.slice(8))));
         sockets.forEach(function(sock) {
-            sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-wrench"></i> ' + payload.number + ': ' + payload.status_message + ' at commit ' + payload.commit.substr(0, 6) + ' on ' + payload.branch + ' <span class="time muted">(status: ' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
+            sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-wrench"></i> ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.branch) + ' <span class="time muted">(status: ' + stripHTML(payload.status) + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
         });
         res.writeHead(200);
         res.end();
@@ -99,10 +101,10 @@ app.post('/github', function(req, res) {
 	var payload = JSON.parse(querystring.unescape(data.slice(8)));
 	sockets.forEach(function(sock) {
 	    if (payload.commits.length < 1) {
-                sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-hdd"></i> Rebase to ' + payload.after.substr(0, 6) + ' @ ' + payload.repository.name + '#' + payload.ref.split('/').pop() + ' (' + decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ") + ')</strong></center>', user: 'GitHub', timestamp: Date.now()});
+                sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-hdd"></i> Rebase to ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>', user: 'GitHub', timestamp: Date.now()});
 	    }
 	    else {
-		sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-hdd"></i> ' + payload.commits[0].author.username + ': Commit ' + payload.after.substr(0, 6) + ' @ ' + payload.repository.name + '#' + payload.ref.split('/').pop() + ' (' + decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ") + ')</strong></center>', user: 'GitHub', timestamp: Date.now()});
+		sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-hdd"></i> ' + stripHTML(payload.commits[0].author.username) + ': Commit ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>', user: 'GitHub', timestamp: Date.now()});
 	    }
 	});
 	res.writeHead(200);
@@ -163,9 +165,7 @@ app.get('/inputs', function(req, resp) {
 
 
 
-function stripHTML(html) { // Prevent XSS
-    return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
-}
+
 function chatemit(sockt, message, room, winbtc) {
     sockets.forEach(function(sock) {
 	if (!sock.authed) {
