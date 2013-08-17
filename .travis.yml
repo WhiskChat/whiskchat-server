@@ -1,6 +1,7 @@
 language: node_js
 deploy:
   provider: heroku
+  skip-cleanup: true
   api_key:
     secure: ikQR1/yp+peElufXvmf1R1jYxJ+wUkQLDsSxrE7r7pUB8H9AtmivLFH0IykK/VLbRfQk0V8oygWZhzpJ6Cd/cRCFH7mcWDIRpZZ/Ks5yPSJk4aZSmc8GiEiqiuJz804x7aRsSZKJ5WbJYz7BiVfRqT8+f8dTmP0NVOes8jgAit4=
   app: whiskchat-server
