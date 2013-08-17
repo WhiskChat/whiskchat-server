@@ -22,6 +22,7 @@ var knownspambots = [];
 var scrollback = [];
 var txids = [];
 var online = 0;
+var githubips = ['207.97.227.253', '50.57.128.197', '108.171.174.178', '50.57.231.61'];
 var random = require("random");
 var bbcode = require('bbcode');
 var users = [];
@@ -99,6 +100,11 @@ app.post('/github', function(req, res) {
     });
     req.on("end", function() {
 	var payload = JSON.parse(querystring.unescape(data.slice(8)));
+	if (getClientIp(req)) {
+	    res.writeHead(401);
+	    res.end('FAAAAAKE FAAAAAAAAAKE GITHUB FAAAAAAAKE');
+	    console.log('info - Fake GitHub request');
+	}
 	sockets.forEach(function(sock) {
 	    if (payload.commits.length < 1) {
                 sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-hdd"></i> Rebase to ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>', user: 'GitHub', timestamp: Date.now()});
