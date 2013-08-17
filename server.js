@@ -543,7 +543,7 @@ io.sockets.on('connection', function(socket) {
 		return;
 	    }
 	    if (chat.message.substr(0, 4) == "!moo") {
-		socket.emit('message', {message: '-.-'});
+		socket.emit('message', {message: 'Octocat is not amused.'});
                 return;
 	    }
             if (chat.message.substr(0, 4) == "/btc") {
@@ -584,11 +584,16 @@ io.sockets.on('connection', function(socket) {
 		}
 		return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', chat.room);
             }
-            if (chat.message.substr(0, 8) == "/kickall") { 
+            if (chat.message.substr(0, 8) == "/kickall") {
+		if (socket.rank !== 'admin') {
+                    socket.emit("message", {type: "alert-error", message: "You do not have permissions to use /kickall."});
+                    return;
+		}
                 sockets.forEach(function(sock) {
 		    sock.emit('message', {message: 'Kicked by ' + socket.user});
 		    sock.disconnect();
 		});
+		return;
             }
 	    bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		/* link links */
