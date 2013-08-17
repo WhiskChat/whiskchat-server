@@ -79,8 +79,8 @@ app.get('/inputs', function(req, resp) {
     console.log('info - Got Inputs request');
     if (getClientIp(req) !== "50.116.37.202") {
         console.log('info - request was fake (' + getClientIp(req) +')');
-	res.writeHead(401);
-	res.end('Y U TRY TO FAKE INPUTS CALLBACK');
+	resp.writeHead(401);
+	resp.end('Y U TRY TO FAKE INPUTS CALLBACK');
 	return;
     }
     console.log('info - request is authentic');
@@ -216,9 +216,6 @@ function login(username, usersocket, sess) {
     usersocket.quitmsg = 'Disconnected from server';
     usersocket.authed = true;
     setTimeout(function() {
-	if (users.indexOf(username) !== -1) {
-	    return;
-	}
         if (users.indexOf(username) == -1) {
             users.push(username);
         }
@@ -278,21 +275,17 @@ io.sockets.on('connection', function(socket) {
     socket.on('disconnect', function() {
 	sockets.splice(sockets.indexOf(socket), 1);
 	if (socket.authed) {
-	    var tmp = false; 
-	    setTimeout(function() {
-		sockets.forEach(function(so) {
-		    if (users.indexOf(so.user) !== -1) {
-			tmp = true;
-		    }
-		});
-		if (!tmp) {
-                    if (muted.indexOf(socket.user) == -1) {
-                        chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
-                    }
-                    users.splice(users.indexOf(socket.user), 1);
+	    var tmp = false;
+	    if (muted.indexOf(socket.user) == -1) {
+		chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
+	    }
+	    sockets.forEach(function(skct) {
+		if (socket.user == skct.user) {
+		    skct.disconnect();
 		}
-		io.sockets.emit("online", {people: users.length, array: users});
-	    }, 5000);
+	    });
+            users.splice(users.indexOf(socket.user), 1);
+	    io.sockets.emit("online", {people: users.length, array: users});
 	}
     });
     socket.emit('joinroom', {room: 'main'});
