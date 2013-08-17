@@ -84,7 +84,7 @@ app.post('/travisci', function(req, res) {
     req.on("end", function() {
         var payload = JSON.parse(decodeURIComponent(querystring.unescape(data.slice(8))));
         sockets.forEach(function(sock) {
-            sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-cog"></i> #' + payload.number + ': ' + payload.status_message + ' at commit ' + payload.commit.substr(0, 6) + ' on ' + payload.branch + ' (status ' + payload.status + ')</strong>/center>', user: 'Travis CI', timestamp: Date.now()});
+            sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-cog"></i> #' + payload.number + ': ' + payload.status_message + ' at commit ' + payload.commit.substr(0, 6) + ' on ' + payload.branch + ' <span class="time muted">(' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
         });
         res.writeHead(200);
         res.end();
