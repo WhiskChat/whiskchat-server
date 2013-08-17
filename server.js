@@ -9,6 +9,7 @@ var inputs = new InputsIO({
 });
 var iottp = require('http').createServer(app);
 var io = require('socket.io').listen(iottp);
+var querystring = require("querystring");
 var hash = require('node_hash');
 var crypto = require('crypto');
 var redis = require('redis');
@@ -76,6 +77,20 @@ function getClientIp(req) {
     }
     return ipAddress;
 }
+app.post('/github', function(req, res) {
+    var data = '';
+    req.on("data", function( chunk ) {
+        data += chunk;
+    });
+    req.on("end", function() {
+	var payload = JSON.parse(querystring.unescape(data.slice(8)));
+	sockets.forEach(function(sock) {
+            sock.emit('chat', {room: 'main', message: '<center><strong>Commit: ' + payload.after + '</strong></center>', user: 'GitHub', timestamp: Date.now()});
+	});
+	res.writeHead(200);
+	res.end();
+    });
+});
 app.get('/inputs', function(req, resp) {
     console.log('info - Got Inputs request');
     if (getClientIp(req) !== "50.116.37.202") {
@@ -264,11 +279,6 @@ setInterval(function() {
         emitAd = false;
     }
 }, 400000);
-gith({
-    repo: 'WhiskTech/whiskchat-server'
-}).on('all', function(payload) {
-    console.log('Got payload: ' + payload);
-});
 io.sockets.on('connection', function(socket) {
     sockets.push(socket);
     
