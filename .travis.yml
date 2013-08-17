@@ -6,6 +6,11 @@ deploy:
   app: whiskchat-server
   on:
     repo: WhiskTech/whiskchat-server
+    node: "0.10"
+node_js:
+  - "0.11"
+  - "0.8"
+  - "0.10"
 env:
   global:
   - secure: Hb4kaC/647AyjXzjvx56queFYeFrwEGLMyMzURPShIB7rUjPLm3AOcf5bOEEVTC1DkN1GZ53M0KHAvKEOJDmn3mB+dikmq4bi3evypHSzKOw2bwQ1fDPQuKgErqk9jfkehzgayzt/bL9TKh7cryVjV43ht9YGqb3AdBV0q4P/Qk=

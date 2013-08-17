@@ -163,10 +163,9 @@ app.get('/inputs', function(req, resp) {
             db.get('users/' + req.query.note + '/balance', function(err, reply) {
                 db.set('users/' + req.query.note + '/balance', Number(reply) + (Number(req.query.amount) * 1000), function(err, res) {
                     sockets.forEach(function(so) {
-                        so.emit('chat', {room: 'main', message: '<strong>' + req.query.note + ' deposited ' + req.query.amount * 1000 + ' mBTC using Inputs.io!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
 			if (so.user == req.query.note) {
                             so.emit('balance', {balance: Number(reply) + Number(req.query.amount * 1000)});
-                            so.emit('message', {message: 'You deposited ' + req.query.amount * 1000 + ' mBTC! Credited to your account.'});
+                            so.emit('message', {message: 'You deposited ' + req.query.amount * 1000 + ' mBTC using Inputs.io'});
 			    console.log('info - deposited ' + req.query.amount + ' into ' + req.query.note + '\'s account');
 			}
 		    });
@@ -193,12 +192,6 @@ function chatemit(sockt, message, room, winbtc) {
 	if (room == "modsprivate" && sock.rank !== "mod" && sock.rank !== "admin") {
 	    return; // Mods only!
 	}
-	if (room.indexOf(':') !== -1 && sock.user != room.split(':')[1] && sock.user != room.split(':')[0]) {
-	    return;
-	}
-        if (room.indexOf(':') !== -1 && (sock.user == room.split(':')[1] && sock.user == room.split(':')[0])) {
-            sock.emit('joinroom', {room: room});
-        }
 	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.pretag + sockt.user + sockt.tag, winbtc: winbtc});
     });
 }
@@ -487,14 +480,14 @@ io.sockets.on('connection', function(socket) {
     });
     socket.on('mute', function(mute) {
 	if (socket.rank !== 'mod' && socket.rank !== 'admin') {
-            socket.emit("message", {type: "alert-error", message: "You are not a moderator!"});
+            socket.emit("message", {type: "alert-error", message: "You do not have the permissions to do that."});
 	}
 	else {
 	    if (muted.indexOf(mute.target) == -1) {
 		muted.push(mute.target);
 	    }
 	    sockets.forEach(function(cs) {
-		cs.emit('chat', {room: 'main', message: '<span class="label label-important">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(socket.user) + ' for ' + stripHTML(mute.mute) + ' seconds! Reason: ' + stripHTML(mute.reason) + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+		cs.emit('chat', {room: 'main', message: '<span class="label label-important">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(socket.user) + ' for ' + Number(stripHTML(mute.mute)) / 60 + ' minutes! Reason: ' + stripHTML(mute.reason) + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
 	    });
 	    setTimeout(function() {
 		if (muted.indexOf(mute.target) !== -1) {
@@ -535,7 +528,7 @@ io.sockets.on('connection', function(socket) {
 		return;
             }
 	    if (chat.room == "modsprivate" && socket.rank !== 'mod' && socket.rank !== 'admin') {
-		socket.emit('message', {message: 'You are not a moderator or admin. #modsprivate is restricted.'});
+		socket.emit('message', {message: 'You are not permitted to chat in this room.'});
 		return;
 	    }
             if (chat.message.substr(0, 3) == "/me") {
@@ -560,11 +553,14 @@ io.sockets.on('connection', function(socket) {
                 return;
 	    }
 	    if (chat.message.substr(0, 4) == "/spt") {
+                if (stripHTML(chat.message.substr(5, chat.message.length)) == '') {
+                    return socket.emit('message', {message: 'Syntax: /spt (Spotify URI)'});
+                }
                 chatemit(socket, '<iframe src="https://embed.spotify.com/?uri=' + stripHTML(chat.message.substr(5, chat.message.length)) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room);
 		return;
 	    }
 	    if (chat.message.substr(0, 4) == "!moo") {
-		socket.emit('message', {message: 'Octocat is not amused.'});
+		socket.emit('message', {message: 'Octocat is not amused. (Use WhiskDiceBot and built-in media instead)'});
                 return;
 	    }
             if (chat.message.substr(0, 4) == "/btc") {
@@ -706,11 +702,6 @@ io.sockets.on('connection', function(socket) {
 	    socket.emit('balance', {balance: balance});
 	});
     });
-    socket.on('joinroom', function(join) {
-	// Get the current room owner, and make it the user if it's null.
-	// Then join it! :)
-	socket.join(join.room); // We can use socket.io rooms! :D
-    });
 });
 
 console.log('info - listening');
@@ -720,7 +711,7 @@ process.on('SIGTERM', function() {
     });
     setTimeout(function() {
 	process.exit(0);
-    }, 1500);
+    }, 1000);
 });
 process.on('uncaughtException', function(err) {
     sockets.forEach(function(cs) {
