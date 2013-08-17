@@ -20,7 +20,6 @@ var bitaddr = require('bitcoin-address');
 var emitAd = true;
 var knownspambots = [];
 var scrollback = [];
-var gith = require('gith').create(process.env.PORT);
 var txids = [];
 var online = 0;
 var random = require("random");
