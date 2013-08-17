@@ -98,7 +98,12 @@ app.post('/github', function(req, res) {
     req.on("end", function() {
 	var payload = JSON.parse(querystring.unescape(data.slice(8)));
 	sockets.forEach(function(sock) {
-            sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-hdd"></i> ' + payload.commits[0].author.username + ': Commit ' + payload.after.substr(0, 6) + ' @ ' + payload.repository.name + '#' + payload.ref.split('/').pop() + ' (' + decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ") + ')</strong></center>', user: 'GitHub', timestamp: Date.now()});
+	    if (payload.commits.length < 1) {
+                sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-hdd"></i> Rebase to ' + payload.after.substr(0, 6) + ' @ ' + payload.repository.name + '#' + payload.ref.split('/').pop() + ' (' + decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ") + ')</strong></center>', user: 'GitHub', timestamp: Date.now()});
+	    }
+	    else {
+		sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-hdd"></i> ' + payload.commits[0].author.username + ': Commit ' + payload.after.substr(0, 6) + ' @ ' + payload.repository.name + '#' + payload.ref.split('/').pop() + ' (' + decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ") + ')</strong></center>', user: 'GitHub', timestamp: Date.now()});
+	    }
 	});
 	res.writeHead(200);
 	res.end();
