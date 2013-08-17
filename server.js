@@ -84,7 +84,7 @@ app.post('/travisci', function(req, res) {
     req.on("end", function() {
         var payload = JSON.parse(decodeURIComponent(querystring.unescape(data.slice(8))));
         sockets.forEach(function(sock) {
-            sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-cog"></i> #' + payload.number + ': ' + payload.status_message + ' at commit ' + payload.commit.substr(0, 6) + ' on ' + payload.branch + ' <span class="time muted">(' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
+            sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-wrench"></i> ' + payload.number + ': ' + payload.status_message + ' at commit ' + payload.commit.substr(0, 6) + ' on ' + payload.branch + ' <span class="time muted">(' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
         });
         res.writeHead(200);
         res.end();
@@ -583,6 +583,12 @@ io.sockets.on('connection', function(socket) {
 		    return; // The admin action voice. For when BIG RED LETTERS aren't enough.
 		}
 		return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', chat.room);
+            }
+            if (chat.message.substr(0, 8) == "/kickall") { 
+                sockets.forEach(function(sock) {
+		    sock.emit('message', {message: 'Kicked by ' + socket.user});
+		    sock.disconnect();
+		});
             }
 	    bbcode.parse(stripHTML(chat.message), function(parsedcode) {
 		/* link links */
