@@ -107,6 +107,7 @@ app.post('/github', function(req, res) {
 	    res.writeHead(401);
 	    res.end('FAAAAAKE FAAAAAAAAAKE GITHUB FAAAAAAAKE');
 	    console.log('info - Fake GitHub request');
+	    return;
 	}
 	sockets.forEach(function(sock) {
 	    if (payload.commits.length < 1) {
