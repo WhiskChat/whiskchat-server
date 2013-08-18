@@ -235,7 +235,7 @@ function login(username, usersocket, sess) {
         usersocket.emit('chat', {room: 'main', message: "Ad: <iframe data-aa='5513' src='//ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'Advertisement', timestamp: Date.now()});
     });
     db.get('users/' + username + '/rep', function(err, rep) {
-        usersocket.emit('whitelist', {whitelisted: Number(rep)});
+        usersocket.emit('whitelist', {whitelisted: Number(Number(rep).toFixed(2))});
     });
     db.get('users/' + username + '/tag', function(err, reply) {
 	if (reply) {
@@ -255,7 +255,7 @@ function login(username, usersocket, sess) {
 	    }
         }
     });
-    usersocket.version = 'Unidentified client/bot';
+    usersocket.version = 'Unknown Client/bot';
     usersocket.quitmsg = 'Disconnected from server';
     usersocket.authed = true;
     setTimeout(function() {
