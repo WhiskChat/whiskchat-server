@@ -58,7 +58,9 @@ db.on('error', function(err) {
     console.log('error - DB error: ' + err);
 });
 function stripHTML(html) { // Prevent XSS
-if (!html) { return null; } // So idiots can't pass us nil!
+    if (!html) {
+	return '';
+    }
     return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
 }
 // Inputs.io code
