@@ -243,7 +243,7 @@ function login(username, usersocket, sess) {
     });
     db.get('users/' + username + '/rooms', function(err, reply) {
 	if (!reply) {
-	    socket.emit('message', {message: 'You should sync your roomlist. Subscribing you to default rooms.'});
+	    usersocket.emit('message', {message: 'You should sync your roomlist. Subscribing you to default rooms.'});
 	    usersocket.emit('joinroom', {room: 'whiskchat'});
 	    usersocket.emit('joinroom', {room: 'botgames'});
 	    return;
@@ -251,7 +251,7 @@ function login(username, usersocket, sess) {
 	JSON.parse(reply).forEach(function(rm) {
 	    usersocket.emit('joinroom', {room: rm});
 	});
-	socket.emit('message', {message: 'Sync complete. You have joined: ' + JSON.parse(reply).join(', ')});
+	usersocket.emit('message', {message: 'Sync complete. You have joined: ' + JSON.parse(reply).join(', ')});
     });
     usersocket.version = 'Unknown Client/bot';
     usersocket.quitmsg = 'Disconnected from server';
