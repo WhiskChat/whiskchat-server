@@ -250,10 +250,13 @@ function login(username, usersocket, sess) {
 	    usersocket.emit('message', {message: 'You should sync your roomlist. Subscribing you to default rooms.'});
 	    usersocket.emit('joinroom', {room: 'whiskchat'});
 	    usersocket.emit('joinroom', {room: 'botgames'});
+	    usersocket.sync = [];
 	    return;
 	}
+	usersocket.sync = [];
 	JSON.parse(reply).forEach(function(rm) {
 	    usersocket.emit('joinroom', {room: rm});
+	    usersocket.sync.push(rm);
 	});
 	usersocket.emit('message', {message: 'Sync complete. You have joined: ' + JSON.parse(reply).join(', ')});
     });
@@ -748,8 +751,13 @@ process.on('SIGTERM', function() {
     }, 1000);
 });
 process.on('uncaughtException', function(err) {
-    sockets.forEach(function(cs) {
-	cs.emit('chat', {room: 'main', message: '<span style="color: #e00;">Server error: ' + err.stack + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
-    });
-    console.log('error - ' + err + err.stack);
+    try {
+        sockets.forEach(function(socket) {
+            socket.emit({room: 'main', message: '<span style="color: #e00">Server error (more details logged to dev console)</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+	});
+    }
+    catch(e) {
+	console.log('error - couldn\'t notify sockets: ' + e);
+    }
+    console.log('error - ' +  err.stack);
 });
