@@ -268,7 +268,7 @@ function login(username, usersocket, sess) {
     }, 2000);
 }
 function handle(err) {
-    console.log('error - ' + err.stack\);
+    console.log('error - ' + err.stack);
     try {
         sockets.forEach(function(socket) {
             socket.emit({room: 'main', message: '<span style="color: #e00">Server error (more details logged to dev console)</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
