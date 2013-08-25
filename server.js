@@ -112,7 +112,7 @@ app.post('/travisci', function(req, res) {
 });
 app.get('/', function(req, res) {
     res.writeHead(200);
-    res.end('<h3>' + versionString + ' is up and running! Connect at whiskchat.com.</h3>');
+    res.end(versionString + ' is up and running! Connect at whiskchat.com.');
 });
 app.post('/github', function(req, res) {
     var data = '';
