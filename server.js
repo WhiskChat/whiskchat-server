@@ -219,23 +219,9 @@ function login(username, usersocket, sess) {
     }
     
     usersocket.emit('chat', {room: 'main', message: 'Signed in as ' + username + '!', user: '<strong>Server</strong>', timestamp: Date.now()});
-    db.get('motd', function(err, reply) {
-	if (reply) {
-	    var motd = reply.split('|');
-	    motd.forEach(function(line) {
-                usersocket.emit('chat', {room: 'main', message: line, user: '<strong>MOTD</strong>', timestamp: Date.now()});
-	    });
-	}
-    });
     usersocket.user = username;
-    usersocket.emit('chat', {room: 'main', message: 'The latest source code is <a href="https://github.com/WhiskTech/whiskchat-server/">here</a>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
-    usersocket.emit('chat', {room: 'main', message: '<iframe id="ohhai" style="" width="560" height="315" src="//www.youtube.com/embed/QvxdDDHElZo" frameborder="0" allowfullscreen=""></iframe>', user: '<strong>MOTD</strong>', timestamp: Date.now()});
-    usersocket.emit('joinroom', {room: 'whiskchat'});
-    usersocket.emit('joinroom', {room: 'botgames'});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
-        usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong style="color: #090;">' + Number(reply).toFixed(2) + ' mBTC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
-        usersocket.emit('chat', {room: 'main', message: "Ad: <iframe data-aa='5513' src='//ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'Advertisement', timestamp: Date.now()});
     });
     db.get('users/' + username + '/rep', function(err, rep) {
         usersocket.emit('whitelist', {whitelisted: Number(Number(rep).toFixed(2))});
@@ -253,10 +239,18 @@ function login(username, usersocket, sess) {
     db.get('users/' + username + '/rank', function(err, reply) {
         if (reply) {
             usersocket.rank = reply;
-	    if (reply == "admin" || reply == "mod") {
-		usersocket.emit('joinroom', {room: 'modsprivate'});
-	    }
         }
+    });
+    db.get('users/' + username + '/rooms', function(err, reply) {
+	if (!reply) {
+	    socket.emit('message', {message: 'You should sync your roomlist. Subscribing you to default rooms.'});
+	    usersocket.emit('joinroom', {room: 'whiskchat'});
+	    usersocket.emit('joinroom', {room: 'botgames'});
+	    return;
+	}
+	reply.forEach(function(rm) {
+	    usersocket.emit('joinroom', {room: rm});
+	});
     });
     usersocket.version = 'Unknown Client/bot';
     usersocket.quitmsg = 'Disconnected from server';
