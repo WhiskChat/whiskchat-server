@@ -248,7 +248,7 @@ function login(username, usersocket, sess) {
 	    usersocket.emit('joinroom', {room: 'botgames'});
 	    return;
 	}
-	reply.forEach(function(rm) {
+	JSON.parse(reply).forEach(function(rm) {
 	    usersocket.emit('joinroom', {room: rm});
 	});
     });
@@ -709,7 +709,7 @@ io.sockets.on('connection', function(socket) {
 	    socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: data.sync is not an array!'});
 	    return;
 	}
-	db.set('users/' + socket.user + '/rooms', data.sync, function(err, res) {
+	db.set('users/' + socket.user + '/rooms', JSON.stringify(data.sync), function(err, res) {
 	    if (err) {
 		socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: '+ err});
 		return;
