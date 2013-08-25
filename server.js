@@ -95,20 +95,24 @@ app.post('/travisci', function(req, res) {
                 payload.status = 10;
             }
 	    if (payload.status == 0) {
-                sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-ok-sign"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message.replace(/\+/g, " ")) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
+                sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-ok-sign"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message.replace(/\+/g, " ")) + ' on commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
 	    }
 	    else {
 		if (payload.status == 1 && payload.status_message !== "Pending") {
-                    sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-exclamation-sign"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message.replace(/\+/g, " ")) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
+                    sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-exclamation-sign"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message.replace(/\+/g, " ")) + ' on commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()});
 		}
 		else {
-                    sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-wrench"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message.replace(/\+/g, " ")) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()}); 
+                    sock.emit('chat', {room: 'main', message: '<center><strong><i class="icon-wrench"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message.replace(/\+/g, " ")) + ' on commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(' + payload.status + ')</span></strong></center>', user: 'Travis CI', timestamp: Date.now()}); 
 		}
 	    }
         });
         res.writeHead(200);
         res.end();
     });
+});
+app.get('/', function(req, res) {
+    res.writeHead(200);
+    res.end('<h3>' + versionString + ' is up and running! Connect at whiskchat.com.</h3>');
 });
 app.post('/github', function(req, res) {
     var data = '';
@@ -280,6 +284,15 @@ function handle(err) {
 }
 function randomerr(type,code,string){
     handle(new Error("RANDOM.ORG Error: Type: "+type+", Status Code: "+code+", Response Data: "+string));
+}
+function genRoomText() {
+    var tmp = {};
+    users.forEach(function(sock) {
+	sock.sync.forEach(function(room) {
+	    tmp.room += 1;
+	});
+    });
+    return "Rooms object: " + JSON.stringify(tmp);
 }
 function calculateEarns(user, msg, callback) {
     callback(null);
@@ -548,6 +561,10 @@ io.sockets.on('connection', function(socket) {
             }
 	    if (chat.message.substr(0, 5) == "/ping") {
                 chatemit(socket, users.join(', ') + ': ' + stripHTML(chat.message.substr(6, chat.message.length)), chat.room);
+                return;
+	    }
+	    if (chat.message.substr(0, 6) == "/rooms") {
+		socket.emit('message', {message: genRoomText()});
                 return;
 	    }
 	    if (chat.message.substr(0, 4) == "/spt") {
