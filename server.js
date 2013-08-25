@@ -209,7 +209,7 @@ function urlify(text) {
     });
 }
 function login(username, usersocket, sess) {
-    
+   
     io.sockets.volatile.emit("online", {people: users.length, array: users});
     if (sess) {
 	usersocket.emit('loggedin', {username: username, session: sess});
@@ -700,8 +700,28 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.on('getbalance', function() {
+	if (!socket.authed) {
+	    return;
+	}
         db.get('users/' + socket.user + '/balance', function(err, balance) {
 	    socket.emit('balance', {balance: balance});
+	});
+    });
+    socket.on('sync', function(data) {
+	if (!socket.authed) {
+	    return;
+	}
+	if (Object.prototype.toString.call(data.sync) !== '[object Array]') {
+	    socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: data.sync is not an array!'});
+	    return;
+	}
+	db.set('users/' + socket.user + '/rooms', data.sync, function(err, res) {
+	    if (err) {
+		socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: '+ err});
+		return;
+	    }
+	    socket.emit('message', {message: '<i class="icon-ok-sign"></i> Sync complete.'});
+	    return;
 	});
     });
 });
