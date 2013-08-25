@@ -251,6 +251,7 @@ function login(username, usersocket, sess) {
 	JSON.parse(reply).forEach(function(rm) {
 	    usersocket.emit('joinroom', {room: rm});
 	});
+	socket.emit('message', {message: 'Sync complete. You have joined: ' + JSON.parse(reply).join(', ')});
     });
     usersocket.version = 'Unknown Client/bot';
     usersocket.quitmsg = 'Disconnected from server';
@@ -267,10 +268,10 @@ function login(username, usersocket, sess) {
     }, 2000);
 }
 function handle(err) {
-    console.log('error - ' + err);
+    console.log('error - ' + err.stack\);
     try {
         sockets.forEach(function(socket) {
-            socket.emit({room: 'main', message: '<span style="color: #e00">Server error: ' + err.stack.replace(/\n/g,'</br>') + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+            socket.emit({room: 'main', message: '<span style="color: #e00">Server error (more details logged to dev console)</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
 	});
     }
     catch(e) {
