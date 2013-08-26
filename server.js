@@ -730,6 +730,25 @@ io.sockets.on('connection', function(socket) {
 	    socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: data.sync is not an array!'});
 	    return;
 	}
+	if (data.sync.length > 15) {
+	    socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: Your room list is over 15 rooms.'});
+	    return;
+	}
+	var tmp5 = true;
+	data.sync.forEach(function(room) {
+	    if (Object.prototype.toString.call(room) !== '[object String]') {
+		socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: Room \'' + room + '\' is not a string!'});
+		tmp5 = false;
+	    }
+	    if (room.length > 20) {
+		socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: Room \'' + room + '\' is over 20 characters long.'});
+		tmp5 = false;
+	    }
+	});
+	if (!tmp5) {
+	    socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: One or more of your rooms did not pass the validation.'});
+	    return;
+	}
 	db.set('users/' + socket.user + '/rooms', JSON.stringify(data.sync), function(err, res) {
 	    if (err) {
 		socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: '+ err});
