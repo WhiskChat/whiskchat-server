@@ -641,8 +641,6 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.on('withdraw', function(draw) {
-	socket.emit('message', {message: "Withdrawals have been temporarily disabled."});
-	return;
 	db.get('users/' + socket.user + '/balance', function(err, bal1) {
 	    if (Number(draw.amount) > 0 && bal1 >= Number(draw.amount)) {
                 inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'WhiskChat withdrawal: ' + socket.user + ' | Thanks for using WhiskChat!', function(err, tx) {
