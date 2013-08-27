@@ -83,7 +83,7 @@ function doPayoutLoop() { // This is called to update the payout pool
 	    }
 	    payoutbal += 0.25;
             sockets.forEach(function(ads) {
-		ads.emit('chat', {room: 'main', message: '<strong>The earnings pool has been updated! There is now ' + payoutbal + ' mBTC to earn!</strong>', user: '<strong>Payout system</strong>', timestamp: Date.now()});
+                ads.emit('chat', {room: 'main', message: '<strong>The earnings pool has been updated! There is now ' + payoutbal + ' mBTC to earn!</strong> In total, ' + (Number(reply) - 0.25) + ' mBTC is available.', user: '<strong>Payout system</strong>', timestamp: Date.now()});
 	    });
         });
     });
@@ -341,7 +341,7 @@ function genRoomText() {
 }
 function calculateEarns(user, msg, callback) {
     var rnd = Math.random() / 10;
-    if (rnd > 0.05) {
+    if (rnd > 0.01) {
 	return null;
     }
     payoutbal = payoutbal - Number(rnd.toFixed(2));
