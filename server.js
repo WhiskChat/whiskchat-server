@@ -64,26 +64,29 @@ function stripHTML(html) { // Prevent XSS
     }
     return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
 }
-function doPayoutLoop() { // This is called to update the payout pool
+function doPayoutLoop(amount) { // This is called to update the payout pool
+    if (amount < 0.01) {
+	amount = 0.25;
+    }
     db.get('system/donated', function(err, reply) {
 	if (err) {
 	    handle(err);
 	    return;
 	}
-	if (Number(reply) < 0.25) {
+	if (Number(reply) < amount) {
 	    return;
 	}
-	if (payoutbal >= 0.2) {
+	if (payoutbal >= (amount - 0.05)) {
 	    return;
 	}
-	db.set('system/donated', Number(reply) - 0.25, function(err, res) {
+	db.set('system/donated', Number(reply) - amount, function(err, res) {
 	    if (err) {
 		handle(err);
 		return;
 	    }
-	    payoutbal += 0.25;
+	    payoutbal += amount;
             sockets.forEach(function(ads) {
-                ads.emit('chat', {room: 'main', message: '<strong>The earnings pool has been updated! There is now ' + payoutbal + ' mBTC to earn!</strong> In total, ' + (Number(reply) - 0.25) + ' mBTC is available.', user: '<strong>Payout system</strong>', timestamp: Date.now()});
+                ads.emit('chat', {room: 'main', message: '<strong>The earnings pool has been updated! There is now ' + payoutbal + ' mBTC to earn!</strong> In total, ' + (Number(reply) - amount) + ' mBTC is available.', user: '<strong>Payout system</strong>', timestamp: Date.now()});
 	    });
         });
     });
@@ -341,7 +344,7 @@ function genRoomText() {
 }
 function calculateEarns(user, msg, callback) {
     var rnd = Math.random() / 10;
-    if (rnd > 0.01) {
+    if (rnd > 0.007) {// 7% to earn mBTC
 	return null;
     }
     payoutbal = payoutbal - Number(rnd.toFixed(2));
@@ -671,7 +674,7 @@ io.sockets.on('connection', function(socket) {
                     socket.emit("message", {type: "alert-error", message: "You do not have permissions to force a payout."});
                     return;
                 }
-                return doPayoutLoop();
+                return doPayoutLoop(chat.message.split(' ')[1]);
             }
             if (chat.message.substr(0, 8) == "/kickall") {
 		if (socket.rank !== 'admin') {
