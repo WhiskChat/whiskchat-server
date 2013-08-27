@@ -239,6 +239,7 @@ function chatemit(sockt, message, room) {
 		    handle(err);
 		    return;
 		}
+		sockt.emit('balance', {balance: Number(res) + Number(winbtc)});
 	    });
 	});
     }
