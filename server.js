@@ -59,6 +59,9 @@ db.on('error', function(err) {
     console.log('error - DB error: ' + err);
 });
 function stripHTML(html) { // Prevent XSS
+    if (!html) {
+	return '';
+    }
     return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
 }
 function doPayoutLoop() { // This is called to update the payout pool
@@ -131,6 +134,10 @@ app.post('/travisci', function(req, res) {
         res.writeHead(200);
         res.end();
     });
+});
+app.get('/', function(req, res) {
+    res.writeHead(200);
+    res.end(versionString + ' is up and running! Connect at whiskchat.com.');
 });
 app.post('/github', function(req, res) {
     var data = '';
@@ -231,7 +238,7 @@ function urlify(text) {
     });
 }
 function login(username, usersocket, sess) {
-    
+   
     io.sockets.volatile.emit("online", {people: users.length, array: users});
     if (sess) {
 	usersocket.emit('loggedin', {username: username, session: sess});
@@ -241,23 +248,9 @@ function login(username, usersocket, sess) {
     }
     
     usersocket.emit('chat', {room: 'main', message: 'Signed in as ' + username + '!', user: '<strong>Server</strong>', timestamp: Date.now()});
-    db.get('motd', function(err, reply) {
-	if (reply) {
-	    var motd = reply.split('|');
-	    motd.forEach(function(line) {
-                usersocket.emit('chat', {room: 'main', message: line, user: '<strong>MOTD</strong>', timestamp: Date.now()});
-	    });
-	}
-    });
     usersocket.user = username;
-    usersocket.emit('chat', {room: 'main', message: 'The latest source code is <a href="https://github.com/WhiskTech/whiskchat-server/">here</a>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
-    usersocket.emit('chat', {room: 'main', message: '<iframe id="ohhai" style="" width="560" height="315" src="//www.youtube.com/embed/QvxdDDHElZo" frameborder="0" allowfullscreen=""></iframe>', user: '<strong>MOTD</strong>', timestamp: Date.now()});
-    usersocket.emit('joinroom', {room: 'whiskchat'});
-    usersocket.emit('joinroom', {room: 'botgames'});
     db.get('users/' + username + '/balance', function(err, reply) {
 	usersocket.emit('balance', {balance: reply});
-        usersocket.emit('chat', {room: 'main', message: 'Your balance is <strong style="color: #090;">' + Number(reply).toFixed(2) + ' mBTC</strong>.', user: '<strong>MOTD</strong>', timestamp: Date.now()});
-        usersocket.emit('chat', {room: 'main', message: "Ad: <iframe data-aa='5513' src='//ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'Advertisement', timestamp: Date.now()});
     });
     db.get('users/' + username + '/rep', function(err, rep) {
         usersocket.emit('whitelist', {whitelisted: Number(Number(rep).toFixed(2))});
@@ -275,10 +268,22 @@ function login(username, usersocket, sess) {
     db.get('users/' + username + '/rank', function(err, reply) {
         if (reply) {
             usersocket.rank = reply;
-	    if (reply == "admin" || reply == "mod") {
-		usersocket.emit('joinroom', {room: 'modsprivate'});
-	    }
         }
+    });
+    db.get('users/' + username + '/rooms', function(err, reply) {
+	if (!reply) {
+	    usersocket.emit('message', {message: 'You should sync your roomlist. Subscribing you to default rooms.'});
+	    usersocket.emit('joinroom', {room: 'whiskchat'});
+	    usersocket.emit('joinroom', {room: 'botgames'});
+	    usersocket.sync = [];
+	    return;
+	}
+	usersocket.sync = [];
+	JSON.parse(reply).forEach(function(rm) {
+	    usersocket.emit('joinroom', {room: rm});
+	    usersocket.sync.push(rm);
+	});
+	usersocket.emit('message', {message: 'Sync complete. You have joined: ' + JSON.parse(reply).join(', ')});
     });
     usersocket.version = 'Unknown Client/bot';
     usersocket.quitmsg = 'Disconnected from server';
@@ -295,10 +300,10 @@ function login(username, usersocket, sess) {
     }, 2000);
 }
 function handle(err) {
-    console.log('error - ' + err);
+    console.log('error - ' + err.stack);
     try {
         sockets.forEach(function(socket) {
-            socket.emit({room: 'main', message: '<span style="color: #e00">Server error: ' + err.stack.replace(/\n/g,'</br>') + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+            socket.emit({room: 'main', message: '<span style="color: #e00">Server error (more details logged to dev console)</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
 	});
     }
     catch(e) {
@@ -307,6 +312,15 @@ function handle(err) {
 }
 function randomerr(type,code,string){
     handle(new Error("RANDOM.ORG Error: Type: "+type+", Status Code: "+code+", Response Data: "+string));
+}
+function genRoomText() {
+    var tmp = {};
+    users.forEach(function(sock) {
+	sock.sync.forEach(function(room) {
+	    tmp.room += 1;
+	});
+    });
+    return "Rooms object: " + JSON.stringify(tmp);
 }
 function calculateEarns(user, msg, callback) {
     var rnd = Math.random();
@@ -582,6 +596,10 @@ io.sockets.on('connection', function(socket) {
                 chatemit(socket, users.join(', ') + ': ' + stripHTML(chat.message.substr(6, chat.message.length)), chat.room);
                 return;
 	    }
+	    if (chat.message.substr(0, 6) == "/rooms") {
+		socket.emit('message', {message: genRoomText()});
+                return;
+	    }
 	    if (chat.message.substr(0, 4) == "/spt") {
                 if (stripHTML(chat.message.substr(5, chat.message.length)) == '') {
                     return socket.emit('message', {message: 'Syntax: /spt (Spotify URI)'});
@@ -663,7 +681,7 @@ io.sockets.on('connection', function(socket) {
 	db.get('users/' + socket.user + '/balance', function(err, bal1) {
 	    if (Number(draw.amount) > 0 && bal1 >= Number(draw.amount)) {
                 inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'WhiskChat withdrawal: ' + socket.user + ' | Thanks for using WhiskChat!', function(err, tx) {
-                    if (typeof tx != "object" && tx.indexOf('VOUCHER') == -1) {
+                    if (tx != 'OK' && tx.indexOf('VOUCHER') == -1) {
                         socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (" + tx + ")"});
                         return;
                     }
@@ -734,8 +752,47 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.on('getbalance', function() {
+	if (!socket.authed) {
+	    return;
+	}
         db.get('users/' + socket.user + '/balance', function(err, balance) {
 	    socket.emit('balance', {balance: balance});
+	});
+    });
+    socket.on('sync', function(data) {
+	if (!socket.authed) {
+	    return;
+	}
+	if (Object.prototype.toString.call(data.sync) !== '[object Array]') {
+	    socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: data.sync is not an array!'});
+	    return;
+	}
+	if (data.sync.length > 15) {
+	    socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: Your room list is over 15 rooms.'});
+	    return;
+	}
+	var tmp5 = true;
+	data.sync.forEach(function(room) {
+	    if (Object.prototype.toString.call(room) !== '[object String]') {
+		socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: Room \'' + room + '\' is not a string!'});
+		tmp5 = false;
+	    }
+	    if (room.length > 20) {
+		socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: Room \'' + room + '\' is over 20 characters long.'});
+		tmp5 = false;
+	    }
+	});
+	if (!tmp5) {
+	    socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: One or more of your rooms did not pass the validation.'});
+	    return;
+	}
+	db.set('users/' + socket.user + '/rooms', JSON.stringify(data.sync), function(err, res) {
+	    if (err) {
+		socket.emit('message', {message: '<i class="icon-exclamation-sign"></i> Sync error: '+ err});
+		return;
+	    }
+	    socket.emit('message', {message: '<i class="icon-ok-sign"></i> Sync complete.'});
+	    return;
 	});
     });
 });
