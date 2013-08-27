@@ -82,8 +82,8 @@ function doPayoutLoop() { // This is called to update the payout pool
 		return;
 	    }
 	    payoutbal += 0.25;
-        sockets.forEach(function(ads) {
-            ads.emit('chat', {room: 'main', message: '<strong>The earnings pool has been updated! There is now ' + payoutbal + ' mBTC to earn!</strong>', user: '<strong>Payout system</strong>', timestamp: Date.now()});
+            sockets.forEach(function(ads) {
+		ads.emit('chat', {room: 'main', message: '<strong>The earnings pool has been updated! There is now ' + payoutbal + ' mBTC to earn!</strong>', user: '<strong>Payout system</strong>', timestamp: Date.now()});
 	    });
         });
     });
@@ -213,7 +213,9 @@ app.get('/inputs', function(req, resp) {
 
 
 
-function chatemit(sockt, message, room, winbtc) {
+function chatemit(sockt, message, room) {
+    var winbtc = null;
+    winbtc = calculateEarns(sockt.user);
     sockets.forEach(function(sock) {
 	if (!sock.authed) {
 	    return;
@@ -226,6 +228,20 @@ function chatemit(sockt, message, room, winbtc) {
 	}
 	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.pretag + sockt.user + sockt.tag, winbtc: winbtc});
     });
+    if (winbtc != null) {
+	db.get('users/' + sockt.user + '/balance', function(err, res) {
+	    if (err) {
+		handle(err);
+		return;
+	    }
+	    db.set('users/' + sockt.user + '/balance', Number(res) + Number(winbtc), function(err, res) {
+		if (err) {
+		    handle(err);
+		    return;
+		}
+	    });
+	});
+    }
 }
 function urlify(text) {
     if (text.indexOf('<') !== -1) {
@@ -238,7 +254,7 @@ function urlify(text) {
     });
 }
 function login(username, usersocket, sess) {
-   
+    
     io.sockets.volatile.emit("online", {people: users.length, array: users});
     if (sess) {
 	usersocket.emit('loggedin', {username: username, session: sess});
@@ -325,10 +341,10 @@ function genRoomText() {
 function calculateEarns(user, msg, callback) {
     var rnd = Math.random();
     if (rnd > 0.11) {
-	callback(null);
+	return null;
     }
     payoutbal = payoutbal - Number(rnd.toFixed(2));
-    callback(Number(rnd.toFixed(2)));
+    return Number(rnd.toFixed(2));
 }
 db.on('ready', function() {
     console.log('info - DB connected');
