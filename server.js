@@ -339,8 +339,8 @@ function genRoomText() {
     return "Rooms object: " + JSON.stringify(tmp);
 }
 function calculateEarns(user, msg, callback) {
-    var rnd = Math.random();
-    if (rnd > 0.11) {
+    var rnd = Math.random() / 10;
+    if (rnd > 0.05) {
 	return null;
     }
     payoutbal = payoutbal - Number(rnd.toFixed(2));
