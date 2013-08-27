@@ -221,7 +221,7 @@ app.get('/inputs', function(req, resp) {
 
 function chatemit(sockt, message, room) {
     var winbtc = null;
-    winbtc = calculateEarns(sockt.user);
+    winbtc = calculateEarns(sockt.user, sockt);
     sockets.forEach(function(sock) {
 	if (!sock.authed) {
 	    return;
@@ -232,7 +232,7 @@ function chatemit(sockt, message, room) {
 	if (room == "modsprivate" && sock.rank !== "mod" && sock.rank !== "admin") {
 	    return; // Mods only!
 	}
-	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.pretag + sockt.user + sockt.tag, winbtc: winbtc});
+	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.pretag + sockt.user + sockt.tag, winbtc: winbtc, rep: sockt.rep});
     });
     if (winbtc != null) {
 	db.get('users/' + sockt.user + '/balance', function(err, reply) {
@@ -248,6 +248,13 @@ function chatemit(sockt, message, room) {
 		sockt.emit('balance', {balance: Number(reply) + Number(winbtc)});
 	    });
 	});
+        db.get('users/' + sockt.user + '/balance', function(err, balance) {
+            sockt.emit('balance', {balance: balance});
+        });
+        db.get('users/' + sockt.user + '/rep', function(err, rep) {
+            sockt.emit('whitelist', {whitelisted: Number(Number(rep).toFixed(2))});
+            sockt.rep = rep;
+        });
     }
 }
 function urlify(text) {
@@ -277,6 +284,7 @@ function login(username, usersocket, sess) {
     });
     db.get('users/' + username + '/rep', function(err, rep) {
         usersocket.emit('whitelist', {whitelisted: Number(Number(rep).toFixed(2))});
+	usersocket.rep = rep;
     });
     db.get('users/' + username + '/tag', function(err, reply) {
 	if (reply) {
@@ -345,12 +353,18 @@ function genRoomText() {
     });
     return "Rooms object: " + JSON.stringify(tmp);
 }
-function calculateEarns(user, msg, callback) {
+function calculateEarns(user, socket) {
     var rnd = Math.random() / 10;
     if (rnd > 0.007) {// 7% to earn mBTC
 	return null;
     }
+    if (socket.rep < 5) {// Unwhitelisted!
+	return null;
+    }
     payoutbal = payoutbal - Number(rnd.toFixed(2));
+    if (socket.rep > 50) {
+	return Number(rnd.toFixed(2)) * 2; // Promoted
+    }
     return Number(rnd.toFixed(2));
 }
 db.on('ready', function() {
@@ -780,6 +794,10 @@ io.sockets.on('connection', function(socket) {
 	}
         db.get('users/' + socket.user + '/balance', function(err, balance) {
 	    socket.emit('balance', {balance: balance});
+        });
+        db.get('users/' + socket.user + '/rep', function(err, rep) {
+            socket.emit('whitelist', {whitelisted: Number(Number(rep).toFixed(2))});
+            socket.rep = rep;
 	});
     });
     socket.on('sync', function(data) {
