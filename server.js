@@ -16,6 +16,7 @@ var redis = require('redis');
 var alphanumeric = /^[a-z0-9]+$/i; // Noone remove this.
 var sockets = [];
 var lastip = [];
+var payoutbal = 0;
 var bitaddr = require('bitcoin-address');
 var emitAd = true;
 var knownspambots = [];
@@ -59,6 +60,30 @@ db.on('error', function(err) {
 });
 function stripHTML(html) { // Prevent XSS
     return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
+}
+function doPayoutLoop() { // This is called to update the payout pool
+    db.get('system/donated', function(err, reply) {
+	if (err) {
+	    handle(err);
+	    return;
+	}
+	if (Number(reply) < 0.25) {
+	    return;
+	}
+	if (payoutbal >= 0.2) {
+	    return;
+	}
+	db.set('system/donated', Number(reply) - 0.25, function(err, res) {
+	    if (err) {
+		handle(err);
+		return;
+	    }
+	    payoutbal += 0.25;
+        sockets.forEach(function(ads) {
+            ads.emit('chat', {room: 'main', message: '<strong>The earnings pool has been updated! There is now ' + payoutbal + ' mBTC to earn!</strong>', user: '<strong>Payout system</strong>', timestamp: Date.now()});
+	    });
+        });
+    });
 }
 // Inputs.io code
 function getClientIp(req) {
@@ -284,7 +309,12 @@ function randomerr(type,code,string){
     handle(new Error("RANDOM.ORG Error: Type: "+type+", Status Code: "+code+", Response Data: "+string));
 }
 function calculateEarns(user, msg, callback) {
-    callback(null);
+    var rnd = Math.random();
+    if (rnd > 0.11) {
+	callback(null);
+    }
+    payoutbal = payoutbal - Number(rnd.toFixed(2));
+    callback(Number(rnd.toFixed(2)));
 }
 db.on('ready', function() {
     console.log('info - DB connected');
@@ -601,6 +631,13 @@ io.sockets.on('connection', function(socket) {
 		}
 		return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', chat.room);
             }
+            if (chat.message.substr(0,9) == "/forcepay") {
+                if (socket.rank !== 'admin') {
+                    socket.emit("message", {type: "alert-error", message: "You do not have permissions to force a payout."});
+                    return;
+                }
+                return doPayoutLoop();
+            }
             if (chat.message.substr(0, 8) == "/kickall") {
 		if (socket.rank !== 'admin') {
                     socket.emit("message", {type: "alert-error", message: "You do not have permissions to use /kickall."});
@@ -708,13 +745,19 @@ process.on('SIGTERM', function() {
     sockets.forEach(function(cs) {
         cs.emit('chat', {room: 'main', message: '<span style="color: #e00;">Server stopping! (most likely just rebooting)</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
-    setTimeout(function() {
-	process.exit(0);
-    }, 1000);
+    db.get('system/donated', function(err, res) {
+	if (err) {
+	    handle(err)
+	    return;
+	}
+	db.set('system/donated', Number(res) + payoutbal, function(err, res) {
+            process.exit(0);
+	});
+    });
 });
 process.on('uncaughtException', function(err) {
     sockets.forEach(function(cs) {
-	cs.emit('chat', {room: 'main', message: '<span style="color: #e00;">Server error: ' + err.stack + '</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
+	cs.emit('chat', {room: 'main', message: '<span style="color: #e00;">500 Internal server error (more details logged to console)</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
     console.log('error - ' + err + err.stack);
 });
