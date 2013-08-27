@@ -87,7 +87,7 @@ function doPayoutLoop(amount) { // This is called to update the payout pool
 		handle(err);
 		return;
 	    }
-	    payoutbal = amount + payoutbal;
+            payoutbal = Number(payoutbal) + Number(amount);
             sockets.forEach(function(ads) {
                 ads.emit('chat', {room: 'main', message: '<strong>The earnings pool has been updated! There is now ' + payoutbal + ' mBTC to earn!</strong> In total, ' + (Number(reply) - amount) + ' mBTC is available.', user: '<strong>Payout system</strong>', timestamp: Date.now()});
 	    });
