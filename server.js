@@ -229,17 +229,17 @@ function chatemit(sockt, message, room) {
 	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.pretag + sockt.user + sockt.tag, winbtc: winbtc});
     });
     if (winbtc != null) {
-	db.get('users/' + sockt.user + '/balance', function(err, res) {
+	db.get('users/' + sockt.user + '/balance', function(err, reply) {
 	    if (err) {
 		handle(err);
 		return;
 	    }
-	    db.set('users/' + sockt.user + '/balance', Number(res) + Number(winbtc), function(err, res) {
+	    db.set('users/' + sockt.user + '/balance', Number(reply) + Number(winbtc), function(err, res) {
 		if (err) {
 		    handle(err);
 		    return;
 		}
-		sockt.emit('balance', {balance: Number(res) + Number(winbtc)});
+		sockt.emit('balance', {balance: Number(reply) + Number(winbtc)});
 	    });
 	});
     }
