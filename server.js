@@ -361,6 +361,9 @@ function calculateEarns(user, socket) {
     if (socket.rep < 5) {// Unwhitelisted!
 	return null;
     }
+    if (payoutbal < 0.01) {
+	return null;
+    }
     payoutbal = payoutbal - Number(rnd.toFixed(2));
     if (socket.rep > 50) {
 	return Number(rnd.toFixed(2)) * 2; // Promoted
