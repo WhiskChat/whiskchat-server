@@ -64,8 +64,11 @@ function stripHTML(html) { // Prevent XSS
     }
     return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
 }
+function isNumber(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n);
+}
 function doPayoutLoop(amount) { // This is called to update the payout pool
-    if (amount < 0.01) {
+    if (isNumber(amount) == false) {
 	amount = 0.25;
     }
     db.get('system/donated', function(err, reply) {
