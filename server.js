@@ -773,13 +773,13 @@ io.sockets.on('connection', function(socket) {
                                 if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
                                     db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
                                     db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
-				    db.set('users/' + socket.user + '/rep', (Number(rep1) - (Number(tip.tip) / 2)), redis.print);
+				    db.set('users/' + socket.user + '/rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
                                     sockets.forEach(function(cs) {
-                                        cs.emit('tip', {room: tip.room, target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + Number(tip.tip)) + ' mBTC] (+ <i class="icon-gift"></i> ' + socket.user + ' [' + (Number(rep1) - (Number(tip.tip) / 2)) + '])', amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
+                                        cs.emit('tip', {room: tip.room, target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + Number(tip.tip)) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2) + ')', amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
 					if (cs.user == socket.user) {
 					    socket.emit('balance', {balance: Number(bal1) - Number(tip.tip)});
-                                            socket.emit('whitelist', {whitelisted: (Number(rep1) - (Number(tip.tip) / 2))});
-                                            socket.rep = (Number(rep1) - (Number(tip.tip) / 2));
+                                            socket.emit('whitelist', {whitelisted: (Number(rep1) + (Number(tip.tip) / 2))});
+                                            socket.rep = (Number(rep1) + (Number(tip.tip) / 2));
 					}
                                     });
                                 }
