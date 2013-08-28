@@ -749,12 +749,12 @@ io.sockets.on('connection', function(socket) {
                 if (exists) {
                         db.get('users/' + tip.user + '/rep', function(err, bal2) {
                             if (Number(tip.tip) > 0 && muted.indexOf(socket.user) == -1) {
-                                    db.set('users/' + tip.user + '/rep', Number(bal2) + Number(tip.tip), redis.print);
+                                    db.set('users/' + tip.user + '/rep', Number(tip.tip), redis.print);
                                 sockets.forEach(function(cs) {
-                                    cs.emit('tip', {room: tip.room, target: "<i class='icon-gift'></i> " + stripHTML(tip.user) + ' [' + Number(bal2) + Number(tip.tip) + ']', amount: Number(tip.tip), message: tip.message, rep: true, user: socket.user, timestamp: Date.now()});
+                                    cs.emit('tip', {room: tip.room, target: "<i class='icon-gift'></i> " + stripHTML(tip.user) + ' [' + Number(tip.tip) + ']', amount: Number(tip.tip), message: tip.message, rep: true, user: socket.user, timestamp: Date.now()});
                                     if (cs.user == tip.user) {
-                                        cs.emit('whitelist', {whitelisted: Number(bal2) + Number(tip.tip)});
-					cs.rep = Number(cs.rep) + Number(tip.tip);
+                                        cs.emit('whitelist', {whitelisted: Number(tip.tip)});
+					cs.rep = Number(tip.tip);
                                     }
                                 });
                             }
