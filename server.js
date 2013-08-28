@@ -91,7 +91,7 @@ function doPayoutLoop(amount) { // This is called to update the payout pool
 	    }
             payoutbal = Number(payoutbal) + Number(amount);
             sockets.forEach(function(ads) {
-                ads.emit('chat', {room: 'main', message: '<strong>The earnings pool has been updated! There is now ' + payoutbal + ' mBTC to earn!</strong> In total, ' + (Number(reply) - amount) + ' mBTC is available.', user: '<strong>Payout system</strong>', timestamp: Date.now()});
+                ads.emit('chat', {room: 'main', message: '<strong>The earnings pool has been updated! There is now ' + payoutbal + ' mBTC to earn!</strong> In total, ' + (Number(reply) - amount) + ' mBTC has been donated. /tip donate (amount) to donate more to the pool!', user: '<strong>Payout system</strong>', timestamp: Date.now()});
 	    });
         });
     });
@@ -751,7 +751,7 @@ io.sockets.on('connection', function(socket) {
                             if (Number(tip.tip) > 0 && muted.indexOf(socket.user) == -1) {
                                     db.set('users/' + tip.user + '/rep', Number(tip.tip), redis.print);
                                 sockets.forEach(function(cs) {
-                                    cs.emit('tip', {room: tip.room, target: "<i class='icon-gift'></i> " + stripHTML(tip.user) + ' [' + Number(tip.tip) + ']', amount: Number(tip.tip), message: tip.message, rep: true, user: socket.user, timestamp: Date.now()});
+                                    cs.emit('tip', {room: tip.room, target: "<i class='icon-gift'></i> " + stripHTML(tip.user) + ' [rep]', amount: Number(tip.tip), message: tip.message, rep: true, user: socket.user, timestamp: Date.now()});
                                     if (cs.user == tip.user) {
                                         cs.emit('whitelist', {whitelisted: Number(tip.tip)});
 					cs.rep = Number(tip.tip);
@@ -773,7 +773,10 @@ io.sockets.on('connection', function(socket) {
                                     db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
                                     db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
                                     sockets.forEach(function(cs) {
-                                        cs.emit('tip', {room: tip.room, target: 'the WhiskChat Server Payout Pool', amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
+                                        cs.emit('tip', {room: tip.room, target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + Number(tip.tip)) + ' mBTC]', amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
+					if (cs.user == socket.user) {
+					    socket.emit('balance', {balance: Number(bal1) - Number(tip.tip)});
+					}
                                     });
                                 }
                                 else {
