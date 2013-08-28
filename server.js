@@ -42,7 +42,7 @@ if (process.argv[2] == "travisci") {
 }
 io.configure(function () { 
     io.set("transports", ["xhr-polling"]); 
-    io.set("polling duration", 10);
+    io.set("polling duration", 5);
     io.set('log level', 1);
 });
 console.log('info - WhiskChat Server starting');
