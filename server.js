@@ -745,14 +745,14 @@ io.sockets.on('connection', function(socket) {
 	    }
             db.get('users/' + tip.user, function(err, exists) {
                 if (exists) {
-                    db.get('users/' + socket.user + '/balance', function(err, bal1) {
                         db.get('users/' + tip.user + '/rep', function(err, bal2) {
                             if (Number(tip.tip) > 0 && muted.indexOf(socket.user) == -1) {
-                                db.set('users/' + tip.user + '/rep', Number(bal2) + Number(tip.tip), redis.print);
+                                    db.set('users/' + tip.user + '/rep', Number(bal2) + Number(tip.tip), redis.print);
                                 sockets.forEach(function(cs) {
-                                    cs.emit('tip', {room: tip.room, target: "<i class='icon-gift'></i> " + stripHTML(tip.user), amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
+                                    cs.emit('tip', {room: tip.room, target: "<i class='icon-gift'></i> " + stripHTML(tip.user) + ' [' + Number(bal2) + Number(tip.tip) + ']', amount: Number(tip.tip), message: tip.message, rep: true, user: socket.user, timestamp: Date.now()});
                                     if (cs.user == tip.user) {
                                         cs.emit('whitelist', {whitelisted: Number(bal2) + Number(tip.tip)});
+					cs.rep = Number(cs.rep) + Number(tip.tip);
                                     }
                                 });
                             }
@@ -760,7 +760,6 @@ io.sockets.on('connection', function(socket) {
                                 socket.emit('message', {type: "alert-error", message: "Reptip failed."});
                             }
                         });
-                    });
                 }
             });
         }
