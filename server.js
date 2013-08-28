@@ -354,8 +354,8 @@ function genRoomText() {
     return "Rooms object: " + JSON.stringify(tmp);
 }
 function calculateEarns(user, socket) {
-    var rnd = Math.random() / 10;
-    if (rnd > 0.01) {// 10% to earn mBTC
+    var rnd = Math.random();
+    if (rnd > 0.115) {// 11.5% to earn mBTC
 	console.log('debug - earns failed - chance');
 	return null;
     }
