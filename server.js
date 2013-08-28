@@ -355,13 +355,16 @@ function genRoomText() {
 }
 function calculateEarns(user, socket) {
     var rnd = Math.random() / 10;
-    if (rnd > 0.007) {// 7% to earn mBTC
+    if (rnd > 0.01) {// 10% to earn mBTC
+	console.log('debug - earns failed - chance');
 	return null;
     }
     if (socket.rep < 5) {// Unwhitelisted!
+	console.log('debug - earns failed - rep');
 	return null;
     }
     if (payoutbal < 0.01) {
+	console.log('debug - earns failed - balance');
 	return null;
     }
     payoutbal = payoutbal - Number(rnd.toFixed(2));
