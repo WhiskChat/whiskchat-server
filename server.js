@@ -67,9 +67,11 @@ function stripHTML(html) { // Prevent XSS
 function isNumber(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
+setInterval(doPayoutLoop, 900000);
+setTimeout(doPayoutLoop, 10000);
 function doPayoutLoop(amount) { // This is called to update the payout pool
     if (isNumber(amount) == false) {
-	amount = 0.25;
+	amount = 1;
     }
     db.get('system/donated', function(err, reply) {
 	if (err) {
@@ -356,15 +358,12 @@ function genRoomText() {
 function calculateEarns(user, socket) {
     var rnd = Math.random();
     if (rnd > 0.115) {// 11.5% to earn mBTC
-	console.log('debug - earns failed - chance');
 	return null;
     }
     if (socket.rep < 5) {// Unwhitelisted!
-	console.log('debug - earns failed - rep');
 	return null;
     }
     if (payoutbal < 0.01) {
-	console.log('debug - earns failed - balance');
 	return null;
     }
     payoutbal = payoutbal - Number(rnd.toFixed(2));
