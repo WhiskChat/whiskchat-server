@@ -47,8 +47,8 @@ io.configure(function () {
 });
 console.log('info - WhiskChat Server starting');
 console.log('info - Starting DB');
-if (process.env.REDISTOGO_URL) {
-    var rtg   = require("url").parse(process.env.REDISTOGO_URL);
+if (process.env.REDISCLOUD_URL) {
+    var rtg   = require("url").parse(process.env.REDISCLOUD_URL);
     var db = redis.createClient(rtg.port, rtg.hostname);
     
     db.auth(rtg.auth.split(":")[1]);
@@ -747,21 +747,21 @@ io.sockets.on('connection', function(socket) {
 	    }
             db.get('users/' + tip.user, function(err, exists) {
                 if (exists) {
-                        db.get('users/' + tip.user + '/rep', function(err, bal2) {
-                            if (Number(tip.tip) > 0 && muted.indexOf(socket.user) == -1) {
-                                    db.set('users/' + tip.user + '/rep', Number(tip.tip), redis.print);
-                                sockets.forEach(function(cs) {
-                                    cs.emit('tip', {room: tip.room, target: "<i class='icon-gift'></i> " + stripHTML(tip.user) + ' [rep]', amount: Number(tip.tip), message: tip.message, rep: true, user: socket.user, timestamp: Date.now()});
-                                    if (cs.user == tip.user) {
-                                        cs.emit('whitelist', {whitelisted: Number(tip.tip)});
-					cs.rep = Number(tip.tip);
-                                    }
-                                });
-                            }
-                            else {
-                                socket.emit('message', {type: "alert-error", message: "Reptip failed."});
-                            }
-                        });
+                    db.get('users/' + tip.user + '/rep', function(err, bal2) {
+                        if (Number(tip.tip) > 0 && muted.indexOf(socket.user) == -1) {
+                            db.set('users/' + tip.user + '/rep', Number(tip.tip), redis.print);
+                            sockets.forEach(function(cs) {
+                                cs.emit('tip', {room: tip.room, target: "<i class='icon-gift'></i> " + stripHTML(tip.user) + ' [rep]', amount: Number(tip.tip), message: tip.message, rep: true, user: socket.user, timestamp: Date.now()});
+                                if (cs.user == tip.user) {
+                                    cs.emit('whitelist', {whitelisted: Number(tip.tip)});
+				    cs.rep = Number(tip.tip);
+                                }
+                            });
+                        }
+                        else {
+                            socket.emit('message', {type: "alert-error", message: "Reptip failed."});
+                        }
+                    });
                 }
             });
         }
@@ -769,53 +769,53 @@ io.sockets.on('connection', function(socket) {
 	    if (tip.user == "donate") {
                 db.get('users/' + socket.user + '/balance', function(err, bal1) {
 		    db.get('users/' + socket.user + '/rep', function(err, rep1) {
-                            db.get('system/donated', function(err, bal2) {
-                                if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
-                                    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
-                                    db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
-				    db.set('users/' + socket.user + '/rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
-                                    sockets.forEach(function(cs) {
-                                        cs.emit('tip', {room: tip.room, target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + Number(tip.tip)) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2) + ')', amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
-					if (cs.user == socket.user) {
-					    socket.emit('balance', {balance: Number(bal1) - Number(tip.tip)});
-                                            socket.emit('whitelist', {whitelisted: (Number(rep1) + (Number(tip.tip) / 2))});
-                                            socket.rep = (Number(rep1) + (Number(tip.tip) / 2));
-					}
-                                    });
-                                }
-                                else {
-                                    socket.emit('message', {type: "alert-error", message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."});
-                                }
-                            });
+                        db.get('system/donated', function(err, bal2) {
+                            if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
+                                db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
+                                db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
+				db.set('users/' + socket.user + '/rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
+                                sockets.forEach(function(cs) {
+                                    cs.emit('tip', {room: tip.room, target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + Number(tip.tip)) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2) + ')', amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
+				    if (cs.user == socket.user) {
+					socket.emit('balance', {balance: Number(bal1) - Number(tip.tip)});
+                                        socket.emit('whitelist', {whitelisted: (Number(rep1) + (Number(tip.tip) / 2))});
+                                        socket.rep = (Number(rep1) + (Number(tip.tip) / 2));
+				    }
+                                });
+                            }
+                            else {
+                                socket.emit('message', {type: "alert-error", message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."});
+                            }
+                        });
 		    });
 		});
 	    }
             else {
-            db.get('users/' + tip.user, function(err, exists) {
-                if (exists) {
-                    db.get('users/' + socket.user + '/balance', function(err, bal1) {
-                        db.get('users/' + tip.user + '/balance', function(err, bal2) {
-                            if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
-				db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
-				db.set('users/' + tip.user + '/balance', Number(bal2) + Number(tip.tip), redis.print);
-				sockets.forEach(function(cs) {
-                                    cs.emit('tip', {room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
-                                    if (cs.user == socket.user) {
-					cs.emit('balance', {balance: Number(bal1) - Number(tip.tip)});
-                                    }
-                                    if (cs.user == tip.user) {
-					cs.emit('balance', {balance: Number(bal2) + Number(tip.tip)});
-                                    }
-				});
-                            }
-                            else {
-				socket.emit('message', {type: "alert-error", message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."});
-                            }
+		db.get('users/' + tip.user, function(err, exists) {
+                    if (exists) {
+			db.get('users/' + socket.user + '/balance', function(err, bal1) {
+                            db.get('users/' + tip.user + '/balance', function(err, bal2) {
+				if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
+				    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
+				    db.set('users/' + tip.user + '/balance', Number(bal2) + Number(tip.tip), redis.print);
+				    sockets.forEach(function(cs) {
+					cs.emit('tip', {room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
+					if (cs.user == socket.user) {
+					    cs.emit('balance', {balance: Number(bal1) - Number(tip.tip)});
+					}
+					if (cs.user == tip.user) {
+					    cs.emit('balance', {balance: Number(bal2) + Number(tip.tip)});
+					}
+				    });
+				}
+				else {
+				    socket.emit('message', {type: "alert-error", message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."});
+				}
+			    });
 			});
-                    });
-		}
-	    });
-		}
+		    }
+		});
+	    }
 	}
     });
     socket.on('getbalance', function() {
