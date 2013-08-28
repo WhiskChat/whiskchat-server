@@ -766,10 +766,27 @@ io.sockets.on('connection', function(socket) {
             });
         }
 	else {
+	    if (tip.user == "donate") {
+                        db.get('users/' + socket.user + '/balance', function(err, bal1) {
+                            db.get('system/donated', function(err, bal2) {
+                                if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
+                                    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
+                                    db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
+                                    sockets.forEach(function(cs) {
+                                        cs.emit('tip', {room: tip.room, target: 'the WhiskChat Server Payout Pool', amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
+                                    });
+                                }
+                                else {
+                                    socket.emit('message', {type: "alert-error", message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."});
+                                }
+                            });
+                        });
+	    }
+            else {
             db.get('users/' + tip.user, function(err, exists) {
-		if (exists) {
+                if (exists) {
                     db.get('users/' + socket.user + '/balance', function(err, bal1) {
-			db.get('users/' + tip.user + '/balance', function(err, bal2) {
+                        db.get('users/' + tip.user + '/balance', function(err, bal2) {
                             if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
 				db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
 				db.set('users/' + tip.user + '/balance', Number(bal2) + Number(tip.tip), redis.print);
@@ -790,6 +807,7 @@ io.sockets.on('connection', function(socket) {
                     });
 		}
 	    });
+		}
 	}
     });
     socket.on('getbalance', function() {
