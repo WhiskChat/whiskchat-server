@@ -81,7 +81,7 @@ function doPayoutLoop(amount) { // This is called to update the payout pool
 	if (Number(reply) < amount) {
 	    return;
 	}
-	if (payoutbal >= (amount - 0.05)) {
+	if (payoutbal >= 0.1) {
 	    return;
 	}
 	db.set('system/donated', Number(reply) - amount, function(err, res) {
