@@ -325,6 +325,9 @@ function login(username, usersocket, sess) {
         if (users.indexOf(username) == -1) {
             users.push(username);
         }
+	else {
+	    return;
+	}
 	if (muted.indexOf(username) !== -1) {
 	    return;
 	}
@@ -405,14 +408,16 @@ io.sockets.on('connection', function(socket) {
 	sockets.splice(sockets.indexOf(socket), 1);
 	if (socket.authed) {
 	    var tmp = false;
-	    if (muted.indexOf(socket.user) == -1) {
-		chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
-	    }
-	    sockets.forEach(function(skct) {
-		if (socket.user == skct.user) {
-		    skct.disconnect();
-		}
-	    });
+	    setTimeout(function() {
+		sockets.forEach(function(skct) {
+		    if (socket.user == skct.user) {
+			tmp = true;
+		    }
+		});
+	    }, 15000);
+            if (muted.indexOf(socket.user) == -1 && !tmp) {
+                chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
+            }
             users.splice(users.indexOf(socket.user), 1);
 	    io.sockets.emit("online", {people: users.length, array: users});
 	}
