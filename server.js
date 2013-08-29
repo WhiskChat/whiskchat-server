@@ -394,8 +394,7 @@ db.on('ready', function() {
 setInterval(function() {
     if (emitAd) {
         sockets.forEach(function(ads) {
-            ads.emit('chat', {room: 'main', message: '<center><iframe frameborder="0" src="https://bitads.net/gimg.php?id=308" style="overflow:hidden;width:468px;height:60px;"></iframe></center>', user: 'bitads', timestamp: Date.now()});
-            ads.emit('chat', {room: 'main', message: '<center><strong><a href="https://bitads.net/?p=bid&id=308">Advertise on WhiskChat!</a></strong></center>', user: 'Advertising', timestamp: Date.now()});
+            ads.emit('chat', {room: 'main', message: '<iframe frameborder="0" src="https://bitads.net/gimg.php?id=308" style="overflow:hidden;width:468px;height:60px;"></iframe>', user: 'bitads', timestamp: Date.now()});
         });
         emitAd = false;
     }
@@ -413,11 +412,11 @@ io.sockets.on('connection', function(socket) {
 	sockets.splice(sockets.indexOf(socket), 1);
 	if (socket.authed) {
 	    var tmp = false;
-		sockets.forEach(function(skct) {
-		    if (socket.user == skct.user) {
-			skct.disconnect();
-		    }
-		});
+	    sockets.forEach(function(skct) {
+		if (socket.user == skct.user) {
+		    skct.disconnect();
+		}
+	    });
             if (muted.indexOf(socket.user) == -1) {
                 chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
             }
