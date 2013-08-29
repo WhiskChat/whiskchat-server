@@ -361,13 +361,13 @@ function genRoomText() {
 function calculateEarns(user, socket) {
     var rnd = Math.random();
     if (typeof socket.stage !== "number") {
-	socket.stage = 0.032;
+	socket.stage = 0.015;
     }
     if (socket.rep > 100) {
 	socket.rep = 100;
     }
     if (rnd > socket.stage) {
-	socket.stage = socket.stage + 0.032;
+	socket.stage = socket.stage + 0.015;
 	return null;
     }
     if (socket.rep < 5) {// Unwhitelisted!
@@ -376,7 +376,7 @@ function calculateEarns(user, socket) {
     if (payoutbal < 0.01) {
 	return null;
     }
-    socket.stage = 0.032;
+    socket.stage = 0.015;
     payoutbal = payoutbal - Math.log(socket.rep)/60;
     return Number((Math.log(socket.rep)/60).toFixed(2));
 }
