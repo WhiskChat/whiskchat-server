@@ -266,7 +266,7 @@ function urlify(text) {
     }
     var urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.replace(urlRegex, function(url) {
-        return '<a href="' + url + '" target="_blank">' + url + '</a>';
+        return '<a target="_blank" href="' + url.replace('"', '') + '">' + url + '</a>';
     });
 }
 function login(username, usersocket, sess) {
@@ -385,21 +385,13 @@ db.on('ready', function() {
 });
 setInterval(function() {
     if (emitAd) {
-	sockets.forEach(function(ads) {
-            ads.emit('chat', {room: 'main', message: "<iframe data-aa='5513' src='http://ad.a-ads.com/5513?size=468x15' scrolling='no' style='width:468px; height:15px; border:0px; padding:0;overflow:hidden' allowtransparency='true'></iframe>", user: 'AnonymousAds', timestamp: Date.now()});
-	});
-	emitAd = false;
-    }
-}, 300000);
-setInterval(function() {
-    if (emitAd) {
         sockets.forEach(function(ads) {
             ads.emit('chat', {room: 'main', message: '<center><iframe frameborder="0" src="https://bitads.net/gimg.php?id=308" style="overflow:hidden;width:468px;height:60px;"></iframe></center>', user: 'bitads', timestamp: Date.now()});
-            ads.emit('chat', {room: 'main', message: '<strong><a href="https://bitads.net/?p=bid&id=308">Advertise on WhiskChat!</a></strong>', user: 'Advertising', timestamp: Date.now()});
+            ads.emit('chat', {room: 'main', message: '<center><strong><a href="https://bitads.net/?p=bid&id=308">Advertise on WhiskChat!</a></strong></center>', user: 'Advertising', timestamp: Date.now()});
         });
         emitAd = false;
     }
-}, 400000);
+}, 300000);
 io.sockets.on('connection', function(socket) {
     sockets.push(socket);
     
