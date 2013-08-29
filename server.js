@@ -373,13 +373,9 @@ function calculateEarns(user, socket) {
     if (payoutbal < 0.01) {
 	return null;
     }
-    var rnd = Math.random();
     socket.stage = 0.032;
-    payoutbal = payoutbal - Number(rnd.toFixed(2));
-    if (socket.rep > 50) {
-	return Number(rnd.toFixed(2)) * 2; // Promoted
-    }
-    return Number(rnd.toFixed(2));
+    payoutbal = payoutbal - Math.log(socket.rep)/60;
+    return Number((Math.log(socket.rep)/60).toFixed(2));
 }
 db.on('ready', function() {
     console.log('info - DB connected');
