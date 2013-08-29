@@ -364,7 +364,7 @@ function calculateEarns(user, socket) {
 	socket.stage = 0.032;
     }
     if (rnd > socket.stage) {
-	socket.stage = socket.stage * 2;
+	socket.stage = socket.stage + 0.032;
 	return null;
     }
     if (socket.rep < 5) {// Unwhitelisted!
@@ -373,6 +373,7 @@ function calculateEarns(user, socket) {
     if (payoutbal < 0.01) {
 	return null;
     }
+    var rnd = Math.random();
     socket.stage = 0.032;
     payoutbal = payoutbal - Number(rnd.toFixed(2));
     if (socket.rep > 50) {
