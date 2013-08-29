@@ -704,6 +704,12 @@ io.sockets.on('connection', function(socket) {
 		}
 		return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', chat.room);
             }
+            if (chat.message.substr(0,2) == "/b") { // Bold - DiamondCardz
+		return chatemit(socket, '<strong>' + stripHTML(chat.message.substr(3, chat.message.length)) + '</strong>', chat.room);
+            }
+            if (chat.message.substr(0,5) == "/bold") { // Bold - DiamondCardz
+		return chatemit(socket, '<strong>' + stripHTML(chat.message.substr(3, chat.message.length)) + '</strong>', chat.room);
+            }
             if (chat.message.substr(0,9) == "/forcepay") {
                 if (socket.rank !== 'admin') {
                     socket.emit("message", {type: "alert-error", message: "You do not have permissions to force a payout."});
