@@ -31,7 +31,14 @@ var lastSendOnline = new Date(); // Throttle online requests
 var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack will insert a version here
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
-
+if (!String.prototype.encodeHTML) {
+    String.prototype.encodeHTML = function () {
+        return this.replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    };
+}
 iottp.listen(process.env.PORT);
 if (process.argv[2] == "travisci") {
     console.log('Travis CI mode active');
@@ -62,7 +69,8 @@ function stripHTML(html) { // Prevent XSS
     if (!html) {
 	return '';
     }
-    return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
+    return html.encodeHTML();
+    //return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
 }
 function isNumber(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
