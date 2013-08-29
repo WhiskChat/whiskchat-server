@@ -363,6 +363,9 @@ function calculateEarns(user, socket) {
     if (typeof socket.stage !== "number") {
 	socket.stage = 0.032;
     }
+    if (socket.rep > 100) {
+	socket.rep = 100;
+    }
     if (rnd > socket.stage) {
 	socket.stage = socket.stage + 0.032;
 	return null;
