@@ -715,7 +715,7 @@ io.sockets.on('connection', function(socket) {
 		});
 		return;
             }
-	    bbcode.parse(stripHTML(chat.message), function(parsedcode) {
+            bbcode.parse(stripHTML(chat.message).replace('"', ''), function(parsedcode) {
 		/* link links */
                 parsedcode = urlify(parsedcode);
 		if (!chat.room) {
