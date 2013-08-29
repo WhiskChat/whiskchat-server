@@ -394,8 +394,8 @@ setInterval(function() {
 setInterval(function() {
     if (emitAd) {
         sockets.forEach(function(ads) {
-            ads.emit('chat', {room: 'main', message: '<center><iframe frameborder="0" src="https://bitads.net/gimg.php?id=148" style="overflow:hidden;width:468px;height:60px;"></iframe></center>', user: 'bitads', timestamp: Date.now()});
-            ads.emit('chat', {room: 'main', message: '<strong><a href="https://bitads.net/?p=bid&id=148">Advertise on WhiskChat!</a></strong>', user: 'Advertising', timestamp: Date.now()});
+            ads.emit('chat', {room: 'main', message: '<center><iframe frameborder="0" src="https://bitads.net/gimg.php?id=308" style="overflow:hidden;width:468px;height:60px;"></iframe></center>', user: 'bitads', timestamp: Date.now()});
+            ads.emit('chat', {room: 'main', message: '<strong><a href="https://bitads.net/?p=bid&id=308">Advertise on WhiskChat!</a></strong>', user: 'Advertising', timestamp: Date.now()});
         });
         emitAd = false;
     }
