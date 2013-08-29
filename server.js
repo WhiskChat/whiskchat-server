@@ -413,14 +413,12 @@ io.sockets.on('connection', function(socket) {
 	sockets.splice(sockets.indexOf(socket), 1);
 	if (socket.authed) {
 	    var tmp = false;
-	    setTimeout(function() {
 		sockets.forEach(function(skct) {
 		    if (socket.user == skct.user) {
-			tmp = true;
+			skct.disconnect();
 		    }
 		});
-	    }, 15000);
-            if (muted.indexOf(socket.user) == -1 && !tmp) {
+            if (muted.indexOf(socket.user) == -1) {
                 chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
             }
             users.splice(users.indexOf(socket.user), 1);
@@ -530,7 +528,7 @@ io.sockets.on('connection', function(socket) {
 				else {
 				    if (hash.sha256(data.password, salt) == reply) {
 					socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
-					db.set("sessions/" + salt, data.username);
+					db.set("sessions/" + salt + '-new', data.username);
 					login(data.username, socket, salt);
 				    }
 				    else {
