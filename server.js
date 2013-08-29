@@ -394,11 +394,11 @@ db.on('ready', function() {
 setInterval(function() {
     if (emitAd) {
         sockets.forEach(function(ads) {
-            ads.emit('chat', {room: 'main', message: '<iframe frameborder="0" src="https://bitads.net/gimg.php?id=308" style="overflow:hidden;width:468px;height:60px;"></iframe>', user: 'bitads', timestamp: Date.now()});
+            ads.emit('chat', {room: 'main', message: '<iframe frameborder="0" src="https://bitads.net/gimg.php?id=308" style="overflow:hidden;width:468px;height:60px;"></iframe><div><a href="https://bitads.net/?p=bid&id=308">Advertise on this adspace!</a></div>', user: 'bitads', timestamp: Date.now()});
         });
         emitAd = false;
     }
-}, 300000);
+}, 400000);
 io.sockets.on('connection', function(socket) {
     sockets.push(socket);
     
