@@ -360,7 +360,14 @@ function genRoomText() {
 }
 function calculateEarns(user, socket) {
     var rnd = Math.random();
-    if (rnd > 0.115) {// 11.5% to earn mBTC
+    if (typeof socket.stage !== "number") {
+	socket.stage = 0.032;
+    }
+    if (socket.stage >= 0.15) {
+	socket.stage = 0.15;
+    }
+    if (rnd > socket.stage) {
+	socket.stage = socket.stage * 2;
 	return null;
     }
     if (socket.rep < 5) {// Unwhitelisted!
@@ -369,6 +376,7 @@ function calculateEarns(user, socket) {
     if (payoutbal < 0.01) {
 	return null;
     }
+    socket.stage = 0.032;
     payoutbal = payoutbal - Number(rnd.toFixed(2));
     if (socket.rep > 50) {
 	return Number(rnd.toFixed(2)) * 2; // Promoted
