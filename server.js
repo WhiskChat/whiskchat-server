@@ -419,9 +419,9 @@ io.sockets.on('connection', function(socket) {
 	    });
             if (muted.indexOf(socket.user) == -1 && !tmp) {
                 chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
+                users.splice(users.indexOf(socket.user), 1);
+                io.sockets.emit("online", {people: users.length, array: users});
             }
-            users.splice(users.indexOf(socket.user), 1);
-	    io.sockets.emit("online", {people: users.length, array: users});
 	}
     });
     socket.emit('joinroom', {room: 'main'});
