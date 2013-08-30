@@ -414,10 +414,10 @@ io.sockets.on('connection', function(socket) {
 	    var tmp = false;
 	    sockets.forEach(function(skct) {
 		if (socket.user == skct.user) {
-		    skct.disconnect();
+		    tmp = true;
 		}
 	    });
-            if (muted.indexOf(socket.user) == -1) {
+            if (muted.indexOf(socket.user) == -1 && !tmp) {
                 chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
             }
             users.splice(users.indexOf(socket.user), 1);
