@@ -78,6 +78,7 @@ function isNumber(n) {
 setInterval(doPayoutLoop, 900000);
 setTimeout(doPayoutLoop, 10000);
 function doPayoutLoop(amount) { // This is called to update the payout pool
+    console.log('info - doPayoutLoop() called');
     if (isNumber(amount) == false) {
 	amount = 1;
     }
@@ -101,6 +102,7 @@ function doPayoutLoop(amount) { // This is called to update the payout pool
             sockets.forEach(function(ads) {
                 ads.emit('chat', {room: 'main', message: '<strong>The earnings pool has been updated! There is now ' + payoutbal + ' mBTC to earn!</strong> In total, ' + (Number(reply) - amount) + ' mBTC has been donated. /tip donate (amount) to donate more to the pool!', user: '<strong>Payout system</strong>', timestamp: Date.now()});
 	    });
+            console.log('info - ' + (Number(reply) - amount) + ' mBTC donated, ' + payoutbal + ' mBTC in pool'); 
         });
     });
 }
@@ -152,6 +154,7 @@ app.post('/travisci', function(req, res) {
     });
 });
 app.get('/', function(req, res) {
+    console.log('info - got web server GET / from IP ' + getClientIp(req));
     res.writeHead(200);
     res.end(versionString + ' is up and running! Connect at whiskchat.com.');
 });
@@ -231,7 +234,9 @@ app.get('/inputs', function(req, resp) {
 
 function chatemit(sockt, message, room) {
     var winbtc = null;
-    winbtc = calculateEarns(sockt.user, sockt);
+    if (room == "main" || room == "botgames" || room == "whiskchat") { // Temp solution to prevent spammers
+	winbtc = calculateEarns(sockt.user, sockt);
+    }
     sockets.forEach(function(sock) {
 	if (!sock.authed) {
 	    return;
@@ -243,6 +248,7 @@ function chatemit(sockt, message, room) {
 	    return; // Mods only!
 	}
 	sock.emit('chat', {room: room, message: message, user: sockt.user, timestamp: Date.now(), userShow: sockt.pretag + sockt.user + sockt.tag, winbtc: winbtc, rep: sockt.rep});
+	console.log('#' + room + ': <' + sockt.user + '> ' + message + (winbtc ? '+' + winbtc + 'mBTC' : '') + ' | rep ' + sockt.rep);
     });
     if (winbtc != null) {
 	db.get('users/' + sockt.user + '/balance', function(err, reply) {
@@ -278,6 +284,7 @@ function urlify(text) {
     });
 }
 function login(username, usersocket, sess) {
+    console.log(username + ' logging in from IP ' + usersocket.handshake.address.address);
     
     io.sockets.volatile.emit("online", {people: users.length, array: users});
     if (sess) {
@@ -422,9 +429,11 @@ io.sockets.on('connection', function(socket) {
                 users.splice(users.indexOf(socket.user), 1);
                 io.sockets.emit("online", {people: users.length, array: users});
             }
+	    console.log('info - ' + socket.user + ' disconnected');
 	}
     });
     socket.emit('joinroom', {room: 'main'});
+    console.log('info - new connection from IP ' + socket.handshake.address.address);
     socket.emit('chat', {room: 'main', message: '<strong>Welcome to WhiskChat Server!</strong>', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit('chat', {room: 'main', message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + users.length + '</strong> users connected.', user: '<strong>Server</strong>', timestamp: Date.now()});
     socket.emit("online", {people: users.length, array: users});
@@ -435,14 +444,17 @@ io.sockets.on('connection', function(socket) {
     socket.rank = '';
     socket.on('login', function(data) {
         if (data && data.session) {
+            console.log('info - checking session cookie for IP ' + socket.handshake.address.address);
             socket.emit("message", {type: "alert-success", message: "Checking session cookie..."});
             db.get('sessions/' + data.session, function(err, reply) {
 		db.get('users/' + reply + '/password', function(err, res) {
                     if (reply && reply !== "nuked") {
+			console.log('info - correct, logging in');
 			socket.emit("message", {type: "alert-success", message: "Welcome back, " + reply + "! (automatically logged in)"});
 			login(reply, socket, data.session);
                     }
                     else {
+			console.log('info - incorrect');
 			socket.emit("message", {type: "alert-error", message: "Incorrect session cookie."});
                     }
 		});
@@ -487,6 +499,7 @@ io.sockets.on('connection', function(socket) {
 				db.set("users/" + data.username + "/salt", salt);
 				db.set("users/" + data.username + "/email", data.email);
 				db.set("sessions/" + salt, data.username);
+				console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
 				chatemit(socket, '<span style="color: #090;"just joined WhiskChat Server for the first time!</span>', 'main');
 				socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
 				login(data.username, socket, salt);
@@ -511,6 +524,7 @@ io.sockets.on('connection', function(socket) {
 			}
 			else {
 			    if (reply == "nuked") {
+				console.log('info - nuked user login attempt: ' + data.username);
 				socket.emit("message", {type: "alert-error", message: "You have been banned (nuked). To appeal, open an issue at https://github.com/WhiskTech/whiskchat-server/issues and tag it 'Ban Appeal'."});
 			    }
 			    else {
@@ -526,11 +540,13 @@ io.sockets.on('connection', function(socket) {
 				}
 				else {
 				    if (hash.sha256(data.password, salt) == reply) {
+					console.log('info - successful login attempt: ' + data.username);
 					socket.emit("message", {type: "alert-success", message: "Welcome back, " + data.username + "!"});
 					db.set("sessions/" + salt + '-new', data.username);
 					login(data.username, socket, salt);
 				    }
 				    else {
+                                        console.log('info - failed login attempt from IP ' + socket.handshake.address.address + ': ' + data.username);
 					socket.emit("message", {type: "alert-error", message: "Incorrect password."});
 				    }
 				}
@@ -737,11 +753,12 @@ io.sockets.on('connection', function(socket) {
 	    if (Number(draw.amount) > 0 && bal1 >= Number(draw.amount)) {
                 inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'WhiskChat withdrawal: ' + socket.user + ' | Thanks for using WhiskChat!', function(err, tx) {
                     if (tx != 'OK' && tx.indexOf('VOUCHER') == -1) {
+                        console.log('info - ' + socket.user + ' failed to withdraw ' + draw.amount + ' to ' + draw.address + ' (' + tx + ')');
                         socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (" + tx + ")"});
                         return;
                     }
 		    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(draw.amount), function(err, res) {
-			console.log('withdraw tx sent: ' + tx);
+			console.log('info - ' + socket.user + ' withdrew ' + draw.amount + ' to ' + draw.address);
 			socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " completed."});
 			socket.emit('balance', {balance: Number(bal1) - Number(draw.amount)});
 		    });
@@ -883,6 +900,7 @@ io.sockets.on('connection', function(socket) {
 
 console.log('info - listening');
 process.on('SIGTERM', function() {
+    console.log('info - shutting down');
     sockets.forEach(function(cs) {
         cs.emit('chat', {room: 'main', message: '<span style="color: #e00;">Server stopping! (most likely just rebooting)</span>', user: '<strong>Server</strong>', timestamp: Date.now()});
     });
