@@ -465,6 +465,9 @@ io.sockets.on('connection', function(socket) {
         if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
             return socket.emit("message", {type: "alert-error", message: "You have been IP banned."});
 	}
+        if (socket.failed) {
+            return socket.emit("message", {type: "alert-error", message: "Please wait 20 seconds in between logins."});
+        }
 	if(data && data.action){
 	    if(data.action == "register"){
 		if(data.username && data.password && data.password2 && data.email){
@@ -503,7 +506,6 @@ io.sockets.on('connection', function(socket) {
 				db.set("users/" + data.username + "/email", data.email);
 				db.set("sessions/" + salt, data.username);
 				console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
-				chatemit(socket, '<span style="color: #090;"just joined WhiskChat Server for the first time!</span>', 'main');
 				socket.emit("message", {type: "alert-success", message: "Thanks for registering, " + data.username + "!"});
 				login(data.username, socket, salt);
 			    }
@@ -550,6 +552,10 @@ io.sockets.on('connection', function(socket) {
 				    }
 				    else {
                                         console.log('info - failed login attempt from IP ' + socket.handshake.address.address + ': ' + data.username);
+					socket.failed = true;
+					setTimeout(function() {
+					    socket.failed = false;
+					}, 20000);
 					socket.emit("message", {type: "alert-error", message: "Incorrect password."});
 				    }
 				}
