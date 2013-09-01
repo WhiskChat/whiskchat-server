@@ -393,8 +393,8 @@ function calculateEarns(user, socket, rep) {
 	return null;
     }
     socket.stage = 0.015;
-    payoutbal = payoutbal - Math.log(socket.rep)/60;
-    return Number((Math.log(socket.rep)/60).toFixed(2));
+    payoutbal = payoutbal - Math.log(rep)/60;
+    return Number((Math.log(rep)/60).toFixed(2));
 }
 db.on('ready', function() {
     console.log('info - DB connected');
