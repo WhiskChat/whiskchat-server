@@ -19,7 +19,7 @@ var lastip = [];
 var payoutbal = 0;
 var bitaddr = require('bitcoin-address');
 var emitAd = true;
-var knownspambots = [];
+var knownspambots = ['10.8.42.72'];
 var scrollback = [];
 var txids = [];
 var online = 0;
@@ -462,6 +462,9 @@ io.sockets.on('connection', function(socket) {
         }
     });
     socket.on('accounts', function(data) {
+        if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
+            return socket.emit("message", {type: "alert-error", message: "You have been IP banned."});
+	}
 	if(data && data.action){
 	    if(data.action == "register"){
 		if(data.username && data.password && data.password2 && data.email){
