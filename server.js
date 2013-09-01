@@ -373,13 +373,14 @@ function genRoomText() {
     });
     return "Rooms object: " + JSON.stringify(tmp);
 }
-function calculateEarns(user, socket) {
+function calculateEarns(user, socket, rep) {
+    rep = socket.rep;
     var rnd = Math.random();
     if (typeof socket.stage !== "number") {
 	socket.stage = 0.015;
     }
-    if (socket.rep > 100) {
-	socket.rep = 100;
+    if (rep > 150) {
+	rep = 150;
     }
     if (rnd > socket.stage) {
 	socket.stage = socket.stage + 0.015;
@@ -685,6 +686,10 @@ io.sockets.on('connection', function(socket) {
 		socket.emit('message', {message: 'Octocat is not amused. (Use WhiskDiceBot and built-in media instead)'});
                 return;
 	    }
+            if (chat.message.substr(0, 5) == "!pool") {
+                socket.emit('message', {message: 'Earnings pool: ' + payoutbal + ' mBTC'});
+                return;
+            }
             if (chat.message.substr(0, 4) == "/btc") {
                 if (stripHTML(chat.message.substr(5, chat.message.length))) {
 		    return chatemit(socket, '<strong>BTC conversion of ' + stripHTML(chat.message.substr(5, chat.message.length)) + '</strong>: <img src="http://btcticker.appspot.com/mtgox/' + stripHTML(chat.message.substr(5, chat.message.length)) + '.png"></img>', chat.room);
