@@ -100,7 +100,7 @@ function doPayoutLoop(amount) { // This is called to update the payout pool
 	    }
             payoutbal = Number(payoutbal) + Number(amount);
             sockets.forEach(function(ads) {
-                ads.emit('chat', {room: 'main', message: '<strong>The earnings pool has been updated! There is now ' + payoutbal + ' mBTC to earn!</strong> In total, ' + (Number(reply) - amount) + ' mBTC has been donated. /tip donate (amount) to donate more to the pool!', user: '<strong>Payout system</strong>', timestamp: Date.now()});
+                ads.emit('chat', {room: 'main', message: '<strong>The earnings pool has been updated! There is now ' + payoutbal.toFixed(2) + ' mBTC to earn!</strong> In total, ' + (Number(reply) - amount).toFixed(2) + ' mBTC has been donated. /tip donate (amount) to donate more to the pool!', user: '<strong>Payout system</strong>', timestamp: Date.now()});
 	    });
             console.log('info - ' + (Number(reply) - amount) + ' mBTC donated, ' + payoutbal + ' mBTC in pool'); 
         });
@@ -819,7 +819,7 @@ io.sockets.on('connection', function(socket) {
                                 db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
 				db.set('users/' + socket.user + '/rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
                                 sockets.forEach(function(cs) {
-                                    cs.emit('tip', {room: tip.room, target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + Number(tip.tip)) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2) + ')', amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
+                                    cs.emit('tip', {room: tip.room, target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + Number(tip.tip)).toFixed(2) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2) + ')', amount: Number(tip.tip), message: tip.message, user: socket.user, timestamp: Date.now()});
 				    if (cs.user == socket.user) {
 					socket.emit('balance', {balance: Number(bal1) - Number(tip.tip)});
                                         socket.emit('whitelist', {whitelisted: (Number(rep1) + (Number(tip.tip) / 2))});
