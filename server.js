@@ -765,18 +765,18 @@ io.sockets.on('connection', function(socket) {
     });
     socket.on('withdraw', function(draw) {
     	if (bitaddr.validate(draw.address)) {
-    	socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (Please input a valid Inputs.io email.)"});
-    	return;
+    		draw.fees = 5;
+    		socket.emit('message', {message: 'This transaction will incur a 5 mBTC fee for sending to non-Inputs addresses.'});
     	}
 	db.get('users/' + socket.user + '/balance', function(err, bal1) {
-	    if (Number(draw.amount) > 0 && bal1 >= Number(draw.amount)) {
+	    if (Number(draw.amount) > 0 && bal1 >= (Number(draw.amount) + draw.fees)) {
                 inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'WhiskChat withdrawal: ' + socket.user + ' | Thanks for using WhiskChat!', function(err, tx) {
                     if (tx != 'OK' && tx.indexOf('VOUCHER') == -1) {
                         console.log('info - ' + socket.user + ' failed to withdraw ' + draw.amount + ' to ' + draw.address + ' (' + tx + ')');
                         socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (" + tx + ")"});
                         return;
                     }
-		    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(draw.amount), function(err, res) {
+		    db.set('users/' + socket.user + '/balance', Number(bal1) - (Number(draw.amount) + draw.fees), function(err, res) {
 			console.log('info - ' + socket.user + ' withdrew ' + draw.amount + ' to ' + draw.address);
 			socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " completed."});
 			socket.emit('balance', {balance: Number(bal1) - Number(draw.amount)});
@@ -784,7 +784,7 @@ io.sockets.on('connection', function(socket) {
                 });
 	    }
 	    else {
-                socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (not enough, incorrect address)"});
+                socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (not enough, incorrect address, 5 mBTC tx fee for non-Inputs)"});
 	    }
 	});
     });
