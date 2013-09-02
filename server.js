@@ -768,6 +768,9 @@ io.sockets.on('connection', function(socket) {
     		draw.fees = 0.5;
     		socket.emit('message', {message: 'This transaction will incur a 0.5 mBTC fee for sending to non-Inputs addresses.'});
     	}
+        else {
+            draw.fees = 0;
+        }
 	db.get('users/' + socket.user + '/balance', function(err, bal1) {
 	    if (Number(draw.amount) > 0 && bal1 >= (Number(draw.amount) + draw.fees)) {
                 inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'WhiskChat withdrawal: ' + socket.user + ' | Thanks for using WhiskChat!', function(err, tx) {
