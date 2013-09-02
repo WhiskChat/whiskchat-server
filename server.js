@@ -765,8 +765,8 @@ io.sockets.on('connection', function(socket) {
     });
     socket.on('withdraw', function(draw) {
     	if (bitaddr.validate(draw.address)) {
-    		draw.fees = 5;
-    		socket.emit('message', {message: 'This transaction will incur a 5 mBTC fee for sending to non-Inputs addresses.'});
+    		draw.fees = 0.5;
+    		socket.emit('message', {message: 'This transaction will incur a 0.5 mBTC fee for sending to non-Inputs addresses.'});
     	}
 	db.get('users/' + socket.user + '/balance', function(err, bal1) {
 	    if (Number(draw.amount) > 0 && bal1 >= (Number(draw.amount) + draw.fees)) {
@@ -784,7 +784,7 @@ io.sockets.on('connection', function(socket) {
                 });
 	    }
 	    else {
-                socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (not enough, incorrect address, 5 mBTC tx fee for non-Inputs)"});
+                socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (not enough, incorrect address, 0.5 mBTC tx fee for non-Inputs)"});
 	    }
 	});
     });
