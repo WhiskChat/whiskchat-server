@@ -26,6 +26,7 @@ var online = 0;
 var githubips = ['207.97.227.253', '50.57.128.197', '108.171.174.178', '50.57.231.61'];
 var random = require("random");
 var bbcode = require('bbcode');
+var bitaddr = require('bitcoin-address');
 var users = [];
 var lastSendOnline = new Date(); // Throttle online requests
 var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack will insert a version here
@@ -763,6 +764,10 @@ io.sockets.on('connection', function(socket) {
 	}
     });
     socket.on('withdraw', function(draw) {
+    	if (bitaddr.validate(draw.address)) {
+    	socket.emit('message', {message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (Please input a valid Inputs.io email.)"});
+    	return;
+    	}
 	db.get('users/' + socket.user + '/balance', function(err, bal1) {
 	    if (Number(draw.amount) > 0 && bal1 >= Number(draw.amount)) {
                 inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'WhiskChat withdrawal: ' + socket.user + ' | Thanks for using WhiskChat!', function(err, tx) {
