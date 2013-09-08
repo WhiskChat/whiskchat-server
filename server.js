@@ -845,6 +845,13 @@ io.sockets.on('connection', function(socket) {
                 });
                 return;
             }
+            if (socket.nuked && chat.room != 'banappeals') {
+                socket.volatile.emit("message", {
+                    type: "alert-error",
+                    message: "You may only talk in #banappeals!"
+                });
+                return;
+            }
             if (chat.message.length < 2) {
                 return;
             }
