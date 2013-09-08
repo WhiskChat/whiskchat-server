@@ -321,6 +321,15 @@ function chatemit(sockt, message, room) {
                 whitelisted: Number(Number(rep).toFixed(2))
             });
             sockt.rep = rep;
+            if (rep < -999 && !socket.nuked) {
+            usersocket.emit('message', {
+                message: 'ALERT: Your account has been nuked. You are prevented from chatting in any room except #banappeals. /sr banappeals to change to it.'
+            })
+            socket.nuked = true
+            usersocket.emit('joinroom', {
+                room: 'banappeals'
+            })
+        }
         });
     }
 }
