@@ -1040,7 +1040,7 @@ io.sockets.on('connection', function(socket) {
             db.get('users/' + tip.user, function(err, exists) {
                 if (exists) {
                     db.get('users/' + tip.user + '/rep', function(err, bal2) {
-                        if (Number(tip.tip) > 0 && muted.indexOf(socket.user) == -1) {
+                        if (!isNaN(Number(tip.tip)) && muted.indexOf(socket.user) == -1) {
                             db.set('users/' + tip.user + '/rep', Number(tip.tip), redis.print);
                             sockets.forEach(function(cs) {
                                 cs.emit('tip', {
