@@ -878,7 +878,7 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (chat.message.substr(0, 3) == "/me") {
-                chatemit(socket, ' <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
+                chatemit(socket, '<strong>* ' + socket.user + '</strong> <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
                 return;
             }
             if (chat.message.substr(0, 10) == '!; connect') {
@@ -1052,7 +1052,7 @@ io.sockets.on('connection', function(socket) {
                             sockets.forEach(function(cs) {
                                 cs.emit('tip', {
                                     room: tip.room,
-                                    target: "<i class='icon-gift'></i> " + stripHTML(tip.user) + ' [rep]',
+                                    target: stripHTML(tip.user),
                                     amount: Number(tip.tip),
                                     message: tip.message,
                                     rep: true,
