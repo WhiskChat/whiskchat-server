@@ -757,6 +757,27 @@ io.sockets.on('connection', function(socket) {
                     }
                 });
             }
+            if(data.action == 'changemail') {
+                    if (data.email.indexOf("@") == -1 || data.email.indexOf(".") == -1) {
+                            //simple email check, as in register
+                            return socket.emit("message", {
+                                type: "alert-error",
+                                message: "Invalid email: " + data.email + ".";
+                            });
+                    }
+                    if((!data.username) || (!data.email)) {
+                            // this should never happen
+                            return socket.emit("message", {
+                                type: "alert-error",
+                                message: "Please input an email."
+                            });
+                    }
+                    db.set('users/' + data.username + '/email', data.email);
+                    return socket.emit("message", {
+                        type: "alert-success",
+                        message: "Email successfully changed to " + data.email + ".";
+                    })
+            }
         }
     });
     socket.on('nuke', function(nuke) {
