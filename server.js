@@ -394,7 +394,7 @@ function login(username, usersocket, sess) {
             username: username
         });
     }
-    socket.emit('joinroom', {room: '--connectedmsg'}); // For whiskchat-client's Connected header
+    usersocket.emit('joinroom', {room: '--connectedmsg'}); // For whiskchat-client's Connected header
     usersocket.user = username;
     db.get('users/' + username + '/balance', function(err, reply) {
         usersocket.emit('balance', {
