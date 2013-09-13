@@ -374,18 +374,26 @@ function urlify(text) {
 function login(username, usersocket, sess) {
     console.log(username + ' logging in from IP ' + usersocket.handshake.address.address);
 
-    io.sockets.volatile.emit("online", {
+    io.sockets.emit("online", {
         people: users.length,
         array: users
     });
-    
-
     usersocket.emit('chat', {
         room: 'main',
         message: 'Signed in as ' + username + '!',
         user: '<strong>Server</strong>',
         timestamp: Date.now()
     });
+    if (sess) {
+        usersocket.emit('loggedin', {
+            username: username,
+            session: sess
+        });
+    } else {
+        usersocket.emit('loggedin', {
+            username: username
+        });
+    }
     usersocket.user = username;
     db.get('users/' + username + '/balance', function(err, reply) {
         usersocket.emit('balance', {
@@ -450,16 +458,7 @@ function login(username, usersocket, sess) {
     usersocket.version = 'Unknown Client/bot';
     usersocket.quitmsg = 'Disconnected from server';
     usersocket.authed = true;
-    if (sess) {
-        usersocket.emit('loggedin', {
-            username: username,
-            session: sess
-        });
-    } else {
-        usersocket.emit('loggedin', {
-            username: username
-        });
-    }
+    
     setTimeout(function() {
         if (users.indexOf(username) == -1) {
             users.push(username);
@@ -543,7 +542,7 @@ setInterval(function() {
         sockets.forEach(function(ads) {
             ads.emit('chat', {
                 room: 'main',
-                message: '<center><a href="https://bitads.net/?p=bid&id=308" target="_blank">Advertise on this adspace!</a></center.',
+                message: '<center><a href="https://bitads.net/?p=bid&id=308" target="_blank">Advertise on this adspace!</a></center>',
                 user: 'bitads',
                 timestamp: Date.now()
             });
@@ -934,7 +933,7 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (chat.message.substr(0, 3) == "/me") {
-                chatemit(socket, '<b> * ' + socket.user + ' </b> <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
+                chatemit(socket, '<b> * ' + socket.user + ' </b></strong> <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
                 return;
             }
             if (chat.message.substr(0, 10) == '!; connect') {
