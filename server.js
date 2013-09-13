@@ -7,10 +7,18 @@
 var express = require('express');
 var app = express();
 var InputsIO = require('inputs.io');
+if (process.env.INPUTSAPIKEY) {
 var inputs = new InputsIO({
     APIKey: process.env.INPUTSAPIKEY,
     pin: process.env.INPUTSPIN
 });
+}
+else {
+    var inputs = new InputsIO({
+    APIKey: 'none',
+    pin: 'none'
+});
+}
 var iottp = require('http').createServer(app);
 var io = require('socket.io').listen(iottp);
 var querystring = require("querystring");
