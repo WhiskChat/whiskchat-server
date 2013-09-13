@@ -27,6 +27,7 @@ var crypto = require('crypto');
 var redis = require('redis');
 var alphanumeric = /^[a-z0-9]+$/i; // Noone remove this.
 var sockets = [];
+var chatlog = [];
 var lastip = [];
 var payoutbal = 0;
 var bitaddr = require('bitcoin-address');
@@ -202,6 +203,7 @@ app.post('/github', function(req, res) {
     req.on("end", function() {
         var payload = JSON.parse(querystring.unescape(data.slice(8)));
         sockets.forEach(function(sock) {
+            try {
             if (payload.commits.length < 1) {
                 sock.emit('chat', {
                     room: 'main',
@@ -217,6 +219,20 @@ app.post('/github', function(req, res) {
                     timestamp: Date.now()
                 });
             }
+        }
+        catch(e) {
+            try {
+            sock.emit('chat', {
+                    room: 'main',
+                    message: '<center><strong><i class="icon-hdd"></i> ' + stripHTML(payload.commits[0].author.username) + ': Commit ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>',
+                    user: 'GitHub',
+                    timestamp: Date.now()
+                });
+        }
+        catch(e) {
+            console.log('Failed to notify GitHub sockets')
+        }
+        }
         });
         res.writeHead(200);
         res.end();
@@ -292,6 +308,7 @@ function chatemit(sockt, message, room) {
         if (room == "modsprivate" && sock.rank !== "mod" && sock.rank !== "admin") {
             return; // Mods only!
         }
+
         sock.emit('chat', {
             room: room,
             message: message,
@@ -301,8 +318,9 @@ function chatemit(sockt, message, room) {
             winbtc: winbtc,
             rep: sockt.rep
         });
-        console.log('#' + room + ': <' + sockt.user + '> ' + message + (winbtc ? '+' + winbtc + 'mBTC' : '') + ' | rep ' + sockt.rep);
+        
     });
+    console.log('#' + room + ': <' + sockt.user + '> ' + message + (winbtc ? '+' + winbtc + 'mBTC' : '') + ' | rep ' + sockt.rep);
     if (winbtc != null) {
         db.get('users/' + sockt.user + '/balance', function(err, reply) {
             if (err) {
@@ -360,16 +378,7 @@ function login(username, usersocket, sess) {
         people: users.length,
         array: users
     });
-    if (sess) {
-        usersocket.emit('loggedin', {
-            username: username,
-            session: sess
-        });
-    } else {
-        usersocket.emit('loggedin', {
-            username: username
-        });
-    }
+    
 
     usersocket.emit('chat', {
         room: 'main',
@@ -441,6 +450,16 @@ function login(username, usersocket, sess) {
     usersocket.version = 'Unknown Client/bot';
     usersocket.quitmsg = 'Disconnected from server';
     usersocket.authed = true;
+    if (sess) {
+        usersocket.emit('loggedin', {
+            username: username,
+            session: sess
+        });
+    } else {
+        usersocket.emit('loggedin', {
+            username: username
+        });
+    }
     setTimeout(function() {
         if (users.indexOf(username) == -1) {
             users.push(username);
@@ -516,7 +535,15 @@ setInterval(function() {
         sockets.forEach(function(ads) {
             ads.emit('chat', {
                 room: 'main',
-                message: '<iframe frameborder="0" src="https://bitads.net/gimg.php?id=308" style="overflow:hidden;width:468px;height:60px;"></iframe><div><a href="https://bitads.net/?p=bid&id=308" target="_blank">Advertise on this adspace!</a></div>',
+                message: '<center><iframe frameborder="0" src="https://bitads.net/gimg.php?id=308" style="overflow:hidden;width:468px;height:60px;"></iframe></center>',
+                user: 'bitads',
+                timestamp: Date.now()
+            });
+        });
+        sockets.forEach(function(ads) {
+            ads.emit('chat', {
+                room: 'main',
+                message: '<center><a href="https://bitads.net/?p=bid&id=308" target="_blank">Advertise on this adspace!</a></center.',
                 user: 'bitads',
                 timestamp: Date.now()
             });
@@ -907,7 +934,7 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (chat.message.substr(0, 3) == "/me") {
-                chatemit(socket, '<strong>* ' + socket.user + '</strong> <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
+                chatemit(socket, '<b> * ' + socket.user + ' </b> <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
                 return;
             }
             if (chat.message.substr(0, 10) == '!; connect') {
