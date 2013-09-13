@@ -762,7 +762,7 @@ io.sockets.on('connection', function(socket) {
                             //simple email check, as in register
                             return socket.emit("message", {
                                 type: "alert-error",
-                                message: "Invalid email: " + data.email + ".";
+                                message: "Invalid email: " + data.email + "."
                             });
                     }
                     if((!data.username) || (!data.email)) {
@@ -775,8 +775,8 @@ io.sockets.on('connection', function(socket) {
                     db.set('users/' + data.username + '/email', data.email);
                     return socket.emit("message", {
                         type: "alert-success",
-                        message: "Email successfully changed to " + data.email + ".";
-                    })
+                        message: "Email successfully changed to " + data.email + "."
+                    });
             }
         }
     });
