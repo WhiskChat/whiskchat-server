@@ -717,7 +717,7 @@ io.sockets.on('connection', function(socket) {
                                 db.set("users/" + data.username + "/password", hashed);
                                 db.set("users/" + data.username + "/salt", salt);
                                 db.set("users/" + data.username + "/email", data.email);
-                                if (data.refer && lastip.indexOf(socket.handshake.address.address) == -1) {
+                                if (data.refer) {
                                     db.set("users/" + data.username + '/referrer', stripHTML(data.refer));
                                     sockets.forEach(function(s) {
                                         if (data.refer == s.user) {
