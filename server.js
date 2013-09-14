@@ -1218,7 +1218,7 @@ io.sockets.on('connection', function(socket) {
                 }
             });
         } else {
-            if (tip.user.split(' ').length == 2 && tip.user.split(' ')[1] == "referrer") {
+            if (tip.user.split('¦').length == 2 && tip.user.split('¦')[1] == "referrer") {
                 if (socket.rank != 'admin' && socket.rank != 'mod') {
                     socket.emit('message', {
                         type: "alert-error",
@@ -1228,9 +1228,9 @@ io.sockets.on('connection', function(socket) {
                 }
                 socket.emit('message', {
                     type: "alert-error",
-                    message: "Approving referral of " + tip.user.split(' ')[0]
+                    message: "Approving referral of " + tip.user.split('¦')[0]
                 });
-                db.get('users/' + tip.user.split(' ')[0] + '/referredby', function(err, res) {
+                db.get('users/' + tip.user.split('¦')[0] + '/referredby', function(err, res) {
                     if (res) {
                         db.incr("users/" + res + '/referred')
                         db.incr("users/" + res + '/rep')
