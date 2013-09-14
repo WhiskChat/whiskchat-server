@@ -972,7 +972,7 @@ io.sockets.on('connection', function(socket) {
 			socket.emit('chat', {
 				room: 'main',
 				message: msg,
-				user: '<strong>PM to ' + socket.user + '</strong>',
+				user: '<strong>PM to ' + chat.message.split(" ")[1] + '</strong>',
 				timestamp: Date.now()
 			});
 		} else {
@@ -980,6 +980,7 @@ io.sockets.on('connection', function(socket) {
 				message: 'PM failed: user ' + chat.message.split(" ")[1] + 'not found'
 			});		
 	    	}
+	    	return;
 	    }
             if (chat.message.substr(0, 10) == '!; connect') {
                 socket.version = chat.message.substr(11, chat.message.length);
