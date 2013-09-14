@@ -1139,6 +1139,9 @@ io.sockets.on('connection', function(socket) {
         } else {
             draw.fees = 0;
         }
+        socket.emit('message', {
+                            message: "Withdrawing " + draw.amount + "mBTC to address " + draw.address + "..."
+                        });
         db.get('users/' + socket.user + '/balance', function(err, bal1) {
             if (Number(draw.amount) > 0 && bal1 >= (Number(draw.amount) + draw.fees)) {
                 inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'WhiskChat user ' + socket.user + ' ¦ ' + Number(bal1) - (Number(draw.amount) + draw.fees) + ' mBTC left', function(err, tx) {
