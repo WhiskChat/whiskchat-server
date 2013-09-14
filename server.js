@@ -323,7 +323,7 @@ function chatemit(sockt, message, room) {
     console.log('#' + room + ': <' + sockt.user + '> ' + message + (winbtc ? '+' + winbtc + 'mBTC' : '') + ' | rep ' + sockt.rep);
     if (winbtc != null) {
         db.get('users/' + sockt.user + '/balance', function(err, reply) {
-            if (err) {
+            if (err) {--
                 handle(err);
                 return;
             }
@@ -937,6 +937,47 @@ io.sockets.on('connection', function(socket) {
                 chatemit(socket, '<b> * ' + socket.user + ' </b></strong> <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
                 return;
             }
+	    if (chat.message.substr(0, 4) == "/msg" || chat.message.substr(0, 3) == "/pm" || chat.message.substr(0, 5) == "/tell") {
+		if((chat.message.equals("/msg") || chat.message.equals("/pm") || chat.message.equals("/tell")) || chat.message.split(" ").length == 2) {
+			socket.emit('message', {
+				message: 'Syntax: ' + chat.message + ' <user> <message>'
+			});
+			return;
+		}
+		var msg = "";
+		for(var i = 0;i<chat.message.split(" ").length;i++) { // What if the message has spaces in it?
+			if(i == 0 || i == 1)
+				continue; // Skip the PM command and the first argument (target username).
+			msg = msg + chat.message.split(" ")[i];
+		}
+		var foundUser = false; // Was the target user found? 
+		sockets.forEach(function(sock) {
+			if(foundUser) {
+			return;
+			}
+                	if(sock.user == chat.message.split(" ")[1]) {
+				sock.emit('chat', {
+					room: 'main',
+					message: msg,
+					user: '<strong>PM from ' + socket.user + '</strong>',
+					timestamp: Date.now()
+				});
+				foundUser = true;
+			}
+            	});
+		if(foundUser) {
+			socket.emit('chat', {
+				room: 'main',
+				message: msg,
+				user: '<strong>PM to ' + socket.user + '</strong>',
+				timestamp: Date.now()
+			});
+		} else {
+			socket.emit('message', {
+				message: 'PM failed: user ' + chat.message.split(" ")[1] + 'not found'
+			});		
+	    	}
+	    }
             if (chat.message.substr(0, 10) == '!; connect') {
                 socket.version = chat.message.substr(11, chat.message.length);
                 return;
