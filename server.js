@@ -455,8 +455,11 @@ function login(username, usersocket, sess) {
         usersocket.emit('message', {
             message: '<i class="icon-ok-sign"></i> Your rooms: ' + JSON.parse(reply).join(', ')
         });
+        usersocket.emit('message', {
+            message: '<i class="icon-user"></i>' + users.length + ' online users: ' + users.join(', ')       
+        });
     });
-    usersocket.version = 'Unknown Client/bot';
+    usersocket.version = '';
     usersocket.quitmsg = 'Disconnected from server';
     usersocket.authed = true;
     
