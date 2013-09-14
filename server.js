@@ -453,7 +453,7 @@ function login(username, usersocket, sess) {
             usersocket.sync.push(rm);
         });
         usersocket.emit('message', {
-            message: 'Sync complete. You have joined: ' + JSON.parse(reply).join(', ')
+            message: '<i class="icon-ok-sign"></i> Your rooms: ' + JSON.parse(reply).join(', ')
         });
     });
     usersocket.version = 'Unknown Client/bot';
@@ -1227,6 +1227,9 @@ io.sockets.on('connection', function(socket) {
     });
     socket.on('sync', function(data) {
         if (!socket.authed) {
+            socket.emit('message', {
+                message: '<i class="icon-exclamation-sign"></i> Sync error: You are not logged in!'
+            });
             return;
         }
         if (Object.prototype.toString.call(data.sync) !== '[object Array]') {
@@ -1245,13 +1248,13 @@ io.sockets.on('connection', function(socket) {
         data.sync.forEach(function(room) {
             if (Object.prototype.toString.call(room) !== '[object String]') {
                 socket.emit('message', {
-                    message: '<i class="icon-exclamation-sign"></i> Sync error: Room \'' + room + '\' is not a string!'
+                    message: '<i class="icon-exclamation-sign"></i> Room \'' + room + '\' is not a string!'
                 });
                 tmp5 = false;
             }
             if (room.length > 20) {
                 socket.emit('message', {
-                    message: '<i class="icon-exclamation-sign"></i> Sync error: Room \'' + room + '\' is over 20 characters long.'
+                    message: '<i class="icon-exclamation-sign"></i> Room \'' + room + '\' is over 20 characters long.'
                 });
                 tmp5 = false;
             }
@@ -1270,7 +1273,7 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             socket.emit('message', {
-                message: '<i class="icon-ok-sign"></i> Sync complete.'
+                message: '<i class="icon-ok-sign"></i> Updated room list.'
             });
             return;
         });
