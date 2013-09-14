@@ -715,7 +715,7 @@ io.sockets.on('connection', function(socket) {
                                 db.set("users/" + data.username + "/password", hashed);
                                 db.set("users/" + data.username + "/salt", salt);
                                 db.set("users/" + data.username + "/email", data.email);
-                                if (data.refer) {
+                                if (data.refer && lastip.indexOf(socket.handshake.address.address) == -1) {
                                     db.set("users/" + data.username + '/referrer', stripHTML(data.refer));
                                     db.incr("users/" + data.refer + '/referred')
                                     db.incr("users/" + data.refer + '/rep')
