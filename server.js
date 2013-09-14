@@ -458,6 +458,14 @@ function login(username, usersocket, sess) {
         usersocket.emit('message', {
             message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ')       
         });
+        usersocket.emit('message', {
+            message: '<i class="icon-bell"></i> Payout stats: ' + payoutbal.toFixed(2) + 'mBTC in play'      
+        });
+        if (socket.refer) {
+            usersocket.emit('message', {
+            message: '<i class="icon-user"></i> You were referred by ' + socket.refer + '!'   
+        });
+        }
     });
     usersocket.version = '';
     usersocket.quitmsg = 'Disconnected from server';
@@ -707,6 +715,11 @@ io.sockets.on('connection', function(socket) {
                                 db.set("users/" + data.username + "/password", hashed);
                                 db.set("users/" + data.username + "/salt", salt);
                                 db.set("users/" + data.username + "/email", data.email);
+                                if (data.refer) {
+                                    db.set("users/" + data.username + '/referrer', stripHTML(data.refer));
+                                    db.incr("users/" + data.refer + '/referred')
+                                    socket.refer = stripHTML(data.refer);
+                                }
                                 db.set("sessions/" + salt, data.username);
                                 console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
                                 socket.emit("message", {
@@ -1006,6 +1019,13 @@ io.sockets.on('connection', function(socket) {
                     message: genRoomText()
                 });
                 return;
+            }
+            if (chat.message.substr(0, 6) == "/refer") {
+                db.get('users/' + socket.user + '/referred', function(err, refer) {
+                    return socket.emit('message', {
+                        message: 'You have referred ' + Number(refer) + 'users.'
+                    });
+                });
             }
             if (chat.message.substr(0, 4) == "/spt") {
                 if (stripHTML(chat.message.substr(5, chat.message.length)) == '') {
