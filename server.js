@@ -1236,7 +1236,7 @@ io.sockets.on('connection', function(socket) {
                         db.incr("users/" + res + '/rep')
                         cs.emit('tip', {
                             room: tip.room,
-                            target: tip.user + '\'s referrer'
+                            target: tip.user + '\'s referrer',
                             amount: 0,
                             message: 'Referral confirmed!',
                             user: socket.user,
