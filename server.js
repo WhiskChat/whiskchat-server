@@ -456,7 +456,7 @@ function login(username, usersocket, sess) {
             message: '<i class="icon-ok-sign"></i> Your rooms: ' + JSON.parse(reply).join(', ')
         });
         usersocket.emit('message', {
-            message: '<i class="icon-user"></i>' + users.length + ' online users: ' + users.join(', ')       
+            message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ')       
         });
     });
     usersocket.version = '';
