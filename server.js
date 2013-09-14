@@ -1132,6 +1132,12 @@ io.sockets.on('connection', function(socket) {
         }
     });
     socket.on('withdraw', function(draw) {
+        if (socket.wlocked) {
+            socket.emit('message', {
+                message: "A withdrawal is already in progress, or your account has been blocked by a moderator."
+            });
+            return;
+        }
         if (bitaddr.validate(draw.address)) {
             draw.fees = 0.5;
             socket.emit('message', {
@@ -1143,11 +1149,7 @@ io.sockets.on('connection', function(socket) {
         socket.emit('message', {
             message: "Withdrawing " + draw.amount + "mBTC to address " + draw.address + "..."
         });
-        if (socket.wlocked) {
-            socket.emit('message', {
-                            message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (A withdrawal is already in progress, or your account is blocked)"
-                        });
-        }
+
         socket.wlocked = true;
         db.get('users/' + socket.user + '/balance', function(err, bal1) {
             if (Number(draw.amount) > 0 && bal1 >= (Number(draw.amount) + draw.fees)) {
