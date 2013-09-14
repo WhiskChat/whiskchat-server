@@ -618,6 +618,7 @@ io.sockets.on('connection', function(socket) {
         array: users
     });
     socket.authed = false;
+    socket.wlocked = false;
     socket.ready = true;
     socket.tag = '';
     socket.pretag = '';
@@ -1140,11 +1141,18 @@ io.sockets.on('connection', function(socket) {
             draw.fees = 0;
         }
         socket.emit('message', {
-                            message: "Withdrawing " + draw.amount + "mBTC to address " + draw.address + "..."
+            message: "Withdrawing " + draw.amount + "mBTC to address " + draw.address + "..."
+        });
+        if (socket.wlocked) {
+            socket.emit('message', {
+                            message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (A withdrawal is already in progress, or your account is blocked)"
                         });
+        }
+        socket.wlocked = true;
         db.get('users/' + socket.user + '/balance', function(err, bal1) {
             if (Number(draw.amount) > 0 && bal1 >= (Number(draw.amount) + draw.fees)) {
                 inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'WhiskChat user ' + socket.user + ' ¦ ' + Number(bal1) - (Number(draw.amount) + draw.fees) + ' mBTC left', function(err, tx) {
+                    socket.wlocked = false;
                     if (tx != 'OK' && tx.indexOf('VOUCHER') == -1) {
                         console.log('info - ' + socket.user + ' failed to withdraw ' + draw.amount + ' to ' + draw.address + ' (' + tx + ')');
                         socket.emit('message', {
