@@ -941,7 +941,7 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
 	    if (chat.message.substr(0, 4) == "/msg" || chat.message.substr(0, 3) == "/pm" || chat.message.substr(0, 5) == "/tell") {
-		if((chat.message.equals("/msg") || chat.message.equals("/pm") || chat.message.equals("/tell")) || chat.message.split(" ").length == 2) {
+		if((chat.message == "/msg" || chat.message == "/pm" || chat.message == "/tell" || chat.message.split(" ").length == 2) {
 			socket.emit('message', {
 				message: 'Syntax: ' + chat.message + ' <user> <message>'
 			});
