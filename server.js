@@ -461,9 +461,9 @@ function login(username, usersocket, sess) {
         usersocket.emit('message', {
             message: '<i class="icon-bell"></i> Payout stats: ' + payoutbal.toFixed(2) + 'mBTC in play'      
         });
-        if (socket.refer) {
+        if (usersocket.refer) {
             usersocket.emit('message', {
-            message: '<i class="icon-user"></i> You were referred by ' + socket.refer + '!'   
+            message: '<i class="icon-user"></i> You were referred by ' + usersocket.refer + '!'   
         });
         }
     });
@@ -1022,10 +1022,11 @@ io.sockets.on('connection', function(socket) {
             }
             if (chat.message.substr(0, 6) == "/refer") {
                 db.get('users/' + socket.user + '/referred', function(err, refer) {
-                    return socket.emit('message', {
-                        message: 'You have referred ' + Number(refer) + 'users.'
+                    socket.emit('message', {
+                        message: 'You have referred ' + Number(refer) + ' users.'
                     });
                 });
+                return;
             }
             if (chat.message.substr(0, 4) == "/spt") {
                 if (stripHTML(chat.message.substr(5, chat.message.length)) == '') {
