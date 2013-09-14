@@ -948,7 +948,7 @@ io.sockets.on('connection', function(socket) {
 		for(var i = 0;i<chat.message.split(" ").length;i++) { // What if the message has spaces in it?
 			if(i == 0 || i == 1)
 				continue; // Skip the PM command and the first argument (target username).
-			msg = msg + chat.message.split(" ")[i];
+			msg = msg + chat.message.split(" ")[i] + " ";
 		}
 		var foundUser = false; // Was the target user found? 
 		sockets.forEach(function(sock) {
