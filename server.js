@@ -1220,12 +1220,28 @@ io.sockets.on('connection', function(socket) {
         } else {
             if (tip.user.split(' ').length == 2 && tip.user.split(' ')[1] == "referrer") {
                 if (socket.rank != 'admin' && socket.rank != 'mod') {
+                    socket.emit('message', {
+                        type: "alert-error",
+                        message: "You must be a mod or admin to approve referrals."
+                    });
                     return;
                 }
-                db.get('users/' + tip.user + '/referredby', function(err, res) {
+                socket.emit('message', {
+                    type: "alert-error",
+                    message: "Approving referral of " + tip.user.split(' ')[0]
+                });
+                db.get('users/' + tip.user.split(' ')[0] + '/referredby', function(err, res) {
                     if (res) {
                         db.incr("users/" + res + '/referred')
                         db.incr("users/" + res + '/rep')
+                        cs.emit('tip', {
+                            room: tip.room,
+                            target: tip.user + '\'s referrer'
+                            amount: 0,
+                            message: 'Referral confirmed!',
+                            user: socket.user,
+                            timestamp: Date.now()
+                        });
                         sockets.forEach(function(cs) {
                             if (cs.user == res) {
                                 socket.emit('message', {
