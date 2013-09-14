@@ -323,7 +323,7 @@ function chatemit(sockt, message, room) {
     console.log('#' + room + ': <' + sockt.user + '> ' + message + (winbtc ? '+' + winbtc + 'mBTC' : '') + ' | rep ' + sockt.rep);
     if (winbtc != null) {
         db.get('users/' + sockt.user + '/balance', function(err, reply) {
-            if (err) {--
+            if (err) {
                 handle(err);
                 return;
             }
