@@ -435,11 +435,7 @@ function login(username, usersocket, sess) {
             usersocket.emit('message', {
                 message: 'You should sync your roomlist. Subscribing you to default rooms.'
             });
-            if (usersocket.refer) {
-                usersocket.emit('message', {
-                    message: '<i class="icon-user"></i> You were referred by ' + usersocket.refer + '!'
-                });
-            }
+            
             usersocket.emit('joinroom', {
                 room: 'whiskchat'
             });
@@ -480,6 +476,11 @@ function login(username, usersocket, sess) {
         if (muted.indexOf(username) !== -1) {
             return;
         }
+        if (usersocket.refer) {
+                usersocket.emit('message', {
+                    message: '<i class="icon-user"></i> You were referred by ' + usersocket.refer + '!'
+                });
+            }
         chatemit(usersocket, '!; connect ' + usersocket.version, 'main');
         console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
     }, 2000);
