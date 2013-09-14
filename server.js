@@ -1231,9 +1231,17 @@ io.sockets.on('connection', function(socket) {
                     message: "Approving referral of " + tip.user.split('¦')[0]
                 });
                 db.get('users/' + tip.user.split('¦')[0] + '/referredby', function(err, res) {
+                    socket.emit('message', {
+                    type: "alert-error",
+                    message: "DBG: (err, res) (" + err + ", " + res + ")"
+                });
+
                     if (res) {
                         db.incr("users/" + res + '/referred')
                         db.incr("users/" + res + '/rep')
+                        socket.emit('message', {
+                                    message: '<i class="icon-user"></i> ' + tip.user + ': referral confirmed! (+1 rep)'
+                                })
                         cs.emit('tip', {
                             room: tip.room,
                             target: tip.user + '\'s referrer',
