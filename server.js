@@ -1054,7 +1054,7 @@ io.sockets.on('connection', function(socket) {
                         }
                     }
                 })
-                
+                return;
             }
             if (chat.message.substr(0, 6) == "/refer") {
                 db.get('users/' + socket.user + '/referred', function(err, refer) {
