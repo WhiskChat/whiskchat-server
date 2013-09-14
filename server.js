@@ -1027,7 +1027,7 @@ io.sockets.on('connection', function(socket) {
                 });
                 return;
             }
-            if (chat.message.substr(0, 7) == "/crefer" && (socket.rank == "admin" ¦¦ socket.rank == "mod")) {
+            if (chat.message.substr(0, 7) == "/crefer" && (socket.rank == "admin" || socket.rank == "mod")) {
                 socket.emit('message', {
                         message: '<i class="icon-user"></i> Confirming ' + chat.message.split(' ')[1]    
                 });
