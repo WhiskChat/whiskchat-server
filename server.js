@@ -8,16 +8,15 @@ var express = require('express');
 var app = express();
 var InputsIO = require('inputs.io');
 if (process.env.INPUTSAPIKEY) {
-var inputs = new InputsIO({
-    APIKey: process.env.INPUTSAPIKEY,
-    pin: process.env.INPUTSPIN
-});
-}
-else {
     var inputs = new InputsIO({
-    APIKey: 'none',
-    pin: 'none'
-});
+        APIKey: process.env.INPUTSAPIKEY,
+        pin: process.env.INPUTSPIN
+    });
+} else {
+    var inputs = new InputsIO({
+        APIKey: 'none',
+        pin: 'none'
+    });
 }
 var iottp = require('http').createServer(app);
 var io = require('socket.io').listen(iottp);
@@ -204,35 +203,33 @@ app.post('/github', function(req, res) {
         var payload = JSON.parse(querystring.unescape(data.slice(8)));
         sockets.forEach(function(sock) {
             try {
-            if (payload.commits.length < 1) {
-                sock.emit('chat', {
-                    room: 'main',
-                    message: '<center><strong><i class="icon-hdd"></i> Rebase to ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>',
-                    user: 'GitHub',
-                    timestamp: Date.now()
-                });
-            } else {
-                sock.emit('chat', {
-                    room: 'main',
-                    message: '<center><strong><i class="icon-hdd"></i> ' + stripHTML(payload.commits[0].author.username) + ': Commit ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>',
-                    user: 'GitHub',
-                    timestamp: Date.now()
-                });
+                if (payload.commits.length < 1) {
+                    sock.emit('chat', {
+                        room: 'main',
+                        message: '<center><strong><i class="icon-hdd"></i> Rebase to ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>',
+                        user: 'GitHub',
+                        timestamp: Date.now()
+                    });
+                } else {
+                    sock.emit('chat', {
+                        room: 'main',
+                        message: '<center><strong><i class="icon-hdd"></i> ' + stripHTML(payload.commits[0].author.username) + ': Commit ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>',
+                        user: 'GitHub',
+                        timestamp: Date.now()
+                    });
+                }
+            } catch (e) {
+                try {
+                    sock.emit('chat', {
+                        room: 'main',
+                        message: '<center><strong><i class="icon-hdd"></i> ' + stripHTML(payload.commits[0].author.username) + ': Commit ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>',
+                        user: 'GitHub',
+                        timestamp: Date.now()
+                    });
+                } catch (e) {
+                    console.log('Failed to notify GitHub sockets')
+                }
             }
-        }
-        catch(e) {
-            try {
-            sock.emit('chat', {
-                    room: 'main',
-                    message: '<center><strong><i class="icon-hdd"></i> ' + stripHTML(payload.commits[0].author.username) + ': Commit ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>',
-                    user: 'GitHub',
-                    timestamp: Date.now()
-                });
-        }
-        catch(e) {
-            console.log('Failed to notify GitHub sockets')
-        }
-        }
         });
         res.writeHead(200);
         res.end();
@@ -318,7 +315,7 @@ function chatemit(sockt, message, room) {
             winbtc: winbtc,
             rep: sockt.rep
         });
-        
+
     });
     console.log('#' + room + ': <' + sockt.user + '> ' + message + (winbtc ? '+' + winbtc + 'mBTC' : '') + ' | rep ' + sockt.rep);
     if (winbtc != null) {
@@ -348,14 +345,14 @@ function chatemit(sockt, message, room) {
             });
             sockt.rep = rep;
             if (rep < -999 && !socket.nuked) {
-            usersocket.emit('message', {
-                message: 'ALERT: Your account has been nuked. You are prevented from chatting in any room except #banappeals. /sr banappeals to change to it.'
-            })
-            socket.nuked = true
-            usersocket.emit('joinroom', {
-                room: 'banappeals'
-            })
-        }
+                usersocket.emit('message', {
+                    message: 'ALERT: Your account has been nuked. You are prevented from chatting in any room except #banappeals. /sr banappeals to change to it.'
+                })
+                socket.nuked = true
+                usersocket.emit('joinroom', {
+                    room: 'banappeals'
+                })
+            }
         });
     }
 }
@@ -394,7 +391,9 @@ function login(username, usersocket, sess) {
             username: username
         });
     }
-    usersocket.emit('joinroom', {room: '--connectedmsg'}); // For whiskchat-client's Connected header
+    usersocket.emit('joinroom', {
+        room: '--connectedmsg'
+    }); // For whiskchat-client's Connected header
     usersocket.user = username;
     db.get('users/' + username + '/balance', function(err, reply) {
         usersocket.emit('balance', {
@@ -456,21 +455,21 @@ function login(username, usersocket, sess) {
             message: '<i class="icon-ok-sign"></i> Your rooms: ' + JSON.parse(reply).join(', ')
         });
         usersocket.emit('message', {
-            message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ')       
+            message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ')
         });
         usersocket.emit('message', {
-            message: '<i class="icon-bell"></i> Payout stats: ' + payoutbal.toFixed(2) + 'mBTC in play'      
+            message: '<i class="icon-bell"></i> Payout stats: ' + payoutbal.toFixed(2) + 'mBTC in play'
         });
         if (usersocket.refer) {
             usersocket.emit('message', {
-            message: '<i class="icon-user"></i> You were referred by ' + usersocket.refer + '!'   
-        });
+                message: '<i class="icon-user"></i> You were referred by ' + usersocket.refer + '!'
+            });
         }
     });
     usersocket.version = '';
     usersocket.quitmsg = 'Disconnected from server';
     usersocket.authed = true;
-    
+
     setTimeout(function() {
         if (users.indexOf(username) == -1) {
             users.push(username);
@@ -718,6 +717,14 @@ io.sockets.on('connection', function(socket) {
                                 if (data.refer) {
                                     db.set("users/" + data.username + '/referrer', stripHTML(data.refer));
                                     db.incr("users/" + data.refer + '/referred')
+                                    db.incr("users/" + data.refer + '/rep')
+                                    sockets.forEach(function(s) {
+                                        if (data.refer == s.user) {
+                                            s.emit("message", {
+                                                message: "<i class='icon-user'></i> Thanks for referring " + data.username + "! (+1 rep)"
+                                            });
+                                        }
+                                    })
                                     socket.refer = stripHTML(data.refer);
                                 }
                                 db.set("sessions/" + salt, data.username);
@@ -808,26 +815,26 @@ io.sockets.on('connection', function(socket) {
                     }
                 });
             }
-            if(data.action == 'changemail') {
-                    if (data.email.indexOf("@") == -1 || data.email.indexOf(".") == -1) {
-                            //simple email check, as in register
-                            return socket.emit("message", {
-                                type: "alert-error",
-                                message: "Invalid email: " + data.email + "."
-                            });
-                    }
-                    if((!data.username) || (!data.email)) {
-                            // this should never happen
-                            return socket.emit("message", {
-                                type: "alert-error",
-                                message: "Please input an email."
-                            });
-                    }
-                    db.set('users/' + data.username + '/email', data.email);
+            if (data.action == 'changemail') {
+                if (data.email.indexOf("@") == -1 || data.email.indexOf(".") == -1) {
+                    //simple email check, as in register
                     return socket.emit("message", {
-                        type: "alert-success",
-                        message: "Email successfully changed to " + data.email + "."
+                        type: "alert-error",
+                        message: "Invalid email: " + data.email + "."
                     });
+                }
+                if ((!data.username) || (!data.email)) {
+                    // this should never happen
+                    return socket.emit("message", {
+                        type: "alert-error",
+                        message: "Please input an email."
+                    });
+                }
+                db.set('users/' + data.username + '/email', data.email);
+                return socket.emit("message", {
+                    type: "alert-success",
+                    message: "Email successfully changed to " + data.email + "."
+                });
             }
         }
     });
@@ -953,48 +960,48 @@ io.sockets.on('connection', function(socket) {
                 chatemit(socket, '<b> * ' + socket.user + ' </b></strong> <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
                 return;
             }
-	    if (chat.message.substr(0, 4) == "/msg" || chat.message.substr(0, 3) == "/pm" || chat.message.substr(0, 5) == "/tell") {
-		if(chat.message == "/msg" || chat.message == "/pm" || chat.message == "/tell" || chat.message.split(" ").length == 2) {
-			socket.emit('message', {
-				message: 'Syntax: ' + chat.message + ' <user> <message>'
-			});
-			return;
-		}
-		var msg = "";
-		for(var i = 0;i<chat.message.split(" ").length;i++) { // What if the message has spaces in it?
-			if(i == 0 || i == 1)
-				continue; // Skip the PM command and the first argument (target username).
-			msg = msg + chat.message.split(" ")[i] + " ";
-		}
-		var foundUser = false; // Was the target user found? 
-		sockets.forEach(function(sock) {
-			if(foundUser) {
-			return;
-			}
-                	if(sock.user == chat.message.split(" ")[1]) {
-				sock.emit('chat', {
-					room: 'main',
-					message: msg,
-					user: '<strong>PM from ' + socket.user + '</strong>',
-					timestamp: Date.now()
-				});
-				foundUser = true;
-			}
-            	});
-		if(foundUser) {
-			socket.emit('chat', {
-				room: 'main',
-				message: msg,
-				user: '<strong>PM to ' + chat.message.split(" ")[1] + '</strong>',
-				timestamp: Date.now()
-			});
-		} else {
-			socket.emit('message', {
-				message: 'PM failed: user ' + chat.message.split(" ")[1] + 'not found'
-			});		
-	    	}
-	    	return;
-	    }
+            if (chat.message.substr(0, 4) == "/msg" || chat.message.substr(0, 3) == "/pm" || chat.message.substr(0, 5) == "/tell") {
+                if (chat.message == "/msg" || chat.message == "/pm" || chat.message == "/tell" || chat.message.split(" ").length == 2) {
+                    socket.emit('message', {
+                        message: 'Syntax: ' + chat.message + ' <user> <message>'
+                    });
+                    return;
+                }
+                var msg = "";
+                for (var i = 0; i < chat.message.split(" ").length; i++) { // What if the message has spaces in it?
+                    if (i == 0 || i == 1)
+                        continue; // Skip the PM command and the first argument (target username).
+                    msg = msg + chat.message.split(" ")[i] + " ";
+                }
+                var foundUser = false; // Was the target user found? 
+                sockets.forEach(function(sock) {
+                    if (foundUser) {
+                        return;
+                    }
+                    if (sock.user == chat.message.split(" ")[1]) {
+                        sock.emit('chat', {
+                            room: 'main',
+                            message: msg,
+                            user: '<strong>PM from ' + socket.user + '</strong>',
+                            timestamp: Date.now()
+                        });
+                        foundUser = true;
+                    }
+                });
+                if (foundUser) {
+                    socket.emit('chat', {
+                        room: 'main',
+                        message: msg,
+                        user: '<strong>PM to ' + chat.message.split(" ")[1] + '</strong>',
+                        timestamp: Date.now()
+                    });
+                } else {
+                    socket.emit('message', {
+                        message: 'PM failed: user ' + chat.message.split(" ")[1] + 'not found'
+                    });
+                }
+                return;
+            }
             if (chat.message.substr(0, 10) == '!; connect') {
                 socket.version = chat.message.substr(11, chat.message.length);
                 return;
@@ -1006,7 +1013,7 @@ io.sockets.on('connection', function(socket) {
             }
             if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online") {
                 socket.emit('message', {
-                    message: '<strong>' + users.length + ' online users: </strong>' + users.join(', ')
+                    message: '<i class="icon-user"></i> ' + users.length + ' online users: </strong>' + users.join(', ')
                 });
                 return;
             }
