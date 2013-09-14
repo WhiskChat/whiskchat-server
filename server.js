@@ -663,10 +663,10 @@ io.sockets.on('connection', function(socket) {
                             message: "Username must be between 3 and 16 characters, must be alphanumeric and cannot contain HTML."
                         });
                     }
-                    if (lastip.indexOf(socket.handshake.address.address) !== -1 || knownspambots.indexOf(socket.handshake.address.address) !== -1) {
+                    if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
                         return socket.emit("message", {
                             type: "alert-error",
-                            message: "You cannot register twice."
+                            message: "You have been IP banned by an admin."
                         });
                     }
                     lastip.push(socket.handshake.address.address);
