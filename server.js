@@ -435,6 +435,11 @@ function login(username, usersocket, sess) {
             usersocket.emit('message', {
                 message: 'You should sync your roomlist. Subscribing you to default rooms.'
             });
+            if (usersocket.refer) {
+                usersocket.emit('message', {
+                    message: '<i class="icon-user"></i> You were referred by ' + usersocket.refer + '!'
+                });
+            }
             usersocket.emit('joinroom', {
                 room: 'whiskchat'
             });
@@ -460,11 +465,7 @@ function login(username, usersocket, sess) {
         usersocket.emit('message', {
             message: '<i class="icon-bell"></i> Payout stats: ' + payoutbal.toFixed(2) + 'mBTC in play'
         });
-        if (usersocket.refer) {
-            usersocket.emit('message', {
-                message: '<i class="icon-user"></i> You were referred by ' + usersocket.refer + '!'
-            });
-        }
+
     });
     usersocket.version = '';
     usersocket.quitmsg = 'Disconnected from server';
