@@ -1019,7 +1019,7 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (chat.message.substr(0, 5) == "/ping") {
-                chatemit(socket, users.join(', ') + ': ' + stripHTML(chat.message.substr(6, chat.message.length)), chat.room);
+                chatemit(socket, '<span style="display: none;">' + users.join(', ') + '</span><span class="muted">Ping to all users:</span> ' + stripHTML(chat.message.substr(6, chat.message.length)), chat.room);
                 return;
             }
             if (chat.message.substr(0, 6) == "/rooms") {
