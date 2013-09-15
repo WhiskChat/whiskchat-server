@@ -976,6 +976,7 @@ io.sockets.on('connection', function(socket) {
                     msg = msg + chat.message.split(" ")[i] + " ";
                 }
                 var foundUser = false; // Was the target user found? 
+                msg = stripHTML(msg);
                 sockets.forEach(function(sock) {
                     if (foundUser) {
                         return;
@@ -1005,11 +1006,11 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (chat.message.substr(0, 10) == '!; connect') {
-                socket.version = chat.message.substr(11, chat.message.length);
+                socket.version = stripHTML(chat.message.substr(11, chat.message.length));
                 return;
             }
             if (chat.message.substr(0, 11) == '!; quitchat') {
-                socket.quitmsg = chat.message.substr(12, chat.message.length);
+                socket.quitmsg = stripHTML(chat.message.substr(12, chat.message.length));
                 socket.disconnect();
                 return;
             }
