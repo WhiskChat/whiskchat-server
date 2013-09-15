@@ -919,6 +919,7 @@ io.sockets.on('connection', function(socket) {
                 timestamp: Date.now()
             });
         } else {
+            chat.message = stripHTML(chat.message) // Prevented XSS - forever!
             if (muted.indexOf(socket.user) !== -1) {
                 socket.volatile.emit("message", {
                     type: "alert-error",
