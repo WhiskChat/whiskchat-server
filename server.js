@@ -946,11 +946,11 @@ io.sockets.on('connection', function(socket) {
             }, 500);
             emitAd = true;
             if (chat.message.substr(0, 1) == "\\") {
-                chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
+                chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + chat.message.substr(1, chat.message.length) + '</span>', chat.room);
                 return;
             }
             if (chat.message.substr(0, 1) == "|") {
-                chatemit(socket, '<span class="rainbow">' + stripHTML(chat.message.substr(1, chat.message.length)) + '</span>', chat.room);
+                chatemit(socket, '<span class="rainbow">' + chat.message.substr(1, chat.message.length) + '</span>', chat.room);
                 return;
             }
             if (chat.room == "modsprivate" && socket.rank !== 'mod' && socket.rank !== 'admin') {
@@ -960,7 +960,7 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (chat.message.substr(0, 3) == "/me") {
-                chatemit(socket, '<b> * ' + socket.user + ' </b></strong> <i>' + stripHTML(chat.message.substr(4, chat.message.length)) + '</i>', chat.room);
+                chatemit(socket, '<b> * ' + socket.user + ' </b></strong> <i>' + chat.message.substr(4, chat.message.length) + '</i>', chat.room);
                 return;
             }
             if (chat.message.substr(0, 4) == "/msg" || chat.message.substr(0, 3) == "/pm" || chat.message.substr(0, 5) == "/tell") {
@@ -977,7 +977,6 @@ io.sockets.on('connection', function(socket) {
                     msg = msg + chat.message.split(" ")[i] + " ";
                 }
                 var foundUser = false; // Was the target user found? 
-                msg = stripHTML(msg);
                 sockets.forEach(function(sock) {
                     if (foundUser) {
                         return;
@@ -1007,11 +1006,11 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (chat.message.substr(0, 10) == '!; connect') {
-                socket.version = stripHTML(chat.message.substr(11, chat.message.length));
+                socket.version = chat.message.substr(11, chat.message.length);
                 return;
             }
             if (chat.message.substr(0, 11) == '!; quitchat') {
-                socket.quitmsg = stripHTML(chat.message.substr(12, chat.message.length));
+                socket.quitmsg = chat.message.substr(12, chat.message.length);
                 socket.disconnect();
                 return;
             }
@@ -1022,7 +1021,7 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (chat.message.substr(0, 5) == "/ping") {
-                chatemit(socket, '<span style="display: none;">' + users.join(', ') + '</span><span class="muted">Ping to all users:</span> ' + stripHTML(chat.message.substr(6, chat.message.length)), chat.room);
+                chatemit(socket, '<span style="display: none;">' + users.join(', ') + '</span><span class="muted">Ping to all users:</span> ' + chat.message.substr(6, chat.message.length), chat.room);
                 return;
             }
             if (chat.message.substr(0, 6) == "/rooms") {
@@ -1068,12 +1067,12 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (chat.message.substr(0, 4) == "/spt") {
-                if (stripHTML(chat.message.substr(5, chat.message.length)) == '') {
+                if (chat.message.substr(5, chat.message.length) == '') {
                     return socket.emit('message', {
                         message: 'Syntax: /spt (Spotify URI)'
                     });
                 }
-                chatemit(socket, '<iframe src="https://embed.spotify.com/?uri=' + stripHTML(chat.message.substr(5, chat.message.length)) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room);
+                chatemit(socket, '<iframe src="https://embed.spotify.com/?uri=' + chat.message.substr(5, chat.message.length) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room);
                 return;
             }
             if (chat.message.substr(0, 4) == "!moo") {
@@ -1089,24 +1088,24 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (chat.message.substr(0, 4) == "/btc") {
-                if (stripHTML(chat.message.substr(5, chat.message.length))) {
-                    return chatemit(socket, '<strong>BTC conversion of ' + stripHTML(chat.message.substr(5, chat.message.length)) + '</strong>: <img src="http://btcticker.appspot.com/mtgox/' + stripHTML(chat.message.substr(5, chat.message.length)) + '.png"></img>', chat.room);
+                if (chat.message.substr(5, chat.message.length)) {
+                    return chatemit(socket, '<strong>BTC conversion of ' + chat.message.substr(5, chat.message.length) + '</strong>: <img src="http://btcticker.appspot.com/mtgox/' + chat.message.substr(5, chat.message.length) + '.png"></img>', chat.room);
                 }
                 return chatemit(socket, '<strong>BTC conversion of 1 BTC to USD: </strong> <img src="http://btcticker.appspot.com/mtgox/1btc.png"></img>', chat.room);
             }
             if (chat.message.substr(0, 3) == "/sc") {
-                if (stripHTML(chat.message.substr(4, chat.message.length)) == '') {
+                if (chat.message.substr(4, chat.message.length) == '') {
                     return socket.emit('message', {
                         message: 'Syntax: /sc (soundcloud id)'
                     });
                 }
-                return chatemit(socket, '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + stripHTML(chat.message.substr(4, chat.message.length)) + '"></iframe>', chat.room);
+                return chatemit(socket, '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + chat.message.substr(4, chat.message.length) + '"></iframe>', chat.room);
             }
             if (chat.message.substr(0, 3) == "/yt") {
-                if (stripHTML(chat.message.substr(4, chat.message.length)).indexOf('youtube.com') !== -1) {
-                    chat.yt = stripHTML(chat.message.substr(4, chat.message.length)).match(/(\?|&)v=([^&]+)/).pop();
+                if (chat.message.substr(4, chat.message.length).indexOf('youtube.com') !== -1) {
+                    chat.yt = chat.message.substr(4, chat.message.length).match(/(\?|&)v=([^&]+)/).pop();
                 } else {
-                    chat.yt = stripHTML(chat.message.substr(4, chat.message.length));
+                    chat.yt = chat.message.substr(4, chat.message.length);
                 }
                 if (chat.yt == '') {
                     return socket.emit('message', {
@@ -1123,7 +1122,7 @@ io.sockets.on('connection', function(socket) {
                     });
                     return;
                 }
-                return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', chat.room);
+                return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
             }
             if (chat.message.substr(0, 3) == "/aa") { // Peapodamus: I'm climbin' in your windows, stealing your codes up
                 if (socket.rank !== 'admin') {
@@ -1133,13 +1132,13 @@ io.sockets.on('connection', function(socket) {
                     });
                     return; // The admin action voice. For when BIG RED LETTERS aren't enough.
                 }
-                return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + stripHTML(chat.message.substr(3, chat.message.length)) + '</span>', chat.room);
+                return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
             }
             if (chat.message.substr(0, 3) == "/b ") { // Bold - DiamondCardz
-                return chatemit(socket, '<strong>' + stripHTML(chat.message.substr(3, chat.message.length)) + '</strong>', chat.room);
+                return chatemit(socket, '<strong>' + chat.message.substr(3, chat.message.length) + '</strong>', chat.room);
             }
             if (chat.message.substr(0, 5) == "/bold") { // Bold - DiamondCardz
-                return chatemit(socket, '<strong>' + stripHTML(chat.message.substr(6, chat.message.length)) + '</strong>', chat.room);
+                return chatemit(socket, '<strong>' + chat.message.substr(6, chat.message.length) + '</strong>', chat.room);
             }
             if (chat.message.substr(0, 9) == "/forcepay") {
                 if (socket.rank !== 'admin') {
@@ -1151,7 +1150,7 @@ io.sockets.on('connection', function(socket) {
                 }
                 return doPayoutLoop(chat.message.split(' ')[1]);
             }
-            bbcode.parse(stripHTML(chat.message).replace('"', ''), function(parsedcode) {
+            bbcode.parse(chat.message, function(parsedcode) {
                 /* link links */
                 parsedcode = urlify(parsedcode);
                 if (!chat.room) {
