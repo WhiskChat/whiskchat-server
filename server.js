@@ -717,7 +717,16 @@ io.sockets.on('connection', function(socket) {
                                 db.set("users/" + data.username + "/password", hashed);
                                 db.set("users/" + data.username + "/salt", salt);
                                 db.set("users/" + data.username + "/email", data.email);
+                                
+                                db.set("sessions/" + salt, data.username);
+                                console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
+                                socket.emit("message", {
+                                    type: "alert-success",
+                                    message: "Thanks for registering, " + data.username + "!"
+                                });
+                                login(data.username, socket, salt);
                                 if (typeof data.refer !== 'undefined') {
+                                    socket.refer = stripHTML(data.refer);
                                     db.set("users/" + data.username + '/referrer', stripHTML(data.refer));
                                     sockets.forEach(function(s) {
                                         if (data.refer == s.user) {
@@ -726,15 +735,7 @@ io.sockets.on('connection', function(socket) {
                                             });
                                         }
                                     })
-                                    socket.refer = stripHTML(data.refer);
                                 }
-                                db.set("sessions/" + salt, data.username);
-                                console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
-                                socket.emit("message", {
-                                    type: "alert-success",
-                                    message: "Thanks for registering, " + data.username + "!"
-                                });
-                                login(data.username, socket, salt);
                             } catch (e) {
                                 console.log(e.stack);
                                 return socket.emit("message", {
