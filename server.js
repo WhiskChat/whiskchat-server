@@ -1227,7 +1227,7 @@ io.sockets.on('connection', function(socket) {
                                     room: tip.room,
                                     target: stripHTML(tip.user),
                                     amount: Number(tip.tip),
-                                    message: tip.message,
+                                    message: stripHTML(tip.message),
                                     rep: true,
                                     user: socket.user,
                                     timestamp: Date.now()
@@ -1280,7 +1280,7 @@ io.sockets.on('connection', function(socket) {
                                         room: tip.room,
                                         target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + Number(tip.tip)).toFixed(2) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2) + ')',
                                         amount: Number(tip.tip),
-                                        message: tip.message,
+                                        message: stripHTML(tip.message),
                                         user: socket.user,
                                         timestamp: Date.now()
                                     });
@@ -1316,7 +1316,7 @@ io.sockets.on('connection', function(socket) {
                                             room: tip.room,
                                             target: stripHTML(tip.user),
                                             amount: Number(tip.tip),
-                                            message: tip.message,
+                                            message: stripHTML(tip.message),
                                             user: socket.user,
                                             timestamp: Date.now()
                                         });
