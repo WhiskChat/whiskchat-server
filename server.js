@@ -1014,7 +1014,7 @@ io.sockets.on('connection', function(socket) {
                 socket.disconnect();
                 return;
             }
-            if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online") {
+            if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online" || chat.message.substr(0, 6) == "/users") {
                 socket.emit('message', {
                     message: '<i class="icon-user"></i> ' + users.length + ' online users: </strong>' + users.join(', ')
                 });
@@ -1084,6 +1084,18 @@ io.sockets.on('connection', function(socket) {
             if (chat.message.substr(0, 5) == "!pool") {
                 socket.emit('message', {
                     message: 'Earnings pool: ' + payoutbal + ' mBTC'
+                });
+                return;
+            }
+            if (chat.message.substr(0, 5) == "/mods") {
+                socket.emit('message', {
+                    message: 'The current moderators are: devinthedev, xDeathwing, TradeFortress'
+                });
+                return;
+            }
+            if (chat.message.substr(0, 7) == "/admins") {
+                socket.emit('message', {
+                    message: 'The current admins are: whiskers75, Diamond, peapodamus'
                 });
                 return;
             }
