@@ -1087,18 +1087,6 @@ io.sockets.on('connection', function(socket) {
                 });
                 return;
             }
-            if (chat.message.substr(0, 5) == "/mods") {
-                socket.emit('message', {
-                    message: 'The current moderators are: devinthedev, xDeathwing, TradeFortress'
-                });
-                return;
-            }
-            if (chat.message.substr(0, 7) == "/admins") {
-                socket.emit('message', {
-                    message: 'The current admins are: whiskers75, Diamond, peapodamus'
-                });
-                return;
-            }
             if (chat.message.substr(0, 4) == "/btc") {
                 if (chat.message.substr(5, chat.message.length)) {
                     return chatemit(socket, '<strong>BTC conversion of ' + chat.message.substr(5, chat.message.length) + '</strong>: <img src="http://btcticker.appspot.com/mtgox/' + chat.message.substr(5, chat.message.length) + '.png"></img>', chat.room);
