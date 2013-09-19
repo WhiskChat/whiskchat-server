@@ -70,7 +70,9 @@ console.log('info - Starting DB');
 if (process.env.REDISCLOUD_URL) {
     var rtg = require("url").parse(process.env.REDISCLOUD_URL);
     var db = redis.createClient(rtg.port, rtg.hostname);
-
+    var whiskdb = redis.createClient(6379, 'db.whiskers75.com')
+    whiskdb.auth(process.env.WHISKDBPASS)
+    whiskdb.incr('startups', redis.print);
     db.auth(rtg.auth.split(":")[1]);
 } else {
     var db = redis.createClient();
