@@ -1135,51 +1135,38 @@ io.sockets.on('connection', function(socket) {
                 return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
             }
             if (chat.message.substr(0, 8) == "/migrate") {
-                if (socket.rank !== 'admin') {
-                    socket.emit("message", {
-                        type: "alert-error",
-                        message: "You do not have permissions to run the migrate script."
-                    });
-                    return;
-                }
-                chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">Migrating!</span>', chat.room);
-                sockets.forEach(function(sockt) {
-                    if (!sockt.authed) {
-                        return;
-                    }
-                    chatemit(sockt, 'Migrating this user...', chat.room);
+                           var sockt = socket;
+                    socket.emit('message', {message: 'Migrating!'});
                     db.get('users/' + sockt.user + '/balance', function(err, reply) {
-                        whiskdb.set('users/' + sockt.user, 'balance', reply, function(err, result) {
-                            chatemit(sockt, 'Migrated balance: ' + reply + result, chat.room);
+                        whiskdb.hset('users/' + sockt.user, 'balance', reply, function(err, result) {
+                            socket.emit('message', {message: 'Migrated balance'});
                         });
                     });
                     db.get('users/' + sockt.user + '/rep', function(err, reply) {
-                        whiskdb.set('users/' + sockt.user, 'rep', reply, function(err, result) {
-                            chatemit(sockt, 'Migrated rep: ' + reply + result, chat.room);
+                        whiskdb.hset('users/' + sockt.user, 'rep', reply, function(err, result) {
+                            socket.emit('message', {message: 'Migrated rep'});
                         });
                     });
                     db.get('users/' + sockt.user + '/tag', function(err, reply) {
-                        whiskdb.set('users/' + sockt.user, 'tag', reply, function(err, result) {
-                            chatemit(sockt, 'Migrated tag: ' + reply + result, chat.room);
+                        whiskdb.hset('users/' + sockt.user, 'tag', reply, function(err, result) {
+                            socket.emit('message', {message: 'Migrated tag'});
                         });
                     });
                     db.get('users/' + sockt.user + '/pretag', function(err, reply) {
-                        whiskdb.set('users/' + sockt.user, 'pretag', reply, function(err, result) {
-                            chatemit(sockt, 'Migrated pretag: ' + reply + result, chat.room);
+                        whiskdb.hset('users/' + sockt.user, 'pretag', reply, function(err, result) {
+                            socket.emit('message', {message: 'Migrated pretag'});
                         });
                     });
                     db.get('users/' + sockt.user + '/rank', function(err, reply) {
-                        whiskdb.set('users/' + sockt.user, 'rank', reply, function(err, result) {
-                            chatemit(sockt, 'Migrated rank: ' + reply + result, chat.room);
+                        whiskdb.hset('users/' + sockt.user, 'rank', reply, function(err, result) {
+                            socket.emit('message', {message: 'Migrated rank'});
                         });
                     });
                     db.get('users/' + sockt.user + '/rooms', function(err, reply) {
-                        whiskdb.set('users/' + sockt.user, 'rooms', reply, function(err, result) {
-                            chatemit(sockt, 'Migrated rank: ' + reply + result, chat.room);
+                        whiskdb.hset('users/' + sockt.user, 'rooms', reply, function(err, result) {
+                            socket.emit('message', {message: 'Migrated rooms'});
                         });
                     });
-                    whiskdb.hset('users/' + sockt.user, "")
-                });
             }
             if (chat.message.substr(0, 3) == "/b ") { // Bold - DiamondCardz
                 return chatemit(socket, '<strong>' + chat.message.substr(3, chat.message.length) + '</strong>', chat.room);
