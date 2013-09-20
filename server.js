@@ -715,7 +715,7 @@ io.sockets.on('connection', function(socket) {
                         });
                     });
                     oldb.get('users/' + data.user + '/password', function(err, reply) {
-                        db.hset('users/' + data.user, 'salt', reply, function(err, result) {
+                        db.hset('users/' + data.user, 'password', reply, function(err, result) {
                             socket.emit('message', {
                                 message: 'Migrated password' + ': ' + reply + ' ' + result
                             });
