@@ -566,207 +566,207 @@ setInterval(function() {
     }
 }, 400000);
 io.sockets.on('connection', function(socket) {
-    sockets.push(socket);
+        sockets.push(socket);
 
-    if (lastSendOnline.getTime() < new Date().getTime() - 2.5 * 1000) {
-        io.sockets.emit("online", {
-            people: users.length,
-            array: users
+        if (lastSendOnline.getTime() < new Date().getTime() - 2.5 * 1000) {
+            io.sockets.emit("online", {
+                people: users.length,
+                array: users
+            });
+            lastSendOnline = new Date();
+        } else {
+            socket.emit("online", {
+                people: users.length,
+                array: users
+            });
+        }
+        socket.on('disconnect', function() {
+            sockets.splice(sockets.indexOf(socket), 1);
+            if (socket.authed) {
+                var tmp = false;
+                sockets.forEach(function(skct) {
+                    if (socket.user == skct.user) {
+                        tmp = true;
+                    }
+                });
+                if (muted.indexOf(socket.user) == -1 && !tmp) {
+                    chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
+                    users.splice(users.indexOf(socket.user), 1);
+                    io.sockets.emit("online", {
+                        people: users.length,
+                        array: users
+                    });
+                }
+                console.log('info - ' + socket.user + ' disconnected');
+            }
         });
-        lastSendOnline = new Date();
-    } else {
+        socket.emit('joinroom', {
+            room: 'main'
+        });
+        console.log('info - new connection from IP ' + socket.handshake.address.address);
+        socket.emit('chat', {
+            room: 'main',
+            message: '<strong>Welcome to WhiskChat Server!</strong>',
+            user: '<strong>Server</strong>',
+            timestamp: Date.now()
+        });
+        socket.emit('chat', {
+            room: 'main',
+            message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + users.length + '</strong> users connected.',
+            user: '<strong>Server</strong>',
+            timestamp: Date.now()
+        });
         socket.emit("online", {
             people: users.length,
             array: users
         });
-    }
-    socket.on('disconnect', function() {
-        sockets.splice(sockets.indexOf(socket), 1);
-        if (socket.authed) {
-            var tmp = false;
-            sockets.forEach(function(skct) {
-                if (socket.user == skct.user) {
-                    tmp = true;
-                }
-            });
-            if (muted.indexOf(socket.user) == -1 && !tmp) {
-                chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
-                users.splice(users.indexOf(socket.user), 1);
-                io.sockets.emit("online", {
-                    people: users.length,
-                    array: users
+        socket.authed = false;
+        socket.wlocked = false;
+        socket.ready = true;
+        socket.tag = '';
+        socket.pretag = '';
+        socket.rank = '';
+        socket.on('login', function(data) {
+            if (data && data.session) {
+                console.log('info - checking session cookie for IP ' + socket.handshake.address.address);
+                socket.emit("message", {
+                    type: "alert-success",
+                    message: "Checking session cookie..."
                 });
-            }
-            console.log('info - ' + socket.user + ' disconnected');
-        }
-    });
-    socket.emit('joinroom', {
-        room: 'main'
-    });
-    console.log('info - new connection from IP ' + socket.handshake.address.address);
-    socket.emit('chat', {
-        room: 'main',
-        message: '<strong>Welcome to WhiskChat Server!</strong>',
-        user: '<strong>Server</strong>',
-        timestamp: Date.now()
-    });
-    socket.emit('chat', {
-        room: 'main',
-        message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + users.length + '</strong> users connected.',
-        user: '<strong>Server</strong>',
-        timestamp: Date.now()
-    });
-    socket.emit("online", {
-        people: users.length,
-        array: users
-    });
-    socket.authed = false;
-    socket.wlocked = false;
-    socket.ready = true;
-    socket.tag = '';
-    socket.pretag = '';
-    socket.rank = '';
-    socket.on('login', function(data) {
-        if (data && data.session) {
-            console.log('info - checking session cookie for IP ' + socket.handshake.address.address);
-            socket.emit("message", {
-                type: "alert-success",
-                message: "Checking session cookie..."
-            });
-            db.get('sessions/' + data.session, function(err, reply) {
-                db.get('users/' + reply + '/password', function(err, res) {
-                    if (reply && reply !== "nuked") {
-                        console.log('info - correct, logging in');
-                        socket.emit("message", {
-                            type: "alert-success",
-                            message: "Welcome back, " + reply + "! (automatically logged in)"
-                        });
-                        login(reply, socket, data.session);
-                    } else {
-                        console.log('info - incorrect');
-                        socket.emit("message", {
-                            type: "alert-error",
-                            message: "Incorrect session cookie."
-                        });
-                    }
-                });
-            });
-        }
-    });
-    socket.on('accounts', function(data) {
-        db.get('ip/' + socket.handshake.address.address, function(err, res) {
-            if (res) {
-                return socket.emit("message", {
-                    type: "alert-error",
-                    message: "You have been IP banned: " + res
-                });
-            }
-        });
-        if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
-            return socket.emit("message", {
-                type: "alert-error",
-                message: "You have been IP banned. No reason is available as this is a code-enacted ban."
-            });
-        }
-        if (socket.failed) {
-            return socket.emit("message", {
-                type: "alert-error",
-                message: "Please wait 20 seconds in between logins."
-            });
-        }
-        if (data && data.action) {
-            if (data.action == "register") {
-                if (data.username && data.password && data.password2 && data.email) {
-                    if (data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>" || alphanumeric.test(data.username) == false) {
-                        return socket.emit("message", {
-                            type: "alert-error",
-                            message: "Username must be between 3 and 16 characters, must be alphanumeric and cannot contain HTML."
-                        });
-                    }
-                    if (data.username.indexOf('<') !== -1 || data.username.indexOf('>') !== -1) {
-                        return socket.emit("message", {
-                            type: "alert-error",
-                            message: "You may not use HTML."
-                        });
-                    }
-                    db.get("users/" + data.username, function(err, reply) {
-                        if (!reply) {
-                            if (data.password.length < 6) {
-                                return socket.emit("message", {
-                                    type: "alert-error",
-                                    message: "Your password must be at least 6 characters long, for security."
-                                });
-                            }
-                            if (data.email.indexOf("@") == -1 || data.email.indexOf(".") == -1) {
-                                //simple email check
-                                return socket.emit("message", {
-                                    type: "alert-error",
-                                    message: "Please enter a valid email."
-                                });
-                            }
-                            if (data.password != data.password2) {
-                                return socket.emit("message", {
-                                    type: "alert-error",
-                                    message: "Passwords must match!"
-                                });
-                            }
-                            // Generate seed for password
-                            try {
-                                var salt = Math.floor(Math.random() * 10000000000).toString();
-
-                                var hashed = hash.sha256(data.password, salt);
-                                db.hset("users/" + data.username, "password", hashed);
-                                db.hset("users/" + data.username, "salt", salt);
-                                db.hset("users/" + data.username, "email", data.email);
-
-                                db.hset("sessions", salt, data.username);
-                                console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
-                                socket.emit("message", {
-                                    type: "alert-success",
-                                    message: "Thanks for registering, " + data.username + "!"
-                                });
-                                login(data.username, socket, salt);
-                                if (typeof data.refer !== 'undefined') {
-                                    socket.refer = stripHTML(data.refer);
-                                    db.hset("users/" + data.username, 'referrer', stripHTML(data.refer));
-                                    sockets.forEach(function(s) {
-                                        if (data.refer == s.user) {
-                                            s.emit("message", {
-                                                message: "<i class='icon-user'></i> Thanks for referring " + data.username + "!"
-                                            });
-                                        }
-                                    })
-                                }
-                            } catch (e) {
-                                console.log(e.stack);
-                                return socket.emit("message", {
-                                    type: "alert-error",
-                                    message: "Error logging in! Stacktrace: " + e.stack
-                                });
-                            }
+                db.get('sessions/' + data.session, function(err, reply) {
+                    db.get('users/' + reply + '/password', function(err, res) {
+                        if (reply && reply !== "nuked") {
+                            console.log('info - correct, logging in');
+                            socket.emit("message", {
+                                type: "alert-success",
+                                message: "Welcome back, " + reply + "! (automatically logged in)"
+                            });
+                            login(reply, socket, data.session);
                         } else {
-                            return socket.emit("message", {
+                            console.log('info - incorrect');
+                            socket.emit("message", {
                                 type: "alert-error",
-                                message: "This username is already taken!"
+                                message: "Incorrect session cookie."
                             });
                         }
                     });
-                } else {
-                    socket.emit("message", {
+                });
+            }
+        });
+        socket.on('accounts', function(data) {
+            db.get('ip/' + socket.handshake.address.address, function(err, res) {
+                if (res) {
+                    return socket.emit("message", {
                         type: "alert-error",
-                        message: "Please fill in all the fields."
+                        message: "You have been IP banned: " + res
                     });
                 }
+            });
+            if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
+                return socket.emit("message", {
+                    type: "alert-error",
+                    message: "You have been IP banned. No reason is available as this is a code-enacted ban."
+                });
             }
-            if (data.action == "login") {
-                db.hget('users/' + data.username, "banned", function(err, nuked) {
-                    if (nuked) {
-                        socket.emit("message", {
-                            type: "alert-error",
-                            message: "You have been banned: " + nuked
+            if (socket.failed) {
+                return socket.emit("message", {
+                    type: "alert-error",
+                    message: "Please wait 20 seconds in between logins."
+                });
+            }
+            if (data && data.action) {
+                if (data.action == "register") {
+                    if (data.username && data.password && data.password2 && data.email) {
+                        if (data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>" || alphanumeric.test(data.username) == false) {
+                            return socket.emit("message", {
+                                type: "alert-error",
+                                message: "Username must be between 3 and 16 characters, must be alphanumeric and cannot contain HTML."
+                            });
+                        }
+                        if (data.username.indexOf('<') !== -1 || data.username.indexOf('>') !== -1) {
+                            return socket.emit("message", {
+                                type: "alert-error",
+                                message: "You may not use HTML."
+                            });
+                        }
+                        db.get("users/" + data.username, function(err, reply) {
+                            if (!reply) {
+                                if (data.password.length < 6) {
+                                    return socket.emit("message", {
+                                        type: "alert-error",
+                                        message: "Your password must be at least 6 characters long, for security."
+                                    });
+                                }
+                                if (data.email.indexOf("@") == -1 || data.email.indexOf(".") == -1) {
+                                    //simple email check
+                                    return socket.emit("message", {
+                                        type: "alert-error",
+                                        message: "Please enter a valid email."
+                                    });
+                                }
+                                if (data.password != data.password2) {
+                                    return socket.emit("message", {
+                                        type: "alert-error",
+                                        message: "Passwords must match!"
+                                    });
+                                }
+                                // Generate seed for password
+                                try {
+                                    var salt = Math.floor(Math.random() * 10000000000).toString();
+
+                                    var hashed = hash.sha256(data.password, salt);
+                                    db.hset("users/" + data.username, "password", hashed);
+                                    db.hset("users/" + data.username, "salt", salt);
+                                    db.hset("users/" + data.username, "email", data.email);
+
+                                    db.hset("sessions", salt, data.username);
+                                    console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
+                                    socket.emit("message", {
+                                        type: "alert-success",
+                                        message: "Thanks for registering, " + data.username + "!"
+                                    });
+                                    login(data.username, socket, salt);
+                                    if (typeof data.refer !== 'undefined') {
+                                        socket.refer = stripHTML(data.refer);
+                                        db.hset("users/" + data.username, 'referrer', stripHTML(data.refer));
+                                        sockets.forEach(function(s) {
+                                            if (data.refer == s.user) {
+                                                s.emit("message", {
+                                                    message: "<i class='icon-user'></i> Thanks for referring " + data.username + "!"
+                                                });
+                                            }
+                                        })
+                                    }
+                                } catch (e) {
+                                    console.log(e.stack);
+                                    return socket.emit("message", {
+                                        type: "alert-error",
+                                        message: "Error logging in! Stacktrace: " + e.stack
+                                    });
+                                }
+                            } else {
+                                return socket.emit("message", {
+                                    type: "alert-error",
+                                    message: "This username is already taken!"
+                                });
+                            }
                         });
                     } else {
-                        db.hget("users/" + data.username, "password", function(err, reply) {
+                        socket.emit("message", {
+                            type: "alert-error",
+                            message: "Please fill in all the fields."
+                        });
+                    }
+                }
+                if (data.action == "login") {
+                    db.hget('users/' + data.username, "banned", function(err, nuked) {
+                        if (nuked) {
+                            socket.emit("message", {
+                                type: "alert-error",
+                                message: "You have been banned: " + nuked
+                            });
+                        } else {
+                            db.hget("users/" + data.username, "password", function(err, reply) {
                                 if (err || reply == null) {
                                     if (err) {
                                         handle(err);
@@ -814,430 +814,430 @@ io.sockets.on('connection', function(socket) {
                                             });
                                         }
                                     });
+                                };
+                            });
                         };
-                    });
-                });
-            }
-        }
-    });
-    socket.on('nuke', function(nuke) {
-        if (socket.rank !== 'admin') {
-            socket.emit("message", {
-                type: "alert-error",
-                message: "You do not have the permissions to do that."
-            });
-        } else {
-            if (nuke.reason == 'unnuke') {
-                db.hget('users/' + nuke.target, 'ip', function(err, ip) {
-                    if (ip) {
-                        db.del('ips/' + ip);
-                    }
-                    socket.emit('message', {
-                        message: 'Unnuked ' + nuke.target
                     })
-                })
-                db.hdel('users/' + nuke.target, redis.print);
-                db.del('sessions/' + res, redis.print);
-            }
-            db.hget('users/' + nuke.target, 'ip', function(err, ip) {
-                if (ip) {
-                    db.set('ips/' + ip, nuke.reason);
-                }
-            })
-            db.hset('users/' + nuke.target, 'banned', nuke.reason, redis.print);
-            db.set('sessions/' + res, 'nuked', redis.print);
-            muted.push(nuke.target);
-            sockets.forEach(function(cs) {
-                cs.emit('chat', {
-                    room: 'main',
-                    message: '<span style="color: #e00">' + stripHTML(socket.user) + ' has nuked ' + stripHTML(nuke.target) + ' ' + (nuke.reason ? 'for ' + stripHTML(nuke.reason) : '') + '!</span>',
-                    user: '<strong>Server</strong>',
-                    timestamp: Date.now()
+});
                 });
-                if (cs.user == nuke.target) {
-                    cs.disconnect();
-                }
-            });
-        }
-    });
-    socket.on('ping', function(ts) {
-        socket.emit('chat', {
-            room: 'main',
-            message: '<strong>Pong! Client -> server ' + (Date.now() - ts.ts) + 'ms</strong>',
-            user: '<strong>Server</strong>',
-            timestamp: Date.now()
-        });
-    });
-    socket.on('mute', function(mute) {
-        if (socket.rank !== 'mod' && socket.rank !== 'admin') {
-            socket.emit("message", {
-                type: "alert-error",
-                message: "You do not have the permissions to do that."
-            });
-        } else {
-            if (muted.indexOf(mute.target) == -1) {
-                muted.push(mute.target);
-            }
-            sockets.forEach(function(cs) {
-                cs.emit('chat', {
-                    room: 'main',
-                    message: '<span style="color: #e00">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(socket.user) + ' for ' + Number(stripHTML(mute.mute)) / 60 + ' minutes! Reason: ' + stripHTML(mute.reason) + '</span>',
-                    user: '<strong>Server</strong>',
-                    timestamp: Date.now()
-                });
-            });
-            setTimeout(function() {
-                if (muted.indexOf(mute.target) !== -1) {
-                    muted.splice(muted.indexOf(mute.target), 1);
+            socket.on('nuke', function(nuke) {
+                if (socket.rank !== 'admin') {
+                    socket.emit("message", {
+                        type: "alert-error",
+                        message: "You do not have the permissions to do that."
+                    });
+                } else {
+                    if (nuke.reason == 'unnuke') {
+                        db.hget('users/' + nuke.target, 'ip', function(err, ip) {
+                            if (ip) {
+                                db.del('ips/' + ip);
+                            }
+                            socket.emit('message', {
+                                message: 'Unnuked ' + nuke.target
+                            })
+                        })
+                        db.hdel('users/' + nuke.target, redis.print);
+                        db.del('sessions/' + res, redis.print);
+                    }
+                    db.hget('users/' + nuke.target, 'ip', function(err, ip) {
+                        if (ip) {
+                            db.set('ips/' + ip, nuke.reason);
+                        }
+                    })
+                    db.hset('users/' + nuke.target, 'banned', nuke.reason, redis.print);
+                    db.set('sessions/' + res, 'nuked', redis.print);
+                    muted.push(nuke.target);
                     sockets.forEach(function(cs) {
                         cs.emit('chat', {
                             room: 'main',
-                            message: '<span style="color: #090">' + mute.target + '\'s mute expired!</span>',
+                            message: '<span style="color: #e00">' + stripHTML(socket.user) + ' has nuked ' + stripHTML(nuke.target) + ' ' + (nuke.reason ? 'for ' + stripHTML(nuke.reason) : '') + '!</span>',
+                            user: '<strong>Server</strong>',
+                            timestamp: Date.now()
+                        });
+                        if (cs.user == nuke.target) {
+                            cs.disconnect();
+                        }
+                    });
+                }
+            });
+            socket.on('ping', function(ts) {
+                socket.emit('chat', {
+                    room: 'main',
+                    message: '<strong>Pong! Client -> server ' + (Date.now() - ts.ts) + 'ms</strong>',
+                    user: '<strong>Server</strong>',
+                    timestamp: Date.now()
+                });
+            });
+            socket.on('mute', function(mute) {
+                if (socket.rank !== 'mod' && socket.rank !== 'admin') {
+                    socket.emit("message", {
+                        type: "alert-error",
+                        message: "You do not have the permissions to do that."
+                    });
+                } else {
+                    if (muted.indexOf(mute.target) == -1) {
+                        muted.push(mute.target);
+                    }
+                    sockets.forEach(function(cs) {
+                        cs.emit('chat', {
+                            room: 'main',
+                            message: '<span style="color: #e00">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(socket.user) + ' for ' + Number(stripHTML(mute.mute)) / 60 + ' minutes! Reason: ' + stripHTML(mute.reason) + '</span>',
                             user: '<strong>Server</strong>',
                             timestamp: Date.now()
                         });
                     });
+                    setTimeout(function() {
+                        if (muted.indexOf(mute.target) !== -1) {
+                            muted.splice(muted.indexOf(mute.target), 1);
+                            sockets.forEach(function(cs) {
+                                cs.emit('chat', {
+                                    room: 'main',
+                                    message: '<span style="color: #090">' + mute.target + '\'s mute expired!</span>',
+                                    user: '<strong>Server</strong>',
+                                    timestamp: Date.now()
+                                });
+                            });
+                        }
+                    }, mute.mute * 1000);
                 }
-            }, mute.mute * 1000);
-        }
-    });
-    socket.on('chat', function(chat) {
-        if (!socket.authed) {
-            socket.emit('chat', {
-                room: 'main',
-                message: 'Please log in or register to chat!',
-                user: '<strong>Server</strong>',
-                timestamp: Date.now()
             });
-        } else {
-            chat.message = stripHTML(chat.message) // Prevented XSS - forever!
-            if (muted.indexOf(socket.user) !== -1) {
-                socket.volatile.emit("message", {
-                    type: "alert-error",
-                    message: "You have been muted!"
-                });
-                return;
-            }
-            if (socket.nuked && chat.room != 'banappeals') {
-                socket.volatile.emit("message", {
-                    type: "alert-error",
-                    message: "You may only talk in #banappeals!"
-                });
-                return;
-            }
-            if (chat.message.length < 2) {
-                return;
-            }
-            if (!socket.ready) {
-                return;
-            }
-            socket.ready = false;
-            setTimeout(function() {
-                socket.ready = true;
-            }, 500);
-            emitAd = true;
-            if (chat.message.substr(0, 1) == "\\") {
-                chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + chat.message.substr(1, chat.message.length) + '</span>', chat.room);
-                return;
-            }
-            if (chat.message.substr(0, 1) == "|") {
-                chatemit(socket, '<span class="rainbow">' + chat.message.substr(1, chat.message.length) + '</span>', chat.room);
-                return;
-            }
-            if (chat.room == "modsprivate" && socket.rank !== 'mod' && socket.rank !== 'admin') {
-                socket.emit('message', {
-                    message: 'You are not permitted to chat in this room.'
-                });
-                return;
-            }
-            if (chat.message.substr(0, 3) == "/me") {
-                chatemit(socket, '<b> * ' + socket.user + ' </b></strong> <i>' + chat.message.substr(4, chat.message.length) + '</i>', chat.room);
-                return;
-            }
-            if (chat.message.substr(0, 4) == "/msg" || chat.message.substr(0, 3) == "/pm" || chat.message.substr(0, 5) == "/tell") {
-                if (chat.message == "/msg" || chat.message == "/pm" || chat.message == "/tell" || chat.message.split(" ").length == 2) {
-                    socket.emit('message', {
-                        message: 'Syntax: ' + chat.message + ' <user> <message>'
-                    });
-                    return;
-                }
-                var msg = "";
-                for (var i = 0; i < chat.message.split(" ").length; i++) { // What if the message has spaces in it?
-                    if (i == 0 || i == 1)
-                        continue; // Skip the PM command and the first argument (target username).
-                    msg = msg + chat.message.split(" ")[i] + " ";
-                }
-                var foundUser = false; // Was the target user found? 
-                sockets.forEach(function(sock) {
-                    if (foundUser) {
-                        return;
-                    }
-                    if (sock.user == chat.message.split(" ")[1]) {
-                        sock.emit('chat', {
-                            room: 'main',
-                            message: msg,
-                            user: '<strong>PM from ' + socket.user + '</strong>',
-                            timestamp: Date.now()
-                        });
-                        foundUser = true;
-                    }
-                });
-                if (foundUser) {
+            socket.on('chat', function(chat) {
+                if (!socket.authed) {
                     socket.emit('chat', {
                         room: 'main',
-                        message: msg,
-                        user: '<strong>PM to ' + chat.message.split(" ")[1] + '</strong>',
+                        message: 'Please log in or register to chat!',
+                        user: '<strong>Server</strong>',
                         timestamp: Date.now()
                     });
                 } else {
-                    socket.emit('message', {
-                        message: 'PM failed: user ' + chat.message.split(" ")[1] + 'not found'
-                    });
-                }
-                return;
-            }
-            if (chat.message.substr(0, 10) == '!; connect') {
-                socket.version = chat.message.substr(11, chat.message.length);
-                return;
-            }
-            if (chat.message.substr(0, 11) == '!; quitchat') {
-                socket.quitmsg = chat.message.substr(12, chat.message.length);
-                socket.disconnect();
-                return;
-            }
-            if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online") {
-                socket.emit('message', {
-                    message: '<i class="icon-user"></i> ' + users.length + ' online users: </strong>' + users.join(', ')
-                });
-                return;
-            }
-            if (chat.message.substr(0, 5) == "/ping") {
-                chatemit(socket, '<span style="display: none;">' + users.join(', ') + '</span><span class="muted">Ping to all users:</span> ' + chat.message.substr(6, chat.message.length), chat.room);
-                return;
-            }
-            if (chat.message.substr(0, 6) == "/rooms") {
-                socket.emit('message', {
-                    message: genRoomText()
-                });
-                return;
-            }
-            if (chat.message.substr(0, 7) == "/crefer" && (socket.rank == "admin" || socket.rank == "mod")) {
-                socket.emit('message', {
-                    message: '<i class="icon-user"></i> Confirming ' + chat.message.split(' ')[1]
-                });
-                db.get('users/' + chat.message.split(' ')[1] + '/referrer', function(err, res) {
-                    if (err) {
-                        handle(err);
+                    chat.message = stripHTML(chat.message) // Prevented XSS - forever!
+                    if (muted.indexOf(socket.user) !== -1) {
+                        socket.volatile.emit("message", {
+                            type: "alert-error",
+                            message: "You have been muted!"
+                        });
                         return;
-                    } else {
-                        if (res) {
+                    }
+                    if (socket.nuked && chat.room != 'banappeals') {
+                        socket.volatile.emit("message", {
+                            type: "alert-error",
+                            message: "You may only talk in #banappeals!"
+                        });
+                        return;
+                    }
+                    if (chat.message.length < 2) {
+                        return;
+                    }
+                    if (!socket.ready) {
+                        return;
+                    }
+                    socket.ready = false;
+                    setTimeout(function() {
+                        socket.ready = true;
+                    }, 500);
+                    emitAd = true;
+                    if (chat.message.substr(0, 1) == "\\") {
+                        chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + chat.message.substr(1, chat.message.length) + '</span>', chat.room);
+                        return;
+                    }
+                    if (chat.message.substr(0, 1) == "|") {
+                        chatemit(socket, '<span class="rainbow">' + chat.message.substr(1, chat.message.length) + '</span>', chat.room);
+                        return;
+                    }
+                    if (chat.room == "modsprivate" && socket.rank !== 'mod' && socket.rank !== 'admin') {
+                        socket.emit('message', {
+                            message: 'You are not permitted to chat in this room.'
+                        });
+                        return;
+                    }
+                    if (chat.message.substr(0, 3) == "/me") {
+                        chatemit(socket, '<b> * ' + socket.user + ' </b></strong> <i>' + chat.message.substr(4, chat.message.length) + '</i>', chat.room);
+                        return;
+                    }
+                    if (chat.message.substr(0, 4) == "/msg" || chat.message.substr(0, 3) == "/pm" || chat.message.substr(0, 5) == "/tell") {
+                        if (chat.message == "/msg" || chat.message == "/pm" || chat.message == "/tell" || chat.message.split(" ").length == 2) {
                             socket.emit('message', {
-                                message: '<i class="icon-user"></i> User ' + chat.message.split(' ')[1] + ' was referred by ' + res
+                                message: 'Syntax: ' + chat.message + ' <user> <message>'
                             });
-                            db.hincrby("users/" + res, 'referred', 1)
-                            db.hincrby("users/" + res, 'rep', 2)
-                            chatemit(socket, '<span style="color: #090"><b><i class="icon-user"></i> Whitelisted ' + chat.message.split(' ')[1] + '!')
-                            chatemit(socket, '<span style="color: #090"><b><i class="icon-user"></i> ' + res + ' earnt 2 rep for referring!')
-                            db.del('users/' + chat.message.split(' ')[1] + '/referrer')
-                        } else {
-                            socket.emit('message', {
-                                message: '<i class="icon-user"></i> User ' + chat.message.split(' ')[1] + ' does not have a referrer.'
-                            });
+                            return;
                         }
-                    }
-                })
-                return;
-            }
-            if (chat.message.substr(0, 6) == "/refer") {
-                db.hget('users/' + socket.user, 'referred', function(err, refer) {
-                    socket.emit('message', {
-                        message: 'You have referred ' + Number(refer) + ' users.'
-                    });
-                });
-                return;
-            }
-            if (chat.message.substr(0, 4) == "/spt") {
-                if (chat.message.substr(5, chat.message.length) == '') {
-                    return socket.emit('message', {
-                        message: 'Syntax: /spt (Spotify URI)'
-                    });
-                }
-                chatemit(socket, '<iframe src="https://embed.spotify.com/?uri=' + chat.message.substr(5, chat.message.length) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room);
-                return;
-            }
-            if (chat.message.substr(0, 4) == "!moo") {
-                socket.emit('message', {
-                    message: 'Octocat is not amused. (Use WhiskDiceBot and built-in media instead)'
-                });
-                return;
-            }
-            if (chat.message.substr(0, 5) == "!pool") {
-                socket.emit('message', {
-                    message: 'Earnings pool: ' + payoutbal + ' mBTC'
-                });
-                return;
-            }
-            if (chat.message.substr(0, 4) == "/btc") {
-                if (chat.message.substr(5, chat.message.length)) {
-                    return chatemit(socket, '<strong>BTC conversion of ' + chat.message.substr(5, chat.message.length) + '</strong>: <img src="http://btcticker.appspot.com/mtgox/' + chat.message.substr(5, chat.message.length) + '.png"></img>', chat.room);
-                }
-                return chatemit(socket, '<strong>BTC conversion of 1 BTC to USD: </strong> <img src="http://btcticker.appspot.com/mtgox/1btc.png"></img>', chat.room);
-            }
-            if (chat.message.substr(0, 3) == "/sc") {
-                if (chat.message.substr(4, chat.message.length) == '') {
-                    return socket.emit('message', {
-                        message: 'Syntax: /sc (soundcloud id)'
-                    });
-                }
-                return chatemit(socket, '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + chat.message.substr(4, chat.message.length) + '"></iframe>', chat.room);
-            }
-            if (chat.message.substr(0, 3) == "/yt") {
-                if (chat.message.substr(4, chat.message.length).indexOf('youtube.com') !== -1) {
-                    chat.yt = chat.message.substr(4, chat.message.length).match(/(\?|&)v=([^&]+)/).pop();
-                } else {
-                    chat.yt = chat.message.substr(4, chat.message.length);
-                }
-                if (chat.yt == '') {
-                    return socket.emit('message', {
-                        message: 'Syntax: /yt (youtube link)'
-                    });
-                }
-                return chatemit(socket, '<iframe width="400" height="225" src="http://www.youtube.com/embed/' + chat.yt + '" frameborder="0" allowfullscreen></iframe>', chat.room);
-            }
-            if (chat.message.substr(0, 3) == "/ma") {
-                if (socket.rank !== 'mod' && socket.rank !== 'admin') {
-                    socket.emit("message", {
-                        type: "alert-error",
-                        message: "You do not have permissions to speak in the MOD ACTION VOICE."
-                    });
-                    return;
-                }
-                return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
-            }
-            if (chat.message.substr(0, 3) == "/aa") { // Peapodamus: I'm climbin' in your windows, stealing your codes up
-                if (socket.rank !== 'admin') {
-                    socket.emit("message", {
-                        type: "alert-error",
-                        message: "You do not have permissions to speak in the ADMIN ACTION VOICE."
-                    });
-                    return; // The admin action voice. For when BIG RED LETTERS aren't enough.
-                }
-                return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
-            }
-            if (chat.message.substr(0, 3) == "/b ") { // Bold - DiamondCardz
-                return chatemit(socket, '<strong>' + chat.message.substr(3, chat.message.length) + '</strong>', chat.room);
-            }
-            if (chat.message.substr(0, 5) == "/bold") { // Bold - DiamondCardz
-                return chatemit(socket, '<strong>' + chat.message.substr(6, chat.message.length) + '</strong>', chat.room);
-            }
-            if (chat.message.substr(0, 9) == "/forcepay") {
-                if (socket.rank !== 'admin') {
-                    socket.emit("message", {
-                        type: "alert-error",
-                        message: "You do not have permissions to force a payout."
-                    });
-                    return;
-                }
-                return doPayoutLoop(chat.message.split(' ')[1]);
-            }
-            bbcode.parse(chat.message, function(parsedcode) {
-                /* link links */
-                parsedcode = urlify(parsedcode);
-                if (!chat.room) {
-                    chat.room = 'main';
-                }
-                chatemit(socket, parsedcode, chat.room);
-            });
-        }
-    });
-    socket.on('withdraw', function(draw) {
-        if (socket.wlocked) {
-            socket.emit('message', {
-                message: "Please wait for all existing withdrawals to complete. Taking a while? Inputs.io may be lagging!"
-            });
-            return;
-        }
-        if (bitaddr.validate(draw.address)) {
-            draw.fees = 0.5;
-            socket.emit('message', {
-                message: 'This transaction will incur a 0.5 mBTC fee for sending using the blockchain.'
-            });
-        } else {
-            draw.fees = 0;
-        }
-        socket.emit('message', {
-            message: "Withdrawing " + draw.amount + "mBTC to address " + draw.address + "..."
-        });
-        socket.wlocked = true;
-        db.hget('users/' + socket.user, 'balance', function(err, bal1) {
-            if (Number(draw.amount) > 0 && bal1 >= (Number(draw.amount) + draw.fees)) {
-                inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'WhiskChat user ' + socket.user + ' ¦ ' + (Number(bal1) - (Number(draw.amount) + draw.fees)) + ' mBTC left', function(err, tx) {
-                    socket.wlocked = false;
-                    if (tx != 'OK' && tx.indexOf('VOUCHER') == -1) {
-                        console.log('info - ' + socket.user + ' failed to withdraw ' + draw.amount + ' to ' + draw.address + ' (' + tx + ')');
-                        socket.emit('message', {
-                            message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (" + tx + ")"
-                        });
-                        return;
-                    }
-                    db.hset('users/' + socket.user, 'balance', Number(bal1) - (Number(draw.amount) + draw.fees), function(err, res) {
-                        console.log('info - ' + socket.user + ' withdrew ' + draw.amount + ' to ' + draw.address);
-                        socket.emit('message', {
-                            message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " completed."
-                        });
-                        socket.emit('balance', {
-                            balance: Number(bal1) - Number(draw.amount)
-                        });
-                    });
-                });
-            } else {
-                socket.emit('message', {
-                    message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (not enough, incorrect address, 0.5 mBTC tx fee for non-Inputs)"
-                });
-            }
-        });
-    });
-    socket.on('tip', function(tip) {
-        if (tip.rep) {
-            if (socket.rank != 'admin' && socket.rank != 'mod') {
-                socket.emit('message', {
-                    message: 'Only moderators and admins can affect rep.'
-                });
-                return;
-            }
-            db.get('users/' + tip.user, function(err, exists) {
-                if (exists) {
-                    db.hget('users/' + tip.user, 'rep', function(err, bal2) {
-                        if (!isNaN(Number(tip.tip)) && muted.indexOf(socket.user) == -1) {
-                            db.hset('users/' + tip.user, 'rep', Number(tip.tip), redis.print);
-                            sockets.forEach(function(cs) {
-                                cs.emit('tip', {
-                                    room: tip.room,
-                                    target: stripHTML(tip.user),
-                                    amount: Number(tip.tip),
-                                    message: stripHTML(tip.message),
-                                    rep: true,
-                                    user: socket.user,
+                        var msg = "";
+                        for (var i = 0; i < chat.message.split(" ").length; i++) { // What if the message has spaces in it?
+                            if (i == 0 || i == 1)
+                                continue; // Skip the PM command and the first argument (target username).
+                            msg = msg + chat.message.split(" ")[i] + " ";
+                        }
+                        var foundUser = false; // Was the target user found? 
+                        sockets.forEach(function(sock) {
+                            if (foundUser) {
+                                return;
+                            }
+                            if (sock.user == chat.message.split(" ")[1]) {
+                                sock.emit('chat', {
+                                    room: 'main',
+                                    message: msg,
+                                    user: '<strong>PM from ' + socket.user + '</strong>',
                                     timestamp: Date.now()
                                 });
-                                if (cs.user == tip.user) {
-                                    cs.emit('whitelist', {
-                                        whitelisted: Number(tip.tip)
-                                    });
-                                    cs.rep = Number(tip.tip);
-                                }
+                                foundUser = true;
+                            }
+                        });
+                        if (foundUser) {
+                            socket.emit('chat', {
+                                room: 'main',
+                                message: msg,
+                                user: '<strong>PM to ' + chat.message.split(" ")[1] + '</strong>',
+                                timestamp: Date.now()
                             });
                         } else {
                             socket.emit('message', {
-                                type: "alert-error",
-                                message: "Reptip failed."
+                                message: 'PM failed: user ' + chat.message.split(" ")[1] + 'not found'
                             });
                         }
+                        return;
+                    }
+                    if (chat.message.substr(0, 10) == '!; connect') {
+                        socket.version = chat.message.substr(11, chat.message.length);
+                        return;
+                    }
+                    if (chat.message.substr(0, 11) == '!; quitchat') {
+                        socket.quitmsg = chat.message.substr(12, chat.message.length);
+                        socket.disconnect();
+                        return;
+                    }
+                    if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online") {
+                        socket.emit('message', {
+                            message: '<i class="icon-user"></i> ' + users.length + ' online users: </strong>' + users.join(', ')
+                        });
+                        return;
+                    }
+                    if (chat.message.substr(0, 5) == "/ping") {
+                        chatemit(socket, '<span style="display: none;">' + users.join(', ') + '</span><span class="muted">Ping to all users:</span> ' + chat.message.substr(6, chat.message.length), chat.room);
+                        return;
+                    }
+                    if (chat.message.substr(0, 6) == "/rooms") {
+                        socket.emit('message', {
+                            message: genRoomText()
+                        });
+                        return;
+                    }
+                    if (chat.message.substr(0, 7) == "/crefer" && (socket.rank == "admin" || socket.rank == "mod")) {
+                        socket.emit('message', {
+                            message: '<i class="icon-user"></i> Confirming ' + chat.message.split(' ')[1]
+                        });
+                        db.get('users/' + chat.message.split(' ')[1] + '/referrer', function(err, res) {
+                            if (err) {
+                                handle(err);
+                                return;
+                            } else {
+                                if (res) {
+                                    socket.emit('message', {
+                                        message: '<i class="icon-user"></i> User ' + chat.message.split(' ')[1] + ' was referred by ' + res
+                                    });
+                                    db.hincrby("users/" + res, 'referred', 1)
+                                    db.hincrby("users/" + res, 'rep', 2)
+                                    chatemit(socket, '<span style="color: #090"><b><i class="icon-user"></i> Whitelisted ' + chat.message.split(' ')[1] + '!')
+                                    chatemit(socket, '<span style="color: #090"><b><i class="icon-user"></i> ' + res + ' earnt 2 rep for referring!')
+                                    db.del('users/' + chat.message.split(' ')[1] + '/referrer')
+                                } else {
+                                    socket.emit('message', {
+                                        message: '<i class="icon-user"></i> User ' + chat.message.split(' ')[1] + ' does not have a referrer.'
+                                    });
+                                }
+                            }
+                        })
+                        return;
+                    }
+                    if (chat.message.substr(0, 6) == "/refer") {
+                        db.hget('users/' + socket.user, 'referred', function(err, refer) {
+                            socket.emit('message', {
+                                message: 'You have referred ' + Number(refer) + ' users.'
+                            });
+                        });
+                        return;
+                    }
+                    if (chat.message.substr(0, 4) == "/spt") {
+                        if (chat.message.substr(5, chat.message.length) == '') {
+                            return socket.emit('message', {
+                                message: 'Syntax: /spt (Spotify URI)'
+                            });
+                        }
+                        chatemit(socket, '<iframe src="https://embed.spotify.com/?uri=' + chat.message.substr(5, chat.message.length) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room);
+                        return;
+                    }
+                    if (chat.message.substr(0, 4) == "!moo") {
+                        socket.emit('message', {
+                            message: 'Octocat is not amused. (Use WhiskDiceBot and built-in media instead)'
+                        });
+                        return;
+                    }
+                    if (chat.message.substr(0, 5) == "!pool") {
+                        socket.emit('message', {
+                            message: 'Earnings pool: ' + payoutbal + ' mBTC'
+                        });
+                        return;
+                    }
+                    if (chat.message.substr(0, 4) == "/btc") {
+                        if (chat.message.substr(5, chat.message.length)) {
+                            return chatemit(socket, '<strong>BTC conversion of ' + chat.message.substr(5, chat.message.length) + '</strong>: <img src="http://btcticker.appspot.com/mtgox/' + chat.message.substr(5, chat.message.length) + '.png"></img>', chat.room);
+                        }
+                        return chatemit(socket, '<strong>BTC conversion of 1 BTC to USD: </strong> <img src="http://btcticker.appspot.com/mtgox/1btc.png"></img>', chat.room);
+                    }
+                    if (chat.message.substr(0, 3) == "/sc") {
+                        if (chat.message.substr(4, chat.message.length) == '') {
+                            return socket.emit('message', {
+                                message: 'Syntax: /sc (soundcloud id)'
+                            });
+                        }
+                        return chatemit(socket, '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + chat.message.substr(4, chat.message.length) + '"></iframe>', chat.room);
+                    }
+                    if (chat.message.substr(0, 3) == "/yt") {
+                        if (chat.message.substr(4, chat.message.length).indexOf('youtube.com') !== -1) {
+                            chat.yt = chat.message.substr(4, chat.message.length).match(/(\?|&)v=([^&]+)/).pop();
+                        } else {
+                            chat.yt = chat.message.substr(4, chat.message.length);
+                        }
+                        if (chat.yt == '') {
+                            return socket.emit('message', {
+                                message: 'Syntax: /yt (youtube link)'
+                            });
+                        }
+                        return chatemit(socket, '<iframe width="400" height="225" src="http://www.youtube.com/embed/' + chat.yt + '" frameborder="0" allowfullscreen></iframe>', chat.room);
+                    }
+                    if (chat.message.substr(0, 3) == "/ma") {
+                        if (socket.rank !== 'mod' && socket.rank !== 'admin') {
+                            socket.emit("message", {
+                                type: "alert-error",
+                                message: "You do not have permissions to speak in the MOD ACTION VOICE."
+                            });
+                            return;
+                        }
+                        return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
+                    }
+                    if (chat.message.substr(0, 3) == "/aa") { // Peapodamus: I'm climbin' in your windows, stealing your codes up
+                        if (socket.rank !== 'admin') {
+                            socket.emit("message", {
+                                type: "alert-error",
+                                message: "You do not have permissions to speak in the ADMIN ACTION VOICE."
+                            });
+                            return; // The admin action voice. For when BIG RED LETTERS aren't enough.
+                        }
+                        return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
+                    }
+                    if (chat.message.substr(0, 3) == "/b ") { // Bold - DiamondCardz
+                        return chatemit(socket, '<strong>' + chat.message.substr(3, chat.message.length) + '</strong>', chat.room);
+                    }
+                    if (chat.message.substr(0, 5) == "/bold") { // Bold - DiamondCardz
+                        return chatemit(socket, '<strong>' + chat.message.substr(6, chat.message.length) + '</strong>', chat.room);
+                    }
+                    if (chat.message.substr(0, 9) == "/forcepay") {
+                        if (socket.rank !== 'admin') {
+                            socket.emit("message", {
+                                type: "alert-error",
+                                message: "You do not have permissions to force a payout."
+                            });
+                            return;
+                        }
+                        return doPayoutLoop(chat.message.split(' ')[1]);
+                    }
+                    bbcode.parse(chat.message, function(parsedcode) {
+                        /* link links */
+                        parsedcode = urlify(parsedcode);
+                        if (!chat.room) {
+                            chat.room = 'main';
+                        }
+                        chatemit(socket, parsedcode, chat.room);
                     });
                 }
             });
-        } else {
-            /*if (tip.user.split(' ').length == 2 && tip.user.split(' ')[1] == "referrer") {
+            socket.on('withdraw', function(draw) {
+                if (socket.wlocked) {
+                    socket.emit('message', {
+                        message: "Please wait for all existing withdrawals to complete. Taking a while? Inputs.io may be lagging!"
+                    });
+                    return;
+                }
+                if (bitaddr.validate(draw.address)) {
+                    draw.fees = 0.5;
+                    socket.emit('message', {
+                        message: 'This transaction will incur a 0.5 mBTC fee for sending using the blockchain.'
+                    });
+                } else {
+                    draw.fees = 0;
+                }
+                socket.emit('message', {
+                    message: "Withdrawing " + draw.amount + "mBTC to address " + draw.address + "..."
+                });
+                socket.wlocked = true;
+                db.hget('users/' + socket.user, 'balance', function(err, bal1) {
+                    if (Number(draw.amount) > 0 && bal1 >= (Number(draw.amount) + draw.fees)) {
+                        inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'WhiskChat user ' + socket.user + ' ¦ ' + (Number(bal1) - (Number(draw.amount) + draw.fees)) + ' mBTC left', function(err, tx) {
+                            socket.wlocked = false;
+                            if (tx != 'OK' && tx.indexOf('VOUCHER') == -1) {
+                                console.log('info - ' + socket.user + ' failed to withdraw ' + draw.amount + ' to ' + draw.address + ' (' + tx + ')');
+                                socket.emit('message', {
+                                    message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (" + tx + ")"
+                                });
+                                return;
+                            }
+                            db.hset('users/' + socket.user, 'balance', Number(bal1) - (Number(draw.amount) + draw.fees), function(err, res) {
+                                console.log('info - ' + socket.user + ' withdrew ' + draw.amount + ' to ' + draw.address);
+                                socket.emit('message', {
+                                    message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " completed."
+                                });
+                                socket.emit('balance', {
+                                    balance: Number(bal1) - Number(draw.amount)
+                                });
+                            });
+                        });
+                    } else {
+                        socket.emit('message', {
+                            message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (not enough, incorrect address, 0.5 mBTC tx fee for non-Inputs)"
+                        });
+                    }
+                });
+            });
+            socket.on('tip', function(tip) {
+                if (tip.rep) {
+                    if (socket.rank != 'admin' && socket.rank != 'mod') {
+                        socket.emit('message', {
+                            message: 'Only moderators and admins can affect rep.'
+                        });
+                        return;
+                    }
+                    db.get('users/' + tip.user, function(err, exists) {
+                        if (exists) {
+                            db.hget('users/' + tip.user, 'rep', function(err, bal2) {
+                                if (!isNaN(Number(tip.tip)) && muted.indexOf(socket.user) == -1) {
+                                    db.hset('users/' + tip.user, 'rep', Number(tip.tip), redis.print);
+                                    sockets.forEach(function(cs) {
+                                        cs.emit('tip', {
+                                            room: tip.room,
+                                            target: stripHTML(tip.user),
+                                            amount: Number(tip.tip),
+                                            message: stripHTML(tip.message),
+                                            rep: true,
+                                            user: socket.user,
+                                            timestamp: Date.now()
+                                        });
+                                        if (cs.user == tip.user) {
+                                            cs.emit('whitelist', {
+                                                whitelisted: Number(tip.tip)
+                                            });
+                                            cs.rep = Number(tip.tip);
+                                        }
+                                    });
+                                } else {
+                                    socket.emit('message', {
+                                        type: "alert-error",
+                                        message: "Reptip failed."
+                                    });
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    /*if (tip.user.split(' ').length == 2 && tip.user.split(' ')[1] == "referrer") {
                 if (socket.rank != 'admin' && socket.rank != 'mod') {
                     return;
                 }
@@ -1255,184 +1255,184 @@ io.sockets.on('connection', function(socket) {
                     }
                 })
             } else {*/
-            if (tip.user == "donate") {
-                db.hget('users/' + socket.user, 'balance', function(err, bal1) {
-                    db.hget('users/' + socket.user, 'rep', function(err, rep1) {
-                        db.get('system/donated', function(err, bal2) {
-                            if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
-                                db.hset('users/' + socket.user, 'balance', Number(bal1) - Number(tip.tip), redis.print);
-                                db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
-                                db.hset('users/' + socket.user, 'rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
-                                sockets.forEach(function(cs) {
-                                    cs.emit('tip', {
-                                        room: tip.room,
-                                        target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + Number(tip.tip)).toFixed(2) + ' mBTC]',
-                                        amount: Number(tip.tip),
-                                        message: '+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2),
-                                        user: socket.user,
-                                        timestamp: Date.now()
-                                    });
-                                    if (cs.user == socket.user) {
-                                        socket.emit('balance', {
-                                            balance: Number(bal1) - Number(tip.tip)
+                    if (tip.user == "donate") {
+                        db.hget('users/' + socket.user, 'balance', function(err, bal1) {
+                            db.hget('users/' + socket.user, 'rep', function(err, rep1) {
+                                db.get('system/donated', function(err, bal2) {
+                                    if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
+                                        db.hset('users/' + socket.user, 'balance', Number(bal1) - Number(tip.tip), redis.print);
+                                        db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
+                                        db.hset('users/' + socket.user, 'rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
+                                        sockets.forEach(function(cs) {
+                                            cs.emit('tip', {
+                                                room: tip.room,
+                                                target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + Number(tip.tip)).toFixed(2) + ' mBTC]',
+                                                amount: Number(tip.tip),
+                                                message: '+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2),
+                                                user: socket.user,
+                                                timestamp: Date.now()
+                                            });
+                                            if (cs.user == socket.user) {
+                                                socket.emit('balance', {
+                                                    balance: Number(bal1) - Number(tip.tip)
+                                                });
+                                                socket.emit('whitelist', {
+                                                    whitelisted: (Number(rep1) + (Number(tip.tip) / 2))
+                                                });
+                                                socket.rep = (Number(rep1) + (Number(tip.tip) / 2));
+                                            }
                                         });
-                                        socket.emit('whitelist', {
-                                            whitelisted: (Number(rep1) + (Number(tip.tip) / 2))
+                                    } else {
+                                        socket.emit('message', {
+                                            type: "alert-error",
+                                            message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."
                                         });
-                                        socket.rep = (Number(rep1) + (Number(tip.tip) / 2));
                                     }
                                 });
-                            } else {
-                                socket.emit('message', {
-                                    type: "alert-error",
-                                    message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."
+                            });
+                        });
+                    } else {
+                        db.get('users/' + tip.user, function(err, exists) {
+                            if (exists) {
+                                db.hget('users/' + socket.user, 'balance', function(err, bal1) {
+                                    db.hget('users/' + tip.user, 'balance', function(err, bal2) {
+                                        if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
+                                            db.hset('users/' + socket.user, 'balance', Number(bal1) - Number(tip.tip), redis.print);
+                                            db.hset('users/' + tip.user, 'balance', Number(bal2) + Number(tip.tip), redis.print);
+                                            sockets.forEach(function(cs) {
+                                                cs.emit('tip', {
+                                                    room: tip.room,
+                                                    target: stripHTML(tip.user),
+                                                    amount: Number(tip.tip),
+                                                    message: stripHTML(tip.message),
+                                                    user: socket.user,
+                                                    timestamp: Date.now()
+                                                });
+                                                if (cs.user == socket.user) {
+                                                    cs.emit('balance', {
+                                                        balance: Number(bal1) - Number(tip.tip)
+                                                    });
+                                                }
+                                                if (cs.user == tip.user) {
+                                                    cs.emit('balance', {
+                                                        balance: Number(bal2) + Number(tip.tip)
+                                                    });
+                                                }
+                                            });
+                                        } else {
+                                            socket.emit('message', {
+                                                type: "alert-error",
+                                                message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."
+                                            });
+                                        }
+                                    });
                                 });
                             }
                         });
+
+                    }
+                }
+            });
+            socket.on('getbalance', function() {
+                if (!socket.authed) {
+                    return;
+                }
+                db.hget('users/' + socket.user, 'balance', function(err, balance) {
+                    socket.emit('balance', {
+                        balance: balance
                     });
                 });
-            } else {
-                db.get('users/' + tip.user, function(err, exists) {
-                    if (exists) {
-                        db.hget('users/' + socket.user, 'balance', function(err, bal1) {
-                            db.hget('users/' + tip.user, 'balance', function(err, bal2) {
-                                if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
-                                    db.hset('users/' + socket.user, 'balance', Number(bal1) - Number(tip.tip), redis.print);
-                                    db.hset('users/' + tip.user, 'balance', Number(bal2) + Number(tip.tip), redis.print);
-                                    sockets.forEach(function(cs) {
-                                        cs.emit('tip', {
-                                            room: tip.room,
-                                            target: stripHTML(tip.user),
-                                            amount: Number(tip.tip),
-                                            message: stripHTML(tip.message),
-                                            user: socket.user,
-                                            timestamp: Date.now()
-                                        });
-                                        if (cs.user == socket.user) {
-                                            cs.emit('balance', {
-                                                balance: Number(bal1) - Number(tip.tip)
-                                            });
-                                        }
-                                        if (cs.user == tip.user) {
-                                            cs.emit('balance', {
-                                                balance: Number(bal2) + Number(tip.tip)
-                                            });
-                                        }
-                                    });
-                                } else {
-                                    socket.emit('message', {
-                                        type: "alert-error",
-                                        message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."
-                                    });
-                                }
-                            });
+                db.hget('users/' + socket.user, 'rep', function(err, rep) {
+                    socket.emit('whitelist', {
+                        whitelisted: Number(Number(rep).toFixed(2))
+                    });
+                    socket.rep = rep;
+                });
+            });
+            socket.on('sync', function(data) {
+                if (!socket.authed) {
+                    socket.emit('message', {
+                        message: '<i class="icon-exclamation-sign"></i> Sync error: You are not logged in!'
+                    });
+                    return;
+                }
+                if (Object.prototype.toString.call(data.sync) !== '[object Array]') {
+                    socket.emit('message', {
+                        message: '<i class="icon-exclamation-sign"></i> Sync error: data.sync is not an array!'
+                    });
+                    return;
+                }
+                if (data.sync.length > 15) {
+                    socket.emit('message', {
+                        message: '<i class="icon-exclamation-sign"></i> Sync error: Your room list is over 15 rooms.'
+                    });
+                    return;
+                }
+                var tmp5 = true;
+                data.sync.forEach(function(room) {
+                    if (Object.prototype.toString.call(room) !== '[object String]') {
+                        socket.emit('message', {
+                            message: '<i class="icon-exclamation-sign"></i> Room \'' + room + '\' is not a string!'
                         });
+                        tmp5 = false;
+                    }
+                    if (room.length > 20) {
+                        socket.emit('message', {
+                            message: '<i class="icon-exclamation-sign"></i> Room \'' + room + '\' is over 20 characters long.'
+                        });
+                        tmp5 = false;
                     }
                 });
+                if (!tmp5) {
+                    socket.emit('message', {
+                        message: '<i class="icon-exclamation-sign"></i> Sync error: One or more of your rooms did not pass the validation.'
+                    });
+                    return;
+                }
+                db.hset('users/' + socket.user, 'rooms', JSON.stringify(data.sync), function(err, res) {
+                    if (err) {
+                        socket.emit('message', {
+                            message: '<i class="icon-exclamation-sign"></i> Sync error: ' + err
+                        });
+                        return;
+                    }
+                    socket.emit('message', {
+                        message: '<i class="icon-ok-sign"></i> Updated room list.'
+                    });
+                    return;
+                });
+            });
+        });
 
-            }
-        }
-    });
-    socket.on('getbalance', function() {
-        if (!socket.authed) {
-            return;
-        }
-        db.hget('users/' + socket.user, 'balance', function(err, balance) {
-            socket.emit('balance', {
-                balance: balance
-            });
-        });
-        db.hget('users/' + socket.user, 'rep', function(err, rep) {
-            socket.emit('whitelist', {
-                whitelisted: Number(Number(rep).toFixed(2))
-            });
-            socket.rep = rep;
-        });
-    });
-    socket.on('sync', function(data) {
-        if (!socket.authed) {
-            socket.emit('message', {
-                message: '<i class="icon-exclamation-sign"></i> Sync error: You are not logged in!'
-            });
-            return;
-        }
-        if (Object.prototype.toString.call(data.sync) !== '[object Array]') {
-            socket.emit('message', {
-                message: '<i class="icon-exclamation-sign"></i> Sync error: data.sync is not an array!'
-            });
-            return;
-        }
-        if (data.sync.length > 15) {
-            socket.emit('message', {
-                message: '<i class="icon-exclamation-sign"></i> Sync error: Your room list is over 15 rooms.'
-            });
-            return;
-        }
-        var tmp5 = true;
-        data.sync.forEach(function(room) {
-            if (Object.prototype.toString.call(room) !== '[object String]') {
-                socket.emit('message', {
-                    message: '<i class="icon-exclamation-sign"></i> Room \'' + room + '\' is not a string!'
+        console.log('info - listening');
+        process.on('SIGTERM', function() {
+            console.log('info - shutting down');
+            sockets.forEach(function(cs) {
+                cs.emit('chat', {
+                    room: 'main',
+                    message: '<span style="color: #e00;">Server stopping! (most likely just rebooting)</span>',
+                    user: '<strong>Server</strong>',
+                    timestamp: Date.now()
                 });
-                tmp5 = false;
-            }
-            if (room.length > 20) {
-                socket.emit('message', {
-                    message: '<i class="icon-exclamation-sign"></i> Room \'' + room + '\' is over 20 characters long.'
-                });
-                tmp5 = false;
-            }
-        });
-        if (!tmp5) {
-            socket.emit('message', {
-                message: '<i class="icon-exclamation-sign"></i> Sync error: One or more of your rooms did not pass the validation.'
             });
-            return;
-        }
-        db.hset('users/' + socket.user, 'rooms', JSON.stringify(data.sync), function(err, res) {
-            if (err) {
-                socket.emit('message', {
-                    message: '<i class="icon-exclamation-sign"></i> Sync error: ' + err
+            db.get('system/donated', function(err, res) {
+                if (err) {
+                    handle(err)
+                    return;
+                }
+                db.set('system/donated', Number(res) + payoutbal, function(err, res) {
+                    process.exit(0);
                 });
-                return;
-            }
-            socket.emit('message', {
-                message: '<i class="icon-ok-sign"></i> Updated room list.'
             });
-            return;
         });
-    });
-});
-
-console.log('info - listening');
-process.on('SIGTERM', function() {
-    console.log('info - shutting down');
-    sockets.forEach(function(cs) {
-        cs.emit('chat', {
-            room: 'main',
-            message: '<span style="color: #e00;">Server stopping! (most likely just rebooting)</span>',
-            user: '<strong>Server</strong>',
-            timestamp: Date.now()
+        process.on('uncaughtException', function(err) {
+            sockets.forEach(function(cs) {
+                cs.emit('chat', {
+                    room: 'main',
+                    message: '<span style="color: #e00;">500 Internal server error (more details logged to console)</span>',
+                    user: '<strong>Server</strong>',
+                    timestamp: Date.now()
+                });
+            });
+            console.log('error - ' + err + err.stack);
         });
-    });
-    db.get('system/donated', function(err, res) {
-        if (err) {
-            handle(err)
-            return;
-        }
-        db.set('system/donated', Number(res) + payoutbal, function(err, res) {
-            process.exit(0);
-        });
-    });
-});
-process.on('uncaughtException', function(err) {
-    sockets.forEach(function(cs) {
-        cs.emit('chat', {
-            room: 'main',
-            message: '<span style="color: #e00;">500 Internal server error (more details logged to console)</span>',
-            user: '<strong>Server</strong>',
-            timestamp: Date.now()
-        });
-    });
-    console.log('error - ' + err + err.stack);
-});
