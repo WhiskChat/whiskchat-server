@@ -658,64 +658,64 @@ io.sockets.on('connection', function(socket) {
                 type: "alert-error",
                 message: "Migrating user: " + data.user
             });
-            db.get('users/' + sockt.user, function(err, exist) {
+            db.get('users/' + socket.user, function(err, exist) {
                 if (exist || err) {
                     return socket.emit("message", {
                         type: "alert-error",
                         message: "User already exists."
                     });
                 } else {
-                    oldb.get('users/' + sockt.user + '/balance', function(err, reply) {
+                    oldb.get('users/' + socket.user + '/balance', function(err, reply) {
                         db.hset('users/' + sockt.user, 'balance', reply, function(err, result) {
                             socket.emit('message', {
                                 message: 'Migrated balance'
                             });
                         });
                     });
-                    oldb.get('users/' + sockt.user + '/rep', function(err, reply) {
-                        db.hset('users/' + sockt.user, 'rep', reply, function(err, result) {
+                    oldb.get('users/' + socket.user + '/rep', function(err, reply) {
+                        db.hset('users/' + socket.user, 'rep', reply, function(err, result) {
                             socket.emit('message', {
                                 message: 'Migrated rep'
                             });
                         });
                     });
-                    oldb.get('users/' + sockt.user + '/tag', function(err, reply) {
-                        db.hset('users/' + sockt.user, 'tag', reply, function(err, result) {
+                    oldb.get('users/' + socket.user + '/tag', function(err, reply) {
+                        db.hset('users/' + socket.user, 'tag', reply, function(err, result) {
                             socket.emit('message', {
                                 message: 'Migrated tag'
                             });
                         });
                     });
-                    oldb.get('users/' + sockt.user + '/pretag', function(err, reply) {
-                        db.hset('users/' + sockt.user, 'pretag', reply, function(err, result) {
+                    oldb.get('users/' + socket.user + '/pretag', function(err, reply) {
+                        db.hset('users/' + socket.user, 'pretag', reply, function(err, result) {
                             socket.emit('message', {
                                 message: 'Migrated pretag'
                             });
                         });
                     });
-                    oldb.get('users/' + sockt.user + '/rank', function(err, reply) {
-                        db.hset('users/' + sockt.user, 'rank', reply, function(err, result) {
+                    oldb.get('users/' + socket.user + '/rank', function(err, reply) {
+                        db.hset('users/' + socket.user, 'rank', reply, function(err, result) {
                             socket.emit('message', {
                                 message: 'Migrated rank'
                             });
                         });
                     });
-                    oldb.get('users/' + sockt.user + '/rooms', function(err, reply) {
-                        db.hset('users/' + sockt.user, 'rooms', reply, function(err, result) {
+                    oldb.get('users/' + socket.user + '/rooms', function(err, reply) {
+                        db.hset('users/' + socket.user, 'rooms', reply, function(err, result) {
                             socket.emit('message', {
                                 message: 'Migrated rooms'
                             });
                         });
                     });
-                    oldb.get('users/' + sockt.user + '/salt', function(err, reply) {
-                        db.hset('users/' + sockt.user, 'salt', reply, function(err, result) {
+                    oldb.get('users/' + socket.user + '/salt', function(err, reply) {
+                        db.hset('users/' + socket.user, 'salt', reply, function(err, result) {
                             socket.emit('message', {
                                 message: 'Migrated salt'
                             });
                         });
                     });
-                    oldb.get('users/' + sockt.user + '/password', function(err, reply) {
-                        db.hset('users/' + sockt.user, 'salt', reply, function(err, result) {
+                    oldb.get('users/' + socket.user + '/password', function(err, reply) {
+                        db.hset('users/' + socket.user, 'salt', reply, function(err, result) {
                             socket.emit('message', {
                                 message: 'Migrated password'
                             });
