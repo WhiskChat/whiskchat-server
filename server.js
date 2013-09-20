@@ -385,6 +385,7 @@ function login(username, usersocket, sess) {
             username: username,
             session: sess
         });
+        db.set('sessions/' + sess, data.username);
     } else {
         usersocket.emit('loggedin', {
             username: username
@@ -395,18 +396,25 @@ function login(username, usersocket, sess) {
         room: '--connectedmsg'
     }); // For whiskchat-client's Connected header
     usersocket.user = username;
+
     db.hget('users/' + username, 'balance', function(err, reply) {
-        if (reply == 'null') {
-        db.hdel('users/' + username, 'balance')
-    }
+        if (reply == 'null' || reply == null) {
+            db.hdel('users/' + username, 'balance')
+            usersocket.emit('message', {
+                message: 'Removed a null. Please refresh after you have logged in to clear nulls.'
+            })
+        }
         usersocket.emit('balance', {
             balance: reply
         });
     });
     db.hget('users/' + username, 'rep', function(err, rep) {
-        if (reply == 'null') {
-        db.hdel('users/' + username, 'rep')
-    }
+        if (reply == 'null' || reply == null) {
+                    db.hdel('users/' + username, 'rep')
+            usersocket.emit('message', {
+                message: 'Removed a null. Please refresh after you have logged in to clear nulls.'
+            })
+        }
         usersocket.emit('whitelist', {
             whitelisted: Number(Number(rep).toFixed(2))
         });
@@ -422,33 +430,45 @@ function login(username, usersocket, sess) {
         }
     });
     db.hget('users/' + username, 'tag', function(err, reply) {
-        if (reply == 'null') {
-        db.hdel('users/' + username, 'tag')
-    }
+        if (reply == 'null' || reply == null) {
+            db.hdel('users/' + username, 'tag')
+            usersocket.emit('message', {
+                message: 'Removed a null. Please refresh after you have logged in to clear nulls.'
+            })
+        }
         if (reply) {
             usersocket.tag = reply;
         }
     });
     db.hget('users/' + username, 'pretag', function(err, reply) {
-        if (reply == 'null') {
-        db.hdel('users/' + username, 'pretag')
-    }
+        if (reply == 'null' || reply == null) {
+            db.hdel('users/' + username, 'pretag')
+            usersocket.emit('message', {
+                message: 'Removed a null. Please refresh after you have logged in to clear nulls.'
+            })
+        }
         if (reply) {
             usersocket.pretag = reply;
         }
     });
     db.hget('users/' + username, 'rank', function(err, reply) {
-        if (reply == 'null') {
-        db.hdel('users/' + username, 'rank')
-    }
+        if (reply == 'null' || reply == null) {
+            db.hdel('users/' + username, 'rank')
+            usersocket.emit('message', {
+                message: 'Removed a null. Please refresh after you have logged in to clear nulls.'
+            })
+        }
         if (reply) {
             usersocket.rank = reply;
         }
     });
     db.hget('users/' + username, 'rooms', function(err, reply) {
-        if (reply == 'null') {
-        db.hdel('users/' + username, 'rooms')
-    }
+        if (reply == 'null' || reply == null) {
+            db.hdel('users/' + username, 'rooms')
+            usersocket.emit('message', {
+                message: 'Removed a null. Please refresh after you have logged in to clear nulls.'
+            })
+        }
         if (!reply) {
             usersocket.emit('message', {
                 message: 'You should sync your roomlist. Subscribing you to default rooms.'
