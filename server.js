@@ -269,8 +269,8 @@ app.get('/inputs', function(req, resp) {
             resp.send('*OK*');
             return;
         } else {
-            db.get('users/' + req.query.note + '/balance', function(err, reply) {
-                db.set('users/' + req.query.note + '/balance', Number(reply) + (Number(req.query.amount) * 1000), function(err, res) {
+            db.hget('users/' + req.query.note, 'balance', function(err, reply) {
+                db.hset('users/' + req.query.note, 'balance', Number(reply) + (Number(req.query.amount) * 1000), function(err, res) {
                     sockets.forEach(function(so) {
                         if (so.user == req.query.note) {
                             so.emit('balance', {
@@ -321,12 +321,12 @@ function chatemit(sockt, message, room) {
     });
     console.log('#' + room + ': <' + sockt.user + '> ' + message + (winbtc ? '+' + winbtc + 'mBTC' : '') + ' | rep ' + sockt.rep);
     if (winbtc != null) {
-        db.get('users/' + sockt.user + '/balance', function(err, reply) {
+        db.hget('users/' + sockt.user, 'balance', function(err, reply) {
             if (err) {
                 handle(err);
                 return;
             }
-            db.set('users/' + sockt.user + '/balance', Number(reply) + Number(winbtc), function(err, res) {
+            db.hset('users/' + sockt.user, 'balance', Number(reply) + Number(winbtc), function(err, res) {
                 if (err) {
                     handle(err);
                     return;
@@ -336,12 +336,12 @@ function chatemit(sockt, message, room) {
                 });
             });
         });
-        db.get('users/' + sockt.user + '/balance', function(err, balance) {
+        db.hget('users/' + sockt.user, 'balance', function(err, balance) {
             sockt.emit('balance', {
                 balance: balance
             });
         });
-        db.get('users/' + sockt.user + '/rep', function(err, rep) {
+        db.hget('users/' + sockt.user, 'rep', function(err, rep) {
             sockt.emit('whitelist', {
                 whitelisted: Number(Number(rep).toFixed(2))
             });
@@ -566,207 +566,207 @@ setInterval(function() {
     }
 }, 400000);
 io.sockets.on('connection', function(socket) {
-        sockets.push(socket);
+    sockets.push(socket);
 
-        if (lastSendOnline.getTime() < new Date().getTime() - 2.5 * 1000) {
-            io.sockets.emit("online", {
-                people: users.length,
-                array: users
-            });
-            lastSendOnline = new Date();
-        } else {
-            socket.emit("online", {
-                people: users.length,
-                array: users
-            });
-        }
-        socket.on('disconnect', function() {
-            sockets.splice(sockets.indexOf(socket), 1);
-            if (socket.authed) {
-                var tmp = false;
-                sockets.forEach(function(skct) {
-                    if (socket.user == skct.user) {
-                        tmp = true;
-                    }
-                });
-                if (muted.indexOf(socket.user) == -1 && !tmp) {
-                    chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
-                    users.splice(users.indexOf(socket.user), 1);
-                    io.sockets.emit("online", {
-                        people: users.length,
-                        array: users
-                    });
-                }
-                console.log('info - ' + socket.user + ' disconnected');
-            }
+    if (lastSendOnline.getTime() < new Date().getTime() - 2.5 * 1000) {
+        io.sockets.emit("online", {
+            people: users.length,
+            array: users
         });
-        socket.emit('joinroom', {
-            room: 'main'
-        });
-        console.log('info - new connection from IP ' + socket.handshake.address.address);
-        socket.emit('chat', {
-            room: 'main',
-            message: '<strong>Welcome to WhiskChat Server!</strong>',
-            user: '<strong>Server</strong>',
-            timestamp: Date.now()
-        });
-        socket.emit('chat', {
-            room: 'main',
-            message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + users.length + '</strong> users connected.',
-            user: '<strong>Server</strong>',
-            timestamp: Date.now()
-        });
+        lastSendOnline = new Date();
+    } else {
         socket.emit("online", {
             people: users.length,
             array: users
         });
-        socket.authed = false;
-        socket.wlocked = false;
-        socket.ready = true;
-        socket.tag = '';
-        socket.pretag = '';
-        socket.rank = '';
-        socket.on('login', function(data) {
-            if (data && data.session) {
-                console.log('info - checking session cookie for IP ' + socket.handshake.address.address);
-                socket.emit("message", {
-                    type: "alert-success",
-                    message: "Checking session cookie..."
-                });
-                db.get('sessions/' + data.session, function(err, reply) {
-                    db.get('users/' + reply + '/password', function(err, res) {
-                        if (reply && reply !== "nuked") {
-                            console.log('info - correct, logging in');
-                            socket.emit("message", {
-                                type: "alert-success",
-                                message: "Welcome back, " + reply + "! (automatically logged in)"
-                            });
-                            login(reply, socket, data.session);
-                        } else {
-                            console.log('info - incorrect');
-                            socket.emit("message", {
-                                type: "alert-error",
-                                message: "Incorrect session cookie."
-                            });
-                        }
-                    });
+    }
+    socket.on('disconnect', function() {
+        sockets.splice(sockets.indexOf(socket), 1);
+        if (socket.authed) {
+            var tmp = false;
+            sockets.forEach(function(skct) {
+                if (socket.user == skct.user) {
+                    tmp = true;
+                }
+            });
+            if (muted.indexOf(socket.user) == -1 && !tmp) {
+                chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
+                users.splice(users.indexOf(socket.user), 1);
+                io.sockets.emit("online", {
+                    people: users.length,
+                    array: users
                 });
             }
-        });
-        socket.on('accounts', function(data) {
-                db.get('ip/' + socket.handshake.address.address, function(err, res) {
-                    if (res) {
-                        return socket.emit("message", {
+            console.log('info - ' + socket.user + ' disconnected');
+        }
+    });
+    socket.emit('joinroom', {
+        room: 'main'
+    });
+    console.log('info - new connection from IP ' + socket.handshake.address.address);
+    socket.emit('chat', {
+        room: 'main',
+        message: '<strong>Welcome to WhiskChat Server!</strong>',
+        user: '<strong>Server</strong>',
+        timestamp: Date.now()
+    });
+    socket.emit('chat', {
+        room: 'main',
+        message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + users.length + '</strong> users connected.',
+        user: '<strong>Server</strong>',
+        timestamp: Date.now()
+    });
+    socket.emit("online", {
+        people: users.length,
+        array: users
+    });
+    socket.authed = false;
+    socket.wlocked = false;
+    socket.ready = true;
+    socket.tag = '';
+    socket.pretag = '';
+    socket.rank = '';
+    socket.on('login', function(data) {
+        if (data && data.session) {
+            console.log('info - checking session cookie for IP ' + socket.handshake.address.address);
+            socket.emit("message", {
+                type: "alert-success",
+                message: "Checking session cookie..."
+            });
+            db.get('sessions/' + data.session, function(err, reply) {
+                db.get('users/' + reply + '/password', function(err, res) {
+                    if (reply && reply !== "nuked") {
+                        console.log('info - correct, logging in');
+                        socket.emit("message", {
+                            type: "alert-success",
+                            message: "Welcome back, " + reply + "! (automatically logged in)"
+                        });
+                        login(reply, socket, data.session);
+                    } else {
+                        console.log('info - incorrect');
+                        socket.emit("message", {
                             type: "alert-error",
-                            message: "You have been IP banned: " + res
+                            message: "Incorrect session cookie."
                         });
                     }
-                })
-                if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
-                    return socket.emit("message", {
-                        type: "alert-error",
-                        message: "You have been IP banned. No reason is available as this is a code-enacted ban."
-                    });
-                }
-                if (socket.failed) {
-                    return socket.emit("message", {
-                        type: "alert-error",
-                        message: "Please wait 20 seconds in between logins."
-                    });
-                }
-                if (data && data.action) {
-                    if (data.action == "register") {
-                        if (data.username && data.password && data.password2 && data.email) {
-                            if (data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>" || alphanumeric.test(data.username) == false) {
+                });
+            });
+        }
+    });
+    socket.on('accounts', function(data) {
+        db.get('ip/' + socket.handshake.address.address, function(err, res) {
+            if (res) {
+                return socket.emit("message", {
+                    type: "alert-error",
+                    message: "You have been IP banned: " + res
+                });
+            }
+        })
+        if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
+            return socket.emit("message", {
+                type: "alert-error",
+                message: "You have been IP banned. No reason is available as this is a code-enacted ban."
+            });
+        }
+        if (socket.failed) {
+            return socket.emit("message", {
+                type: "alert-error",
+                message: "Please wait 20 seconds in between logins."
+            });
+        }
+        if (data && data.action) {
+            if (data.action == "register") {
+                if (data.username && data.password && data.password2 && data.email) {
+                    if (data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>" || alphanumeric.test(data.username) == false) {
+                        return socket.emit("message", {
+                            type: "alert-error",
+                            message: "Username must be between 3 and 16 characters, must be alphanumeric and cannot contain HTML."
+                        });
+                    }
+                    if (data.username.indexOf('<') !== -1 || data.username.indexOf('>') !== -1) {
+                        return socket.emit("message", {
+                            type: "alert-error",
+                            message: "You may not use HTML."
+                        });
+                    }
+                    db.get("users/" + data.username, function(err, reply) {
+                        if (!reply) {
+                            if (data.password.length < 6) {
                                 return socket.emit("message", {
                                     type: "alert-error",
-                                    message: "Username must be between 3 and 16 characters, must be alphanumeric and cannot contain HTML."
+                                    message: "Your password must be at least 6 characters long, for security."
                                 });
                             }
-                            if (data.username.indexOf('<') !== -1 || data.username.indexOf('>') !== -1) {
+                            if (data.email.indexOf("@") == -1 || data.email.indexOf(".") == -1) {
+                                //simple email check
                                 return socket.emit("message", {
                                     type: "alert-error",
-                                    message: "You may not use HTML."
+                                    message: "Please enter a valid email."
                                 });
                             }
-                            db.get("users/" + data.username, function(err, reply) {
-                                if (!reply) {
-                                    if (data.password.length < 6) {
-                                        return socket.emit("message", {
-                                            type: "alert-error",
-                                            message: "Your password must be at least 6 characters long, for security."
-                                        });
-                                    }
-                                    if (data.email.indexOf("@") == -1 || data.email.indexOf(".") == -1) {
-                                        //simple email check
-                                        return socket.emit("message", {
-                                            type: "alert-error",
-                                            message: "Please enter a valid email."
-                                        });
-                                    }
-                                    if (data.password != data.password2) {
-                                        return socket.emit("message", {
-                                            type: "alert-error",
-                                            message: "Passwords must match!"
-                                        });
-                                    }
-                                    // Generate seed for password
-                                    try {
-                                        var salt = Math.floor(Math.random() * 10000000000).toString();
+                            if (data.password != data.password2) {
+                                return socket.emit("message", {
+                                    type: "alert-error",
+                                    message: "Passwords must match!"
+                                });
+                            }
+                            // Generate seed for password
+                            try {
+                                var salt = Math.floor(Math.random() * 10000000000).toString();
 
-                                        var hashed = hash.sha256(data.password, salt);
-                                        db.hset("users/" + data.username, "password", hashed);
-                                        db.hset("users/" + data.username, "salt", salt);
-                                        db.hset("users/" + data.username, "email", data.email);
+                                var hashed = hash.sha256(data.password, salt);
+                                db.hset("users/" + data.username, "password", hashed);
+                                db.hset("users/" + data.username, "salt", salt);
+                                db.hset("users/" + data.username, "email", data.email);
 
-                                        db.hset("sessions", salt, data.username);
-                                        console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
-                                        socket.emit("message", {
-                                            type: "alert-success",
-                                            message: "Thanks for registering, " + data.username + "!"
-                                        });
-                                        login(data.username, socket, salt);
-                                        if (typeof data.refer !== 'undefined') {
-                                            socket.refer = stripHTML(data.refer);
-                                            db.hset("users/" + data.username, 'referrer', stripHTML(data.refer));
-                                            sockets.forEach(function(s) {
-                                                if (data.refer == s.user) {
-                                                    s.emit("message", {
-                                                        message: "<i class='icon-user'></i> Thanks for referring " + data.username + "!"
-                                                    });
-                                                }
-                                            })
+                                db.hset("sessions", salt, data.username);
+                                console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
+                                socket.emit("message", {
+                                    type: "alert-success",
+                                    message: "Thanks for registering, " + data.username + "!"
+                                });
+                                login(data.username, socket, salt);
+                                if (typeof data.refer !== 'undefined') {
+                                    socket.refer = stripHTML(data.refer);
+                                    db.hset("users/" + data.username, 'referrer', stripHTML(data.refer));
+                                    sockets.forEach(function(s) {
+                                        if (data.refer == s.user) {
+                                            s.emit("message", {
+                                                message: "<i class='icon-user'></i> Thanks for referring " + data.username + "!"
+                                            });
                                         }
-                                    } catch (e) {
-                                        console.log(e.stack);
-                                        return socket.emit("message", {
-                                            type: "alert-error",
-                                            message: "Error logging in! Stacktrace: " + e.stack
-                                        });
-                                    }
-                                } else {
-                                    return socket.emit("message", {
-                                        type: "alert-error",
-                                        message: "This username is already taken!"
-                                    });
+                                    })
                                 }
-                            });
+                            } catch (e) {
+                                console.log(e.stack);
+                                return socket.emit("message", {
+                                    type: "alert-error",
+                                    message: "Error logging in! Stacktrace: " + e.stack
+                                });
+                            }
                         } else {
-                            socket.emit("message", {
+                            return socket.emit("message", {
                                 type: "alert-error",
-                                message: "Please fill in all the fields."
+                                message: "This username is already taken!"
                             });
                         }
-                    }
-                    if (data.action == "login") {
-                        db.hget('users/' + data.username, "banned", function(err, nuked) {
-                            if (nuked) {
-                                socket.emit("message", {
-                                    type: "alert-error",
-                                    message: "You have been banned: " + nuked
-                                });
-                            } else {
-                                db.hget("users/" + data.username, "password", function(err, reply) {
+                    });
+                } else {
+                    socket.emit("message", {
+                        type: "alert-error",
+                        message: "Please fill in all the fields."
+                    });
+                }
+            }
+            if (data.action == "login") {
+                db.hget('users/' + data.username, "banned", function(err, nuked) {
+                        if (nuked) {
+                            socket.emit("message", {
+                                type: "alert-error",
+                                message: "You have been banned: " + nuked
+                            });
+                        } else {
+                            db.hget("users/" + data.username, "password", function(err, reply) {
                                     if (err || reply == null) {
                                         if (err) {
                                             handle(err);
@@ -814,14 +814,15 @@ io.sockets.on('connection', function(socket) {
                                                 });
                                             }
                                         });
-                                    }
-                                });
+
+                                    });
                             }
                         });
-                    }
                 }
             }
-        }); socket.on('nuke', function(nuke) {
+        }
+    });
+    socket.on('nuke', function(nuke) {
         if (socket.rank !== 'admin') {
             socket.emit("message", {
                 type: "alert-error",
@@ -860,14 +861,16 @@ io.sockets.on('connection', function(socket) {
                 }
             });
         }
-    }); socket.on('ping', function(ts) {
+    });
+    socket.on('ping', function(ts) {
         socket.emit('chat', {
             room: 'main',
             message: '<strong>Pong! Client -> server ' + (Date.now() - ts.ts) + 'ms</strong>',
             user: '<strong>Server</strong>',
             timestamp: Date.now()
         });
-    }); socket.on('mute', function(mute) {
+    });
+    socket.on('mute', function(mute) {
         if (socket.rank !== 'mod' && socket.rank !== 'admin') {
             socket.emit("message", {
                 type: "alert-error",
@@ -899,7 +902,8 @@ io.sockets.on('connection', function(socket) {
                 }
             }, mute.mute * 1000);
         }
-    }); socket.on('chat', function(chat) {
+    });
+    socket.on('chat', function(chat) {
         if (!socket.authed) {
             socket.emit('chat', {
                 room: 'main',
@@ -1147,7 +1151,8 @@ io.sockets.on('connection', function(socket) {
                 chatemit(socket, parsedcode, chat.room);
             });
         }
-    }); socket.on('withdraw', function(draw) {
+    });
+    socket.on('withdraw', function(draw) {
         if (socket.wlocked) {
             socket.emit('message', {
                 message: "Please wait for all existing withdrawals to complete. Taking a while? Inputs.io may be lagging!"
@@ -1193,7 +1198,8 @@ io.sockets.on('connection', function(socket) {
                 });
             }
         });
-    }); socket.on('tip', function(tip) {
+    });
+    socket.on('tip', function(tip) {
         if (tip.rep) {
             if (socket.rank != 'admin' && socket.rank != 'mod') {
                 socket.emit('message', {
@@ -1203,9 +1209,9 @@ io.sockets.on('connection', function(socket) {
             }
             db.get('users/' + tip.user, function(err, exists) {
                 if (exists) {
-                    db.get('users/' + tip.user + '/rep', function(err, bal2) {
+                    db.hget('users/' + tip.user, 'rep', function(err, bal2) {
                         if (!isNaN(Number(tip.tip)) && muted.indexOf(socket.user) == -1) {
-                            db.set('users/' + tip.user + '/rep', Number(tip.tip), redis.print);
+                            db.hset('users/' + tip.user, 'rep', Number(tip.tip), redis.print);
                             sockets.forEach(function(cs) {
                                 cs.emit('tip', {
                                     room: tip.room,
@@ -1252,19 +1258,19 @@ io.sockets.on('connection', function(socket) {
                 })
             } else {*/
             if (tip.user == "donate") {
-                db.get('users/' + socket.user + '/balance', function(err, bal1) {
-                    db.get('users/' + socket.user + '/rep', function(err, rep1) {
+                db.hget('users/' + socket.user, 'balance', function(err, bal1) {
+                    db.hget('users/' + socket.user, 'rep', function(err, rep1) {
                         db.get('system/donated', function(err, bal2) {
                             if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
-                                db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
+                                db.hset('users/' + socket.user, 'balance', Number(bal1) - Number(tip.tip), redis.print);
                                 db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
-                                db.set('users/' + socket.user + '/rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
+                                db.hset('users/' + socket.user, 'rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
                                 sockets.forEach(function(cs) {
                                     cs.emit('tip', {
                                         room: tip.room,
-                                        target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + Number(tip.tip)).toFixed(2) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2) + ')',
+                                        target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + Number(tip.tip)).toFixed(2) + ' mBTC]',
                                         amount: Number(tip.tip),
-                                        message: stripHTML(tip.message),
+                                        message: '+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2),
                                         user: socket.user,
                                         timestamp: Date.now()
                                     });
@@ -1290,11 +1296,11 @@ io.sockets.on('connection', function(socket) {
             } else {
                 db.get('users/' + tip.user, function(err, exists) {
                     if (exists) {
-                        db.get('users/' + socket.user + '/balance', function(err, bal1) {
-                            db.get('users/' + tip.user + '/balance', function(err, bal2) {
+                        db.hget('users/' + socket.user, 'balance', function(err, bal1) {
+                            db.hget('users/' + tip.user, 'balance', function(err, bal2) {
                                 if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
-                                    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
-                                    db.set('users/' + tip.user + '/balance', Number(bal2) + Number(tip.tip), redis.print);
+                                    db.hset('users/' + socket.user, 'balance', Number(bal1) - Number(tip.tip), redis.print);
+                                    db.hset('users/' + tip.user, 'balance', Number(bal2) + Number(tip.tip), redis.print);
                                     sockets.forEach(function(cs) {
                                         cs.emit('tip', {
                                             room: tip.room,
@@ -1328,22 +1334,24 @@ io.sockets.on('connection', function(socket) {
 
             }
         }
-    }); socket.on('getbalance', function() {
+    });
+    socket.on('getbalance', function() {
         if (!socket.authed) {
             return;
         }
-        db.get('users/' + socket.user + '/balance', function(err, balance) {
+        db.hget('users/' + socket.user, 'balance', function(err, balance) {
             socket.emit('balance', {
                 balance: balance
             });
         });
-        db.get('users/' + socket.user + '/rep', function(err, rep) {
+        db.hget('users/' + socket.user, 'rep', function(err, rep) {
             socket.emit('whitelist', {
                 whitelisted: Number(Number(rep).toFixed(2))
             });
             socket.rep = rep;
         });
-    }); socket.on('sync', function(data) {
+    });
+    socket.on('sync', function(data) {
         if (!socket.authed) {
             socket.emit('message', {
                 message: '<i class="icon-exclamation-sign"></i> Sync error: You are not logged in!'
@@ -1383,7 +1391,7 @@ io.sockets.on('connection', function(socket) {
             });
             return;
         }
-        db.set('users/' + socket.user + '/rooms', JSON.stringify(data.sync), function(err, res) {
+        db.hset('users/' + socket.user, 'rooms', JSON.stringify(data.sync), function(err, res) {
             if (err) {
                 socket.emit('message', {
                     message: '<i class="icon-exclamation-sign"></i> Sync error: ' + err
