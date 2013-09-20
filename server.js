@@ -70,9 +70,7 @@ console.log('info - Starting DB');
 if (process.env.REDISCLOUD_URL) {
     var rtg = require("url").parse(process.env.REDISCLOUD_URL);
     var db = redis.createClient(rtg.port, rtg.hostname);
-    var whiskdb = redis.createClient(6379, 'db.whiskers75.com')
-    whiskdb.auth(process.env.WHISKDBPASS)
-    whiskdb.incr('startups', redis.print);
+
     db.auth(rtg.auth.split(":")[1]);
 } else {
     var db = redis.createClient();
@@ -437,7 +435,7 @@ function login(username, usersocket, sess) {
             usersocket.emit('message', {
                 message: 'You should sync your roomlist. Subscribing you to default rooms.'
             });
-
+            
             usersocket.emit('joinroom', {
                 room: 'whiskchat'
             });
@@ -479,10 +477,10 @@ function login(username, usersocket, sess) {
             return;
         }
         if (usersocket.refer) {
-            usersocket.emit('message', {
-                message: '<i class="icon-user"></i> You were referred by ' + usersocket.refer + '!'
-            });
-        }
+                usersocket.emit('message', {
+                    message: '<i class="icon-user"></i> You were referred by ' + usersocket.refer + '!'
+                });
+            }
         chatemit(usersocket, '!; connect ' + usersocket.version, 'main');
         console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
     }, 2000);
@@ -719,7 +717,7 @@ io.sockets.on('connection', function(socket) {
                                 db.set("users/" + data.username + "/password", hashed);
                                 db.set("users/" + data.username + "/salt", salt);
                                 db.set("users/" + data.username + "/email", data.email);
-
+                                
                                 db.set("sessions/" + salt, data.username);
                                 console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
                                 socket.emit("message", {
@@ -1034,13 +1032,14 @@ io.sockets.on('connection', function(socket) {
             }
             if (chat.message.substr(0, 7) == "/crefer" && (socket.rank == "admin" || socket.rank == "mod")) {
                 socket.emit('message', {
-                    message: '<i class="icon-user"></i> Confirming ' + chat.message.split(' ')[1]
+                        message: '<i class="icon-user"></i> Confirming ' + chat.message.split(' ')[1]    
                 });
                 db.get('users/' + chat.message.split(' ')[1] + '/referrer', function(err, res) {
                     if (err) {
                         handle(err);
                         return;
-                    } else {
+                    }
+                    else {
                         if (res) {
                             socket.emit('message', {
                                 message: '<i class="icon-user"></i> User ' + chat.message.split(' ')[1] + ' was referred by ' + res
@@ -1049,7 +1048,8 @@ io.sockets.on('connection', function(socket) {
                             db.incr("users/" + res + '/rep')
                             chatemit(socket, '<span style="color: #090"><b><i class="icon-user"></i> Confirmed referral for ' + chat.message.split(' ')[1] + ' (' + res + ': +1 rep)')
                             db.del('users/' + chat.message.split(' ')[1] + '/referrer')
-                        } else {
+                        }
+                        else {
                             socket.emit('message', {
                                 message: '<i class="icon-user"></i> User ' + chat.message.split(' ')[1] + ' does not have a referrer.'
                             });
@@ -1133,40 +1133,6 @@ io.sockets.on('connection', function(socket) {
                     return; // The admin action voice. For when BIG RED LETTERS aren't enough.
                 }
                 return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
-            }
-            if (chat.message.substr(0, 8) == "/migrate") {
-                           var sockt = socket;
-                    socket.emit('message', {message: 'Migrating!'});
-                    db.get('users/' + sockt.user + '/balance', function(err, reply) {
-                        whiskdb.hset('users/' + sockt.user, 'balance', reply, function(err, result) {
-                            socket.emit('message', {message: 'Migrated balance'});
-                        });
-                    });
-                    db.get('users/' + sockt.user + '/rep', function(err, reply) {
-                        whiskdb.hset('users/' + sockt.user, 'rep', reply, function(err, result) {
-                            socket.emit('message', {message: 'Migrated rep'});
-                        });
-                    });
-                    db.get('users/' + sockt.user + '/tag', function(err, reply) {
-                        whiskdb.hset('users/' + sockt.user, 'tag', reply, function(err, result) {
-                            socket.emit('message', {message: 'Migrated tag'});
-                        });
-                    });
-                    db.get('users/' + sockt.user + '/pretag', function(err, reply) {
-                        whiskdb.hset('users/' + sockt.user, 'pretag', reply, function(err, result) {
-                            socket.emit('message', {message: 'Migrated pretag'});
-                        });
-                    });
-                    db.get('users/' + sockt.user + '/rank', function(err, reply) {
-                        whiskdb.hset('users/' + sockt.user, 'rank', reply, function(err, result) {
-                            socket.emit('message', {message: 'Migrated rank'});
-                        });
-                    });
-                    db.get('users/' + sockt.user + '/rooms', function(err, reply) {
-                        whiskdb.hset('users/' + sockt.user, 'rooms', reply, function(err, result) {
-                            socket.emit('message', {message: 'Migrated rooms'});
-                        });
-                    });
             }
             if (chat.message.substr(0, 3) == "/b ") { // Bold - DiamondCardz
                 return chatemit(socket, '<strong>' + chat.message.substr(3, chat.message.length) + '</strong>', chat.room);
