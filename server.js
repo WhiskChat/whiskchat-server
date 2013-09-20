@@ -396,12 +396,12 @@ function login(username, usersocket, sess) {
         room: '--connectedmsg'
     }); // For whiskchat-client's Connected header
     usersocket.user = username;
-    db.get('users/' + username + '/balance', function(err, reply) {
+    db.hget('users/' + username, 'balance', function(err, reply) {
         usersocket.emit('balance', {
             balance: reply
         });
     });
-    db.get('users/' + username + '/rep', function(err, rep) {
+    db.hget('users/' + username, 'rep', function(err, rep) {
         usersocket.emit('whitelist', {
             whitelisted: Number(Number(rep).toFixed(2))
         });
@@ -416,22 +416,22 @@ function login(username, usersocket, sess) {
             })
         }
     });
-    db.get('users/' + username + '/tag', function(err, reply) {
+    db.hget('users/' + username, 'tag', function(err, reply) {
         if (reply) {
             usersocket.tag = reply;
         }
     });
-    db.get('users/' + username + '/pretag', function(err, reply) {
+    db.hget('users/' + username, 'pretag', function(err, reply) {
         if (reply) {
             usersocket.pretag = reply;
         }
     });
-    db.get('users/' + username + '/rank', function(err, reply) {
+    db.hget('users/' + username, 'rank', function(err, reply) {
         if (reply) {
             usersocket.rank = reply;
         }
     });
-    db.get('users/' + username + '/rooms', function(err, reply) {
+    db.hget('users/' + username, 'rooms', function(err, reply) {
         if (!reply) {
             usersocket.emit('message', {
                 message: 'You should sync your roomlist. Subscribing you to default rooms.'
