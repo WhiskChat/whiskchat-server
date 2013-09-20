@@ -666,7 +666,7 @@ io.sockets.on('connection', function(socket) {
                     });
                 } else {
                     oldb.get('users/' + socket.user + '/balance', function(err, reply) {
-                        db.hset('users/' + sockt.user, 'balance', reply, function(err, result) {
+                        db.hset('users/' + socket.user, 'balance', reply, function(err, result) {
                             socket.emit('message', {
                                 message: 'Migrated balance'
                             });
