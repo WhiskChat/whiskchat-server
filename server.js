@@ -865,7 +865,7 @@ io.sockets.on('connection', function(socket) {
                                                     type: "alert-success",
                                                     message: "Welcome back, " + data.username + "!"
                                                 });
-                                                db.set("sessions/" + salt + '-new', data.username);
+                                                db.set("sessions/" + salt, data.username);
                                                 login(data.username, socket, salt);
                                             } else {
                                                 console.log('info - failed login attempt from IP ' + socket.handshake.address.address + ': ' + data.username);
