@@ -661,7 +661,7 @@ io.sockets.on('connection', function(socket) {
                     message: "You have been IP banned: " + res
                 });
             }
-        })
+        });
         if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
             return socket.emit("message", {
                 type: "alert-error",
@@ -760,65 +760,63 @@ io.sockets.on('connection', function(socket) {
             }
             if (data.action == "login") {
                 db.hget('users/' + data.username, "banned", function(err, nuked) {
-                        if (nuked) {
-                            socket.emit("message", {
-                                type: "alert-error",
-                                message: "You have been banned: " + nuked
-                            });
-                        } else {
-                            db.hget("users/" + data.username, "password", function(err, reply) {
-                                    if (err || reply == null) {
-                                        if (err) {
-                                            handle(err);
-                                        } else {
-
-                                            socket.emit("message", {
-                                                type: "alert-error",
-                                                message: "User does not exist."
-                                            });
-                                        }
+                    if (nuked) {
+                        socket.emit("message", {
+                            type: "alert-error",
+                            message: "You have been banned: " + nuked
+                        });
+                    } else {
+                        db.hget("users/" + data.username, "password", function(err, reply) {
+                                if (err || reply == null) {
+                                    if (err) {
+                                        handle(err);
                                     } else {
-                                        db.hget('users/' + data.username, 'salt', function(err, salt) {
-                                            try {
-                                                if (salt == null) {
+
+                                        socket.emit("message", {
+                                            type: "alert-error",
+                                            message: "User does not exist."
+                                        });
+                                    }
+                                } else {
+                                    db.hget('users/' + data.username, 'salt', function(err, salt) {
+                                        try {
+                                            if (salt == null) {
+                                                socket.emit("message", {
+                                                    type: "alert-error",
+                                                    message: "User does not exist."
+                                                });
+                                            } else {
+                                                if (hash.sha256(data.password, salt) == reply) {
+                                                    console.log('info - successful login attempt: ' + data.username);
+                                                    socket.emit("message", {
+                                                        type: "alert-success",
+                                                        message: "Welcome back, " + data.username + "!"
+                                                    });
+                                                    db.set("sessions/" + salt + '-new', data.username);
+                                                    login(data.username, socket, salt);
+                                                } else {
+                                                    console.log('info - failed login attempt from IP ' + socket.handshake.address.address + ': ' + data.username);
+                                                    socket.failed = true;
+                                                    setTimeout(function() {
+                                                        socket.failed = false;
+                                                    }, 20000);
                                                     socket.emit("message", {
                                                         type: "alert-error",
-                                                        message: "User does not exist."
+                                                        message: "Incorrect password."
                                                     });
-                                                } else {
-                                                    if (hash.sha256(data.password, salt) == reply) {
-                                                        console.log('info - successful login attempt: ' + data.username);
-                                                        socket.emit("message", {
-                                                            type: "alert-success",
-                                                            message: "Welcome back, " + data.username + "!"
-                                                        });
-                                                        db.set("sessions/" + salt + '-new', data.username);
-                                                        login(data.username, socket, salt);
-                                                    } else {
-                                                        console.log('info - failed login attempt from IP ' + socket.handshake.address.address + ': ' + data.username);
-                                                        socket.failed = true;
-                                                        setTimeout(function() {
-                                                            socket.failed = false;
-                                                        }, 20000);
-                                                        socket.emit("message", {
-                                                            type: "alert-error",
-                                                            message: "Incorrect password."
-                                                        });
-                                                    }
                                                 }
-                                            } catch (e) {
-                                                console.log(e.stack);
-                                                return socket.emit("message", {
-                                                    type: "alert-error",
-                                                    message: "Error logging you in. Full stacktrace: " + e.stack
-                                                });
                                             }
-                                        });
-
+                                        } catch (e) {
+                                            console.log(e.stack);
+                                            return socket.emit("message", {
+                                                type: "alert-error",
+                                                message: "Error logging you in. Full stacktrace: " + e.stack
+                                            });
+                                        }
                                     });
-                            }
+                                });
                         });
-                }
+                });
             }
         }
     });
