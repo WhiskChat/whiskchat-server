@@ -69,11 +69,10 @@ console.log('info - WhiskChat Server starting');
 console.log('info - Starting DB');
 if (process.env.REDISCLOUD_URL) {
     var rtg = require("url").parse(process.env.REDISCLOUD_URL);
-    var db = redis.createClient(rtg.port, rtg.hostname);
-    var whiskdb = redis.createClient(6379, 'db.whiskers75.com')
-    whiskdb.auth(process.env.WHISKDBPASS)
-    whiskdb.incr('startups', redis.print);
-    db.auth(rtg.auth.split(":")[1]);
+    var oldb = redis.createClient(rtg.port, rtg.hostname);
+    var db = redis.createClient(6379, 'db.whiskers75.com')
+    db.incr('startups', redis.print);
+    oldb.auth(rtg.auth.split(":")[1]);
 } else {
     var db = redis.createClient();
 }
@@ -650,6 +649,79 @@ io.sockets.on('connection', function(socket) {
                         });
                     }
                 });
+            });
+        }
+    });
+    socket.on('migrate', function(data) {
+        if (data && data.user) {
+            socket.emit("message", {
+                type: "alert-error",
+                message: "Migrating user: " + data.user
+            });
+            db.get('users/' + sockt.user, function(err, exist) {
+                if (exist || err) {
+                    return socket.emit("message", {
+                        type: "alert-error",
+                        message: "User already exists."
+                    });
+                } else {
+                    oldb.get('users/' + sockt.user + '/balance', function(err, reply) {
+                        db.hset('users/' + sockt.user, 'balance', reply, function(err, result) {
+                            socket.emit('message', {
+                                message: 'Migrated balance'
+                            });
+                        });
+                    });
+                    oldb.get('users/' + sockt.user + '/rep', function(err, reply) {
+                        db.hset('users/' + sockt.user, 'rep', reply, function(err, result) {
+                            socket.emit('message', {
+                                message: 'Migrated rep'
+                            });
+                        });
+                    });
+                    oldb.get('users/' + sockt.user + '/tag', function(err, reply) {
+                        db.hset('users/' + sockt.user, 'tag', reply, function(err, result) {
+                            socket.emit('message', {
+                                message: 'Migrated tag'
+                            });
+                        });
+                    });
+                    oldb.get('users/' + sockt.user + '/pretag', function(err, reply) {
+                        db.hset('users/' + sockt.user, 'pretag', reply, function(err, result) {
+                            socket.emit('message', {
+                                message: 'Migrated pretag'
+                            });
+                        });
+                    });
+                    oldb.get('users/' + sockt.user + '/rank', function(err, reply) {
+                        db.hset('users/' + sockt.user, 'rank', reply, function(err, result) {
+                            socket.emit('message', {
+                                message: 'Migrated rank'
+                            });
+                        });
+                    });
+                    oldb.get('users/' + sockt.user + '/rooms', function(err, reply) {
+                        db.hset('users/' + sockt.user, 'rooms', reply, function(err, result) {
+                            socket.emit('message', {
+                                message: 'Migrated rooms'
+                            });
+                        });
+                    });
+                    oldb.get('users/' + sockt.user + '/salt', function(err, reply) {
+                        db.hset('users/' + sockt.user, 'salt', reply, function(err, result) {
+                            socket.emit('message', {
+                                message: 'Migrated salt'
+                            });
+                        });
+                    });
+                    oldb.get('users/' + sockt.user + '/password', function(err, reply) {
+                        db.hset('users/' + sockt.user, 'salt', reply, function(err, result) {
+                            socket.emit('message', {
+                                message: 'Migrated password'
+                            });
+                        });
+                    });
+                }
             });
         }
     });
