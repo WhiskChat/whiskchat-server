@@ -61,8 +61,6 @@ if (process.argv[2] == "travisci") {
     }, 10000);
 }
 io.configure(function() {
-    io.set("transports", ["xhr-polling"]);
-    io.set("polling duration", 2);
     io.set('log level', 1);
 });
 console.log('info - WhiskChat Server starting');
@@ -392,16 +390,23 @@ function login(username, usersocket, sess) {
             username: username
         });
     }
+
     usersocket.emit('joinroom', {
         room: '--connectedmsg'
     }); // For whiskchat-client's Connected header
     usersocket.user = username;
     db.hget('users/' + username, 'balance', function(err, reply) {
+        if (reply == 'null') {
+        db.hdel('users/' + username, 'balance')
+    }
         usersocket.emit('balance', {
             balance: reply
         });
     });
     db.hget('users/' + username, 'rep', function(err, rep) {
+        if (reply == 'null') {
+        db.hdel('users/' + username, 'rep')
+    }
         usersocket.emit('whitelist', {
             whitelisted: Number(Number(rep).toFixed(2))
         });
@@ -417,21 +422,33 @@ function login(username, usersocket, sess) {
         }
     });
     db.hget('users/' + username, 'tag', function(err, reply) {
+        if (reply == 'null') {
+        db.hdel('users/' + username, 'tag')
+    }
         if (reply) {
             usersocket.tag = reply;
         }
     });
     db.hget('users/' + username, 'pretag', function(err, reply) {
+        if (reply == 'null') {
+        db.hdel('users/' + username, 'pretag')
+    }
         if (reply) {
             usersocket.pretag = reply;
         }
     });
     db.hget('users/' + username, 'rank', function(err, reply) {
+        if (reply == 'null') {
+        db.hdel('users/' + username, 'rank')
+    }
         if (reply) {
             usersocket.rank = reply;
         }
     });
     db.hget('users/' + username, 'rooms', function(err, reply) {
+        if (reply == 'null') {
+        db.hdel('users/' + username, 'rooms')
+    }
         if (!reply) {
             usersocket.emit('message', {
                 message: 'You should sync your roomlist. Subscribing you to default rooms.'
