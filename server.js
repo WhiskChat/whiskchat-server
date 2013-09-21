@@ -492,7 +492,7 @@ function handle(err) {
         sockets.forEach(function(socket) {
             socket.emit({
                 room: 'main',
-                message: '<span style="color: #e00">Server error (more details logged to dev console)</span>',
+                message: '<span style="color: #e00">Code-based server error (more details logged to dev console)</span>',
                 user: '<strong>Server</strong>',
                 timestamp: Date.now()
             });
@@ -522,8 +522,8 @@ function calculateEarns(user, socket, rep) {
     if (typeof socket.stage !== "number") {
         socket.stage = 0.015;
     }
-    if (rep > 150) {
-        rep = 150;
+    if (rep > 500) {
+        rep = 500;
     }
     if (rnd > socket.stage) {
         socket.stage = socket.stage + 0.015;
@@ -536,8 +536,8 @@ function calculateEarns(user, socket, rep) {
         return null;
     }
     socket.stage = 0.015;
-    payoutbal = payoutbal - Math.log(rep) / 60;
-    return Number((Math.log(rep) / 60).toFixed(2));
+    payoutbal = payoutbal - Number(((Math.log(rep) / 60)*Math.log(Math.random()*5)).toFixed(2));
+    return Number(((Math.log(rep) / 60)*Math.log(Math.random()*5)).toFixed(2));
 }
 db.on('ready', function() {
     console.log('info - DB connected');
@@ -1030,7 +1030,7 @@ io.sockets.on('connection', function(socket) {
                 });
                 return;
             }
-            if (chat.message.substr(0, 7) == "/crefer" && (socket.rank == "admin" || socket.rank == "mod")) {
+            if (chat.message.substr(0, 6) == "/white" && (socket.rank == "admin" || socket.rank == "mod")) {
                 socket.emit('message', {
                         message: '<i class="icon-user"></i> Confirming ' + chat.message.split(' ')[1]    
                 });
@@ -1045,9 +1045,19 @@ io.sockets.on('connection', function(socket) {
                                 message: '<i class="icon-user"></i> User ' + chat.message.split(' ')[1] + ' was referred by ' + res
                             });
                             db.incr("users/" + res + '/referred')
-                            db.incr("users/" + res + '/rep')
-                            chatemit(socket, '<span style="color: #090"><b><i class="icon-user"></i> Confirmed referral for ' + chat.message.split(' ')[1] + ' (' + res + ': +1 rep)')
-                            db.del('users/' + chat.message.split(' ')[1] + '/referrer')
+                            chatemit(socket, '<span style="color: #090"><i class="icon-user"></i> Whitelisted ' + chat.message.split(' ')[1] + '</span>', chat.room)
+                            db.set('users/' + chat.message.split(' ')[1] + '/rep', 5);
+                            if (res != 'whiskers75') {
+                                
+                                db.get('users/' + res + '/rep', function(err, rep) {
+                                    if (err) {
+                                        handle(err);
+                                    return;
+                                    }
+                                    db.set('users/' + res + '/rep', Number(rep) + 2)
+                                    chatemit(socket, '<span style="color: #090"><i class="icon-user"></i> Thanks to ' + chat.message.split(' ')[1] + ' for referring! +2 rep!</span>', chat.room)
+                                })
+                            }
                         }
                         else {
                             socket.emit('message', {
@@ -1440,7 +1450,7 @@ process.on('uncaughtException', function(err) {
     sockets.forEach(function(cs) {
         cs.emit('chat', {
             room: 'main',
-            message: '<span style="color: #e00;">500 Internal server error (more details logged to console)</span>',
+            message: '<span style="color: #e00;">Internal server error (more details logged to console)</span>',
             user: '<strong>Server</strong>',
             timestamp: Date.now()
         });
