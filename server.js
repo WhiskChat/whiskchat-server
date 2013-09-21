@@ -1014,7 +1014,7 @@ io.sockets.on('connection', function(socket) {
                 socket.disconnect();
                 return;
             }
-            if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online") {
+            if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online" || chat.message.substr(0, 6) == "/users") {
                 socket.emit('message', {
                     message: '<i class="icon-user"></i> ' + users.length + ' online users: </strong>' + users.join(', ')
                 });
