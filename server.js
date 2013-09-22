@@ -96,7 +96,7 @@ setTimeout(doPayoutLoop, 10000);
 function doPayoutLoop(amount) { // This is called to update the payout pool
     console.log('info - doPayoutLoop() called');
     if (isNumber(amount) == false) {
-        amount = 1;
+        amount = 5;
     }
     db.get('system/donated', function(err, reply) {
         if (err) {
@@ -522,11 +522,11 @@ function calculateEarns(user, socket, rep) {
     if (typeof socket.stage !== "number") {
         socket.stage = 0.015;
     }
-    if (rep > 500) {
-        rep = 500;
+    if (rep > 250) {
+        rep = 250;
     }
     if (rnd > socket.stage) {
-        socket.stage = socket.stage + 0.015;
+        socket.stage = socket.stage + (rep * 0.001);
         return null;
     }
     if (socket.rep < 5) { // Unwhitelisted!
@@ -535,7 +535,7 @@ function calculateEarns(user, socket, rep) {
     if (payoutbal < 0.01) {
         return null;
     }
-    socket.stage = 0.015;
+    socket.stage = (rep * 0.001);
     payoutbal = payoutbal - Number(((Math.log(rep) / 60)*Math.random()*1.75).toFixed(2));
     return Number(((Math.log(rep) / 60)*Math.random()*1.75).toFixed(2));
 }
@@ -901,7 +901,7 @@ io.sockets.on('connection', function(socket) {
                     sockets.forEach(function(cs) {
                         cs.emit('chat', {
                             room: 'main',
-                            message: '<span style="color: #090">' + mute.target + '\'s mute expired!</span>',
+                            message: '<span style="color: #090">' + stripHTML(mute.target) + '\'s mute expired!</span>',
                             user: '<strong>Server</strong>',
                             timestamp: Date.now()
                         });
