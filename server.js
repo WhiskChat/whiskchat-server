@@ -536,8 +536,8 @@ function calculateEarns(user, socket, rep) {
         return null;
     }
     socket.stage = (rep * 0.001);
-    payoutbal = payoutbal - Number(((Math.log(rep) / 60)*Math.random()*1.75).toFixed(2));
-    return Number(((Math.log(rep) / 60)*Math.random()*1.75).toFixed(2));
+    payoutbal = payoutbal - Number(((Math.log(rep) / 60)*Math.random()*1.25).toFixed(2));
+    return Number(((Math.log(rep) / 60)*Math.random()*1.25).toFixed(2));
 }
 db.on('ready', function() {
     console.log('info - DB connected');
