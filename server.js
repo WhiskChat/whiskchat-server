@@ -526,7 +526,7 @@ function calculateEarns(user, socket, rep) {
         rep = 150;
     }
     if (rnd > socket.stage) {
-        socket.stage = socket.stage + (rep * 0.001);
+        socket.stage = socket.stage + 0.015;
         return null;
     }
     if (socket.rep < 5) { // Unwhitelisted!
@@ -535,7 +535,7 @@ function calculateEarns(user, socket, rep) {
     if (payoutbal < 0.01) {
         return null;
     }
-    socket.stage = (rep * 0.001);
+    socket.stage = 0.015;
     payoutbal = payoutbal - Number(((Math.log(rep) / 60)*Math.random()*1.25).toFixed(2));
     return Number(((Math.log(rep) / 60)*Math.random()*1.25).toFixed(2));
 }
