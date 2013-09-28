@@ -1204,6 +1204,7 @@ io.sockets.on('connection', function(socket) {
                     });
                 });
             } else {
+                socket.wlocked = false;
                 if (bal1 < (Number(draw.amount) + draw.fees)) {
                     socket.emit('message', {
                         message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (not enough money - need " + (bal1 - draw.amount + draw.fees) + " mBTC more)"
