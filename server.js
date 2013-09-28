@@ -435,7 +435,7 @@ function login(username, usersocket, sess) {
             usersocket.emit('message', {
                 message: 'You should sync your roomlist. Subscribing you to default rooms.'
             });
-            
+
             usersocket.emit('joinroom', {
                 room: 'whiskchat'
             });
@@ -477,10 +477,10 @@ function login(username, usersocket, sess) {
             return;
         }
         if (usersocket.refer) {
-                usersocket.emit('message', {
-                    message: '<i class="icon-user"></i> You were referred by ' + usersocket.refer + '!'
-                });
-            }
+            usersocket.emit('message', {
+                message: '<i class="icon-user"></i> You were referred by ' + usersocket.refer + '!'
+            });
+        }
         chatemit(usersocket, '!; connect ' + usersocket.version, 'main');
         console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
     }, 2000);
@@ -717,7 +717,7 @@ io.sockets.on('connection', function(socket) {
                                 db.set("users/" + data.username + "/password", hashed);
                                 db.set("users/" + data.username + "/salt", salt);
                                 db.set("users/" + data.username + "/email", data.email);
-                                
+
                                 db.set("sessions/" + salt, data.username);
                                 console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
                                 socket.emit("message", {
@@ -1032,14 +1032,13 @@ io.sockets.on('connection', function(socket) {
             }
             if (chat.message.substr(0, 6) == "/white" && (socket.rank == "admin" || socket.rank == "mod")) {
                 socket.emit('message', {
-                        message: '<i class="icon-user"></i> Confirming ' + chat.message.split(' ')[1]    
+                    message: '<i class="icon-user"></i> Confirming ' + chat.message.split(' ')[1]
                 });
                 db.get('users/' + chat.message.split(' ')[1] + '/referrer', function(err, res) {
                     if (err) {
                         handle(err);
                         return;
-                    }
-                    else {
+                    } else {
                         if (res) {
                             socket.emit('message', {
                                 message: '<i class="icon-user"></i> User ' + chat.message.split(' ')[1] + ' was referred by ' + res
@@ -1048,18 +1047,17 @@ io.sockets.on('connection', function(socket) {
                             chatemit(socket, '<span style="color: #090"><i class="icon-user"></i> Whitelisted ' + chat.message.split(' ')[1] + '</span>', chat.room)
                             db.set('users/' + chat.message.split(' ')[1] + '/rep', 5);
                             if (res != 'whiskers75') {
-                                
+
                                 db.get('users/' + res + '/rep', function(err, rep) {
                                     if (err) {
                                         handle(err);
-                                    return;
+                                        return;
                                     }
                                     db.set('users/' + res + '/rep', Number(rep) + 2)
                                     chatemit(socket, '<span style="color: #090"><i class="icon-user"></i> Thanks to ' + chat.message.split(' ')[1] + ' for referring! +2 rep!</span>', chat.room)
                                 })
                             }
-                        }
-                        else {
+                        } else {
                             socket.emit('message', {
                                 message: '<i class="icon-user"></i> User ' + chat.message.split(' ')[1] + ' does not have a referrer.'
                             });
@@ -1279,36 +1277,49 @@ io.sockets.on('connection', function(socket) {
             if (tip.user == "donate") {
                 db.get('users/' + socket.user + '/balance', function(err, bal1) {
                     db.get('users/' + socket.user + '/rep', function(err, rep1) {
-                        db.get('system/donated', function(err, bal2) {
-                            if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
-                                db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
-                                db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
-                                db.set('users/' + socket.user + '/rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
-                                sockets.forEach(function(cs) {
-                                    cs.emit('tip', {
-                                        room: tip.room,
-                                        target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + Number(tip.tip)).toFixed(2) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2) + ')',
-                                        amount: Number(tip.tip),
-                                        message: stripHTML(tip.message),
-                                        user: socket.user,
-                                        timestamp: Date.now()
+                        db.get('system/personal', function(err, per) {
+                            db.get('system/donated', function(err, bal2) {
+                                if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
+                                    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
+                                    db.set('system/donated', Number(bal2) + Number(tip.tip) / 2, redis.print);
+                                    db.set('system/personal', Number(per) + Number(tip.tip) / 2, redis.print);
+                                    db.set('users/' + socket.user + '/rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
+                                    sockets.forEach(function(cs) {
+                                        cs.emit('tip', {
+                                            room: tip.room,
+                                            target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + (Number(tip.tip) / 2)).toFixed(2) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2) + ')',
+                                            amount: Number(tip.tip) / 2,
+                                            message: stripHTML(tip.message),
+                                            user: socket.user,
+                                            timestamp: Date.now()
+                                        });
+                                        if (cs.user == socket.user) {
+                                            socket.emit('balance', {
+                                                balance: Number(bal1) - Number(tip.tip)
+                                            });
+                                            socket.emit('whitelist', {
+                                                whitelisted: (Number(rep1) + (Number(tip.tip) / 2))
+                                            });
+                                            socket.rep = (Number(rep1) + (Number(tip.tip) / 2));
+                                        }
                                     });
-                                    if (cs.user == socket.user) {
-                                        socket.emit('balance', {
-                                            balance: Number(bal1) - Number(tip.tip)
+                                    sockets.forEach(function(cs) {
+                                        cs.emit('tip', {
+                                            room: tip.room,
+                                            target: 'whiskers75\'s Funds [' + (Number(per) + (Number(tip.tip) / 2)).toFixed(2) + ' mBTC]',
+                                            amount: Number(tip.tip) / 2,
+                                            message: stripHTML(tip.message),
+                                            user: socket.user,
+                                            timestamp: Date.now()
                                         });
-                                        socket.emit('whitelist', {
-                                            whitelisted: (Number(rep1) + (Number(tip.tip) / 2))
-                                        });
-                                        socket.rep = (Number(rep1) + (Number(tip.tip) / 2));
-                                    }
-                                });
-                            } else {
-                                socket.emit('message', {
-                                    type: "alert-error",
-                                    message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."
-                                });
-                            }
+                                    });
+                                } else {
+                                    socket.emit('message', {
+                                        type: "alert-error",
+                                        message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."
+                                    });
+                                }
+                            });
                         });
                     });
                 });
