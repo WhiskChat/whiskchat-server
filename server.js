@@ -1204,9 +1204,15 @@ io.sockets.on('connection', function(socket) {
                     });
                 });
             } else {
-                socket.emit('message', {
-                    message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (not enough, incorrect address, 0.5 mBTC tx fee for non-Inputs)"
-                });
+                if (bal1 < (Number(draw.amount) + draw.fees)) {
+                    socket.emit('message', {
+                        message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (not enough money - need " + (bal1 - draw.amount + draw.fees) + " mBTC more)"
+                    });
+                } else {
+                    socket.emit('message', {
+                        message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (tip more than 0)"
+                    });
+                }
             }
         });
     });
