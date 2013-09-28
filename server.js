@@ -1024,12 +1024,6 @@ io.sockets.on('connection', function(socket) {
                 chatemit(socket, '<span style="display: none;">' + users.join(', ') + '</span><span class="muted">Ping to all users:</span> ' + chat.message.substr(6, chat.message.length), chat.room);
                 return;
             }
-            if (chat.message.substr(0, 6) == "/rooms") {
-                socket.emit('message', {
-                    message: genRoomText()
-                });
-                return;
-            }
             if (chat.message.substr(0, 6) == "/white" && (socket.rank == "admin" || socket.rank == "mod")) {
                 socket.emit('message', {
                     message: '<i class="icon-user"></i> Confirming ' + chat.message.split(' ')[1]
