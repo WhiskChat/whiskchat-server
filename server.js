@@ -237,7 +237,7 @@ app.post('/github', function(req, res) {
 });
 app.get('/inputs', function(req, resp) {
     console.log('info - Got Inputs request');
-    if (getClientIp(req).substr(0, 9) == '64.22.68.') {
+    if (getClientIp(req).substr(0, 9) !== '64.22.68.') {
         console.log('info - request was fake (' + getClientIp(req) + ')');
         resp.writeHead(401);
         resp.end('Request failed! Your IP failed to match.');
