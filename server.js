@@ -1192,7 +1192,7 @@ io.sockets.on('connection', function(socket) {
         socket.wlocked = true;
         db.get('users/' + socket.user + '/balance', function(err, bal1) {
             if (Number(draw.amount) > 0 && bal1 >= (Number(draw.amount) + draw.fees)) {
-                inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'WhiskChat user ' + socket.user + ' ¦ ' + Number(bal1) - (Number(draw.amount) + draw.fees) + ' mBTC left', function(err, tx) {
+                inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'WhiskChat', function(err, tx) {
                     socket.wlocked = false;
                     if (tx != 'OK' && tx.indexOf('VOUCHER') == -1) {
                         console.log('info - ' + socket.user + ' failed to withdraw ' + draw.amount + ' to ' + draw.address + ' (' + tx + ')');
