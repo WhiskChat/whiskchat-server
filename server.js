@@ -536,6 +536,9 @@ function calculateEarns(user, socket, rep) {
         return null;
     }
     socket.stage = 0.015;
+    if (rnd > 0.25) {
+        rnd = 0.25;
+    }
     payoutbal = payoutbal - Number(rnd.toFixed(2));
     return Number(rnd.toFixed(2));
 }
