@@ -526,7 +526,7 @@ function calculateEarns(user, socket, rep) {
         rep = 150;
     }
     if (rnd > socket.stage) {
-        socket.stage = socket.stage + 0.015 + (rep * 0.001);
+        socket.stage = socket.stage + 0.015 + (rep * 0.0001);
         return null;
     }
     if (socket.rep < 5) { // Unwhitelisted!
