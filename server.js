@@ -550,15 +550,7 @@ setInterval(function() {
         sockets.forEach(function(ads) {
             ads.emit('chat', {
                 room: 'main',
-                message: '<center><iframe frameborder="0" src="https://bitads.net/gimg.php?id=308" style="overflow:hidden;width:468px;height:60px;"></iframe></center>',
-                user: 'bitads',
-                timestamp: Date.now()
-            });
-        });
-        sockets.forEach(function(ads) {
-            ads.emit('chat', {
-                room: 'main',
-                message: '<center><a href="https://bitads.net/?p=bid&id=308" target="_blank">Advertise on this adspace!</a></center>',
+                message: '<center><iframe scrolling="no" frameborder="0" src="https://bitads.net/gimg.php?id=308" style="overflow:hidden;width:468px;height:60px;"></iframe></center>',
                 user: 'bitads',
                 timestamp: Date.now()
             });
