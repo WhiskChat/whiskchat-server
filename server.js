@@ -1412,12 +1412,14 @@ io.sockets.on('connection', function(socket) {
                 });
                 tmp5 = false;
             }
+            else {
             if (room.length > 20) {
                 socket.emit('message', {
                     message: '<i class="icon-exclamation-sign"></i> Room \'' + room + '\' is over 20 characters long.'
                 });
                 tmp5 = false;
             }
+        }
         });
         if (!tmp5) {
             socket.emit('message', {
