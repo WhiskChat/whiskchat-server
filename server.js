@@ -1275,10 +1275,9 @@ io.sockets.on('connection', function(socket) {
                     db.get('users/' + socket.user + '/rep', function(err, rep1) {
                         db.get('system/personal', function(err, per) {
                             db.get('system/donated', function(err, bal2) {
-                                if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
+                                if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) >= 0.1 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
                                     db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
-                                    db.set('system/donated', Number(bal2) + Number(tip.tip) / 2, redis.print);
-                                    db.set('system/personal', Number(per) + Number(tip.tip) / 2, redis.print);
+                                    db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
                                     db.set('users/' + socket.user + '/rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
                                     sockets.forEach(function(cs) {
                                         cs.emit('tip', {
@@ -1299,20 +1298,10 @@ io.sockets.on('connection', function(socket) {
                                             socket.rep = (Number(rep1) + (Number(tip.tip) / 2));
                                         }
                                     });
-                                    sockets.forEach(function(cs) {
-                                        cs.emit('tip', {
-                                            room: tip.room,
-                                            target: 'whiskers75\'s Funds [' + (Number(per) + (Number(tip.tip) / 2)).toFixed(2) + ' mBTC]',
-                                            amount: Number(tip.tip) / 2,
-                                            message: stripHTML(tip.message),
-                                            user: socket.user,
-                                            timestamp: Date.now()
-                                        });
-                                    });
                                 } else {
                                     socket.emit('message', {
                                         type: "alert-error",
-                                        message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."
+                                        message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself. Donations must be more than or equal to 0.1 mBTC to prevent spam."
                                     });
                                 }
                             });
