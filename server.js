@@ -369,7 +369,7 @@ function urlify(text) {
 }
 
 function login(username, usersocket, sess) {
-    console.log(username + ' logging in from IP ' + usersocket.manager.handshaken[socket.id].remoteAddress);
+    console.log(username + ' logging in from IP ' + usersocket.handshake.address.address);
 
     io.sockets.emit("online", {
         people: users.length,
@@ -482,7 +482,7 @@ function login(username, usersocket, sess) {
             });
         }
         chatemit(usersocket, '!; connect ' + usersocket.version, 'main');
-        console.log(username + ' logged in from IP ' + usersocket.manager.handshaken[socket.id].remoteAddress);
+        console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
     }, 2000);
 }
 
@@ -604,7 +604,7 @@ io.sockets.on('connection', function(socket) {
     socket.emit('joinroom', {
         room: 'main'
     });
-    console.log('info - new connection from IP ' + socket.manager.handshaken[socket.id].remoteAddress);
+    console.log('info - new connection from IP ' + socket.handshake.address.address);
     socket.emit('chat', {
         room: 'main',
         message: '<strong>Welcome to WhiskChat Server!</strong>',
@@ -629,7 +629,7 @@ io.sockets.on('connection', function(socket) {
     socket.rank = '';
     socket.on('login', function(data) {
         if (data && data.session) {
-            console.log('info - checking session cookie for IP ' + socket.manager.handshaken[socket.id].remoteAddress);
+            console.log('info - checking session cookie for IP ' + socket.handshake.address.address);
             socket.emit("message", {
                 type: "alert-success",
                 message: "Checking session cookie..."
@@ -655,7 +655,7 @@ io.sockets.on('connection', function(socket) {
         }
     });
     socket.on('accounts', function(data) {
-        if (knownspambots.indexOf(socket.manager.handshaken[socket.id].remoteAddress) !== -1) {
+        if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
             return socket.emit("message", {
                 type: "alert-error",
                 message: "You have been IP banned."
@@ -676,13 +676,13 @@ io.sockets.on('connection', function(socket) {
                             message: "Username must be between 3 and 16 characters, must be alphanumeric and cannot contain HTML."
                         });
                     }
-                    if (knownspambots.indexOf(socket.manager.handshaken[socket.id].remoteAddress) !== -1) {
+                    if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
                         return socket.emit("message", {
                             type: "alert-error",
                             message: "You have been IP banned by an admin."
                         });
                     }
-                    lastip.push(socket.manager.handshaken[socket.id].remoteAddress);
+                    lastip.push(socket.handshake.address.address);
                     if (data.username.indexOf('<') !== -1 || data.username.indexOf('>') !== -1) {
                         return socket.emit("message", {
                             type: "alert-error",
@@ -722,7 +722,7 @@ io.sockets.on('connection', function(socket) {
                                 db.set("users/" + data.username + "/email", data.email);
 
                                 db.set("sessions/" + salt, data.username);
-                                console.log('info - new signup from IP ' + socket.manager.handshaken[socket.id].remoteAddress + ' (' + data.username + ')');
+                                console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
                                 socket.emit("message", {
                                     type: "alert-success",
                                     message: "Thanks for registering, " + data.username + "!"
@@ -797,7 +797,7 @@ io.sockets.on('connection', function(socket) {
                                         db.set("sessions/" + salt + '-new', data.username);
                                         login(data.username, socket, salt);
                                     } else {
-                                        console.log('info - failed login attempt from IP ' + socket.manager.handshaken[socket.id].remoteAddress + ': ' + data.username);
+                                        console.log('info - failed login attempt from IP ' + socket.handshake.address.address + ': ' + data.username);
                                         socket.failed = true;
                                         setTimeout(function() {
                                             socket.failed = false;
@@ -1128,25 +1128,6 @@ io.sockets.on('connection', function(socket) {
                     return;
                 }
                 return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
-            }
-            if (chat.message.substr(0, 6) == "/whois") {
-                if (socket.rank !== 'mod' && socket.rank !== 'admin') {
-                    socket.emit("message", {
-                        type: "alert-error",
-                        message: "You do not have permissions to whois users."
-                    });
-                    return;
-                }
-                socket.emit("message", {
-                    message: "Whois: " + chat.message.substr(7, chat.message.length)
-                });
-                sockets.forEach(function(skt) {
-                    if (skt.user == chat.message.substr(7, chat.message.length)) {
-                        socket.emit("message", {
-                            message: chat.message.substr(7, chat.message.length) + ': IP ' + skt.manager.handshaken[socket.id].remoteAddress
-                        });
-                    }
-                });
             }
             if (chat.message.substr(0, 3) == "/aa") { // Peapodamus: I'm climbin' in your windows, stealing your codes up
                 if (socket.rank !== 'admin') {
