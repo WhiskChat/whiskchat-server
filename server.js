@@ -294,7 +294,7 @@ app.get('/inputs', function(req, resp) {
 function chatemit(sockt, message, room) {
     var winbtc = null;
     if (room == "main" || room == "botgames" || room == "whiskchat") { // Temp solution to prevent spammers
-        winbtc = calculateEarns(sockt.user, sockt);
+        winbtc = calculateEarns(sockt.user, sockt, 0, message);
     }
     sockets.forEach(function(sock) {
         if (!sock.authed) {
