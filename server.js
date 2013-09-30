@@ -27,6 +27,7 @@ var redis = require('redis');
 var alphanumeric = /^[a-z0-9]+$/i; // Noone remove this.
 var sockets = [];
 var chatlog = [];
+var modsonline = 0;
 var lastip = [];
 var payoutbal = 0;
 var bitaddr = require('bitcoin-address');
@@ -482,6 +483,9 @@ function login(username, usersocket, sess) {
             });
         }
         chatemit(usersocket, '!; connect ' + usersocket.version, 'main');
+        if (usersocket.rank == 'mod' || usersocket.rank == 'admin') {
+            modsonline++;
+        }
         console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
     }, 2000);
 }
@@ -516,7 +520,7 @@ function genRoomText() {
     return "Rooms object: " + JSON.stringify(tmp);
 }
 
-function calculateEarns(user, socket, rep) {
+function calculateEarns(user, socket, rep, msg) {
     rep = socket.rep;
     var rnd = Math.random();
     if (typeof socket.stage !== "number") {
@@ -529,10 +533,10 @@ function calculateEarns(user, socket, rep) {
         socket.stage = socket.stage + 0.015 + (rep * 0.0001);
         return null;
     }
-    if (socket.rep < 5) { // Unwhitelisted!
+    if (socket.rep < 5 || msg.length < (10 * Math.random().toFixed(2))) { // Unwhitelisted!
         return null;
     }
-    if (payoutbal < 0.01) {
+    if (payoutbal < 0.01 || modsonline < 1) {
         return null;
     }
     socket.stage = 0.015;
@@ -576,13 +580,15 @@ io.sockets.on('connection', function(socket) {
     socket.on('disconnect', function() {
         sockets.splice(sockets.indexOf(socket), 1);
         if (socket.authed) {
-            var tmp = false;
             sockets.forEach(function(skct) {
                 if (socket.user == skct.user) {
-                    tmp = true;
+                    skct.disconnect();
                 }
             });
-            if (muted.indexOf(socket.user) == -1 && !tmp) {
+            if (muted.indexOf(socket.user) == -1) {
+                if (socket.rank == 'mod' || socket.rank == 'admin') {
+                    modsonline--;
+                }
                 chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
                 users.splice(users.indexOf(socket.user), 1);
                 io.sockets.emit("online", {
@@ -1011,7 +1017,7 @@ io.sockets.on('connection', function(socket) {
             }
             if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online" || chat.message.substr(0, 6) == "/users") {
                 socket.emit('message', {
-                    message: '<i class="icon-user"></i> ' + users.length + ' online users: </strong>' + users.join(', ')
+                    message: '<i class="icon-user"></i> ' + users.length + ' online users: </strong>' + users.join(', ') + '. ' + modsonline + ' online moderators.'
                 });
                 return;
             }
