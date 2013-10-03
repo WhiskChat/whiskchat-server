@@ -1289,7 +1289,7 @@ io.sockets.on('connection', function(socket) {
                                         cs.emit('tip', {
                                             room: tip.room,
                                             target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + (Number(tip.tip))).toFixed(2) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2) + ')',
-                                            amount: Number(tip.tip) / 2,
+                                            amount: Number(tip.tip),
                                             message: stripHTML(tip.message),
                                             user: socket.user,
                                             timestamp: Date.now()
