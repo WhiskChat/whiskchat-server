@@ -533,10 +533,10 @@ function calculateEarns(user, socket, rep, msg) {
         socket.stage = socket.stage + 0.015 + (rep * 0.0001);
         return null;
     }
-    if (socket.rep < 5 || msg.length < (10 * Math.random().toFixed(2))) { // Unwhitelisted!
+    if (socket.rep < 5 || msg.length < (10 * Math.random().toFixed(2))) {
         return null;
     }
-    if (payoutbal < 0.01 || modsonline < 1) {
+    if (payoutbal < 0.01) {
         return null;
     }
     socket.stage = 0.015;
