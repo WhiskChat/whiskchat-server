@@ -554,8 +554,8 @@ setInterval(function() {
         sockets.forEach(function(ads) {
             ads.emit('chat', {
                 room: 'main',
-                message: '<center><iframe scrolling="no" frameborder="0" src="https://bitads.net/gimg.php?id=308" style="overflow:hidden;width:468px;height:60px;"></iframe></center>',
-                user: 'bitads',
+                message: '<center><iframe scrolling="no" style="border: 0; width: 728px; height: 90px;" frameborder="no" src="http://coinurl.com/get.php?id=16590"></iframe></center>',
+                user: 'Advertisement',
                 timestamp: Date.now()
             });
         });
@@ -612,6 +612,12 @@ io.sockets.on('connection', function(socket) {
     socket.emit('chat', {
         room: 'main',
         message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + users.length + '</strong> users connected.',
+        user: '<strong>Server</strong>',
+        timestamp: Date.now()
+    });
+    socket.emit('chat', {
+        room: 'main',
+        message: 'Please login or register to gain access to chat! The link can be found in the top-right corner.',
         user: '<strong>Server</strong>',
         timestamp: Date.now()
     });
