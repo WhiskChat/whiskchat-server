@@ -990,33 +990,33 @@ io.sockets.on('connection', function(socket) {
                     msg = msg + chat.message.split(" ")[i] + " ";
                 }
                 var foundUser = false; // Was the target user found? 
-                sockets.forEach(function(sock) {
-                    if (foundUser) {
-                        return;
-                    }
-                    if (sock.user == chat.message.split(" ")[1]) {
-                        sock.emit('chat', {
-                            room: 'main',
-                            message: msg,
-                            user: '<strong>PM from ' + socket.user + '</strong>',
-                            timestamp: Date.now()
-                        });
-                        foundUser = true;
-                    }
-                });
+            sockets.forEach(function(sock) {
                 if (foundUser) {
-                    socket.emit('chat', {
+                    return;
+                }
+                if (sock.user == chat.message.split(" ")[1]) {
+                    sock.emit('chat', {
                         room: 'main',
-                        message: msg,
-                        user: '<strong>PM to ' + chat.message.split(" ")[1] + '</strong>',
+                        message: '<span class="muted">[me -> ' + socket.user + ']</span> ' + msg,
+                        user: '<strong>PM</strong>',
                         timestamp: Date.now()
                     });
-                } else {
-                    socket.emit('message', {
-                        message: 'PM failed: user ' + chat.message.split(" ")[1] + 'not found'
-                    });
+                    foundUser = true;
                 }
-                return;
+            });
+            if (foundUser) {
+                socket.emit('chat', {
+                    room: 'main',
+                    message: '<span class="muted">[' + chat.message.split(" ")[1] + ' -> me]</span> ' + msg,
+                    user: '<strong>PM</strong>',
+                    timestamp: Date.now()
+                });
+            } else {
+                socket.emit('message', {
+                    message: 'PM failed: user ' + chat.message.split(" ")[1] + ' not found.'
+                });
+            }
+            return;
             }
             if (chat.message.substr(0, 10) == '!; connect') {
                 socket.version = chat.message.substr(11, chat.message.length);
