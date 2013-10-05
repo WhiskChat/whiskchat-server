@@ -572,7 +572,6 @@ setInterval(function() {
                     timestamp: Date.now()
                 });
             });
-            console.log('info - ' + (Number(reply) - amount) + ' mBTC donated, ' + payoutbal + ' mBTC in pool');
         });
         emitAd = 0;
     }
@@ -593,18 +592,20 @@ io.sockets.on('connection', function(socket) {
         });
     }
     socket.on('disconnect', function() {
+        chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
         sockets.splice(sockets.indexOf(socket), 1);
+        var tmp = false;
         if (socket.authed) {
             sockets.forEach(function(skct) {
                 if (socket.user == skct.user) {
-                    skct.disconnect();
+                    tmp = true;
+                    chatemit(socket, '!; connect Existing socket connection', 'main');
                 }
             });
-            if (muted.indexOf(socket.user) == -1) {
+            if (muted.indexOf(socket.user) == -1 && tmp) {
                 if (socket.rank == 'mod' || socket.rank == 'admin') {
                     modsonline--;
                 }
-                chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
                 users.splice(users.indexOf(socket.user), 1);
                 io.sockets.emit("online", {
                     people: users.length,

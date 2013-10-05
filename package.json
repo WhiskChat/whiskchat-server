@@ -1,21 +1,25 @@
 {
     "name": "whiskchat-server",
-    "version": "1.0.2",
+    "version": "1.0.2-1",
     "author": "WhiskTech",
     "description": "a fork of coinchat",
     "engines": {
         "node": "0.10.17"
     },
-    "dependencies" : {
-	"socket.io"   :  "*",
-	"redis" :  "*",
-	"node_hash" :  "*",
-	"crypto"    :  "*",
-	"express"   :  "*",
-        "bitcoin-address"    :  "*",
-        "inputs.io" :  "git://github.com/WhiskTech/whiskchat-inputs#master",
-        "gith"      :  "*",
-        "random"    :  "*",
-        "bbcode"    :  "git://github.com/whiskers75/whiskchat-bbcode#master"
+    "dependencies": {
+        "socket.io": "*",
+        "redis": "*",
+        "node_hash": "*",
+        "crypto": "*",
+        "express": "*",
+        "bitcoin-address": "*",
+        "inputs.io": "git://github.com/WhiskTech/whiskchat-inputs#master",
+        "gith": "*",
+        "random": "*",
+        "bbcode": "git://github.com/whiskers75/whiskchat-bbcode#master"
+    },
+    "subdomain": "whiskchat",
+    "scripts": {
+        "start": "node server.js"
     }
 }
