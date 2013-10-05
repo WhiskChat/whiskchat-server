@@ -997,7 +997,7 @@ io.sockets.on('connection', function(socket) {
                 if (sock.user == chat.message.split(" ")[1]) {
                     sock.emit('chat', {
                         room: 'main',
-                        message: '<span class="muted">[me -> ' + socket.user + ']</span> ' + msg,
+                        message: '<span class="muted">[' + socket.user + ' -> me]</span> ' + msg,
                         user: '<strong>PM</strong>',
                         timestamp: Date.now()
                     });
@@ -1007,7 +1007,7 @@ io.sockets.on('connection', function(socket) {
             if (foundUser) {
                 socket.emit('chat', {
                     room: 'main',
-                    message: '<span class="muted">[' + chat.message.split(" ")[1] + ' -> me]</span> ' + msg,
+                    message: '<span class="muted">[me ->' + chat.message.split(" ")[1] + ']</span> ' + msg,
                     user: '<strong>PM</strong>',
                     timestamp: Date.now()
                 });
