@@ -1,6 +1,6 @@
 {
     "name": "whiskchat-server",
-    "version": "1.0.2-1",
+    "version": "1.0.2-3",
     "author": "WhiskTech",
     "description": "a fork of coinchat",
     "engines": {
@@ -18,7 +18,7 @@
         "random": "*",
         "bbcode": "git://github.com/whiskers75/whiskchat-bbcode#master"
     },
-    "subdomain": "whiskchat",
+    "subdomain": "whiskchat-server",
     "scripts": {
         "start": "node server.js"
     }

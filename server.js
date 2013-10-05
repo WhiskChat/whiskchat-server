@@ -592,7 +592,9 @@ io.sockets.on('connection', function(socket) {
         });
     }
     socket.on('disconnect', function() {
+        if (socket.authed) {
         chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
+    }
         sockets.splice(sockets.indexOf(socket), 1);
         var tmp = false;
         if (socket.authed) {
@@ -1051,7 +1053,7 @@ io.sockets.on('connection', function(socket) {
             }
             if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online" || chat.message.substr(0, 6) == "/users") {
                 socket.emit('message', {
-                    message: '<i class="icon-user"></i> ' + users.length + ' online users: </strong>' + users.join(', ') + '. ' + modsonline + ' online moderators.'
+                    message: '<i class="icon-user"></i> ' + users.length + ' online users: </strong>' + users.join(', ') + '.'
                 });
                 return;
             }
