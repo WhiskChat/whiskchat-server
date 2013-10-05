@@ -119,7 +119,7 @@ function doPayoutLoop(amount) { // This is called to update the payout pool
             sockets.forEach(function(ads) {
                 ads.emit('chat', {
                     room: 'main',
-                    message: '<strong>The earnings pool has been updated! There is now ' + payoutbal.toFixed(2) + ' mBTC to earn!</strong> In total, ' + (Number(reply) - amount).toFixed(2) + ' mBTC has been donated. /tip donate (amount) to donate more to the pool!',
+                    message: 'Please donate to the payout pool! ' + (Number(reply) - amount).toFixed(2) + ' mBTC has been donated. /tip donate (amount) to donate more to the pool, and win half your donation in rep!',
                     user: '<strong>Payout system</strong>',
                     timestamp: Date.now()
                 });
@@ -559,6 +559,21 @@ setInterval(function() {
                 timestamp: Date.now()
             });
         });
+        db.get('system/donated', function(err, res) {
+            if (err) {
+                handle(err);
+                return;
+            }
+            sockets.forEach(function(ads) {
+                ads.emit('chat', {
+                    room: 'main',
+                    message: 'Please donate to the payout pool! ' + (Number(res)).toFixed(2) + ' mBTC has been donated. /tip donate (amount) to donate more to the pool, and win half your donation in rep!',
+                    user: '<strong>Payout system</strong>',
+                    timestamp: Date.now()
+                });
+            });
+            console.log('info - ' + (Number(reply) - amount) + ' mBTC donated, ' + payoutbal + ' mBTC in pool');
+        });
         emitAd = 0;
     }
 }, 350000);
@@ -617,16 +632,22 @@ io.sockets.on('connection', function(socket) {
     });
     socket.emit('chat', {
         room: 'main',
+        message: '<a href="http://bit.cur.lv/whiskchat"><strong>Need help? Check out our guide!</strong></a> (uses coinurl, max 5 second ad shown)',
+        user: '<strong>Server</strong>',
+        timestamp: Date.now()
+    });
+    socket.emit('chat', {
+        room: 'main',
         message: 'Please login or register below!',
         user: '<strong>Server</strong>',
         timestamp: Date.now()
-    });  
+    });
     socket.emit('chat', {
         room: 'main',
         message: '<input type="text" id="login-username" placeholder="Username" style="margin-bottom: 0px;"><div class="input-append" style="margin-bottom: 0px;"><input type="password" id="login-password" placeholder="Password"><button class="btn btn-success" id="login-button">Login</button></div><p style="display: inline-block; margin-left: 2px;">+ email to sign up:</p><div class="input-append" style="margin-bottom: 0px;"><input type="text" id="register-email" placeholder="Email"><button class="btn btn-danger" id="register-button">Sign up</button></div><script>$("#register-button").click(function() {socket.emit("accounts", {action: "register",username: $("#login-username").val(),password: $("#login-password").val(),password2: $("#login-password").val(),email: $("#register-email").val(),refer: referrer});});$("#login-button").click(function() {socket.emit("accounts", {action: "login",username: $("#login-username").val(),password: $("#login-password").val()});});</script>',
         user: '<strong>Server</strong>',
         timestamp: Date.now()
-    }); 
+    });
     socket.emit("online", {
         people: users.length,
         array: users
@@ -990,33 +1011,33 @@ io.sockets.on('connection', function(socket) {
                     msg = msg + chat.message.split(" ")[i] + " ";
                 }
                 var foundUser = false; // Was the target user found? 
-            sockets.forEach(function(sock) {
+                sockets.forEach(function(sock) {
+                    if (foundUser) {
+                        return;
+                    }
+                    if (sock.user == chat.message.split(" ")[1]) {
+                        sock.emit('chat', {
+                            room: 'main',
+                            message: '<span class="muted">[' + socket.user + ' -> me]</span> ' + msg,
+                            user: '<strong>PM</strong>',
+                            timestamp: Date.now()
+                        });
+                        foundUser = true;
+                    }
+                });
                 if (foundUser) {
-                    return;
-                }
-                if (sock.user == chat.message.split(" ")[1]) {
-                    sock.emit('chat', {
+                    socket.emit('chat', {
                         room: 'main',
-                        message: '<span class="muted">[' + socket.user + ' -> me]</span> ' + msg,
+                        message: '<span class="muted">[me ->' + chat.message.split(" ")[1] + ']</span> ' + msg,
                         user: '<strong>PM</strong>',
                         timestamp: Date.now()
                     });
-                    foundUser = true;
+                } else {
+                    socket.emit('message', {
+                        message: 'PM failed: user ' + chat.message.split(" ")[1] + ' not found.'
+                    });
                 }
-            });
-            if (foundUser) {
-                socket.emit('chat', {
-                    room: 'main',
-                    message: '<span class="muted">[me ->' + chat.message.split(" ")[1] + ']</span> ' + msg,
-                    user: '<strong>PM</strong>',
-                    timestamp: Date.now()
-                });
-            } else {
-                socket.emit('message', {
-                    message: 'PM failed: user ' + chat.message.split(" ")[1] + ' not found.'
-                });
-            }
-            return;
+                return;
             }
             if (chat.message.substr(0, 10) == '!; connect') {
                 socket.version = chat.message.substr(11, chat.message.length);
@@ -1082,6 +1103,11 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (chat.message.substr(0, 4) == "/spt") {
+                if (socket.rep < 15) {
+                    return socket.emit('message', {
+                        message: 'You must have 15 reputation to embed media!'
+                    });
+                }
                 if (chat.message.substr(5, chat.message.length) == '') {
                     return socket.emit('message', {
                         message: 'Syntax: /spt (Spotify URI)'
@@ -1109,6 +1135,11 @@ io.sockets.on('connection', function(socket) {
                 return chatemit(socket, '<strong>BTC conversion of 1 BTC to USD: </strong> <img src="http://btcticker.appspot.com/mtgox/1btc.png"></img>', chat.room);
             }
             if (chat.message.substr(0, 3) == "/sc") {
+                if (socket.rep < 15) {
+                    return socket.emit('message', {
+                        message: 'You must have 15 reputation to embed media!'
+                    });
+                }
                 if (chat.message.substr(4, chat.message.length) == '') {
                     return socket.emit('message', {
                         message: 'Syntax: /sc (soundcloud id)'
@@ -1117,6 +1148,11 @@ io.sockets.on('connection', function(socket) {
                 return chatemit(socket, '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + chat.message.substr(4, chat.message.length) + '"></iframe>', chat.room);
             }
             if (chat.message.substr(0, 3) == "/yt") {
+                if (socket.rep < 15) {
+                    return socket.emit('message', {
+                        message: 'You must have 15 reputation to embed media!'
+                    });
+                }
                 if (chat.message.substr(4, chat.message.length).indexOf('youtube.com') !== -1) {
                     chat.yt = chat.message.substr(4, chat.message.length).match(/(\?|&)v=([^&]+)/).pop();
                 } else {
@@ -1410,15 +1446,14 @@ io.sockets.on('connection', function(socket) {
                     message: '<i class="icon-exclamation-sign"></i> Room \'' + room + '\' is not a string!'
                 });
                 tmp5 = false;
+            } else {
+                if (room.length > 20) {
+                    socket.emit('message', {
+                        message: '<i class="icon-exclamation-sign"></i> Room \'' + room + '\' is over 20 characters long.'
+                    });
+                    tmp5 = false;
+                }
             }
-            else {
-            if (room.length > 20) {
-                socket.emit('message', {
-                    message: '<i class="icon-exclamation-sign"></i> Room \'' + room + '\' is over 20 characters long.'
-                });
-                tmp5 = false;
-            }
-        }
         });
         if (!tmp5) {
             socket.emit('message', {
