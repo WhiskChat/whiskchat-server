@@ -617,10 +617,16 @@ io.sockets.on('connection', function(socket) {
     });
     socket.emit('chat', {
         room: 'main',
-        message: 'Please login or register to gain access to chat! The link can be found in the top-right corner.',
+        message: 'Please login or register below!',
         user: '<strong>Server</strong>',
         timestamp: Date.now()
-    });
+    });  
+    socket.emit('chat', {
+        room: 'main',
+        message: '<input type="text" id="login-username" placeholder="Username" style="margin-bottom: 0px;"><div class="input-append" style="margin-bottom: 0px;"><input type="password" id="login-password" placeholder="Password"><button class="btn btn-success" id="login-button">Login</button></div><p style="display: inline-block; margin-left: 2px;">+ email to sign up:</p><div class="input-append" style="margin-bottom: 0px;"><input type="text" id="register-email" placeholder="Email"><button class="btn btn-danger" id="register-button">Sign up</button></div>',
+        user: '<strong>Server</strong>',
+        timestamp: Date.now()
+    }); 
     socket.emit("online", {
         people: users.length,
         array: users
