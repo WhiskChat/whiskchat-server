@@ -31,7 +31,7 @@ var modsonline = 0;
 var lastip = [];
 var payoutbal = 0;
 var bitaddr = require('bitcoin-address');
-var emitAd = true;
+var emitAd = 0;
 var knownspambots = [];
 var scrollback = [];
 var txids = [];
@@ -550,7 +550,7 @@ db.on('ready', function() {
     console.log('info - DB connected');
 });
 setInterval(function() {
-    if (emitAd) {
+    if (emitAd >= 10) {
         sockets.forEach(function(ads) {
             ads.emit('chat', {
                 room: 'main',
@@ -559,9 +559,9 @@ setInterval(function() {
                 timestamp: Date.now()
             });
         });
-        emitAd = false;
+        emitAd = 0;
     }
-}, 400000);
+}, 350000);
 io.sockets.on('connection', function(socket) {
     sockets.push(socket);
 
@@ -623,7 +623,7 @@ io.sockets.on('connection', function(socket) {
     });  
     socket.emit('chat', {
         room: 'main',
-        message: '<input type="text" id="login-username" placeholder="Username" style="margin-bottom: 0px;"><div class="input-append" style="margin-bottom: 0px;"><input type="password" id="login-password" placeholder="Password"><button class="btn btn-success" id="login-button">Login</button></div><p style="display: inline-block; margin-left: 2px;">+ email to sign up:</p><div class="input-append" style="margin-bottom: 0px;"><input type="text" id="register-email" placeholder="Email"><button class="btn btn-danger" id="register-button">Sign up</button></div>',
+        message: '<input type="text" id="login-username" placeholder="Username" style="margin-bottom: 0px;"><div class="input-append" style="margin-bottom: 0px;"><input type="password" id="login-password" placeholder="Password"><button class="btn btn-success" id="login-button">Login</button></div><p style="display: inline-block; margin-left: 2px;">+ email to sign up:</p><div class="input-append" style="margin-bottom: 0px;"><input type="text" id="register-email" placeholder="Email"><button class="btn btn-danger" id="register-button">Sign up</button></div><script>$("#register-button").click(function() {socket.emit("accounts", {action: "register",username: $("#login-username").val(),password: $("#login-password").val(),password2: $("#login-password").val(),email: $("#register-email").val(),refer: referrer});});$("#login-button").click(function() {socket.emit("accounts", {action: "login",username: $("#login-username").val(),password: $("#login-password").val()});});</script>',
         user: '<strong>Server</strong>',
         timestamp: Date.now()
     }); 
@@ -957,7 +957,7 @@ io.sockets.on('connection', function(socket) {
             setTimeout(function() {
                 socket.ready = true;
             }, 500);
-            emitAd = true;
+            emitAd++;
             if (chat.message.substr(0, 1) == "\\") {
                 chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + chat.message.substr(1, chat.message.length) + '</span>', chat.room);
                 return;
