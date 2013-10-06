@@ -165,6 +165,12 @@ app.post('/travisci', function(req, res) {
                     user: 'Travis CI',
                     timestamp: Date.now()
                 });
+                sock.emit('chat', {
+                    room: 'main',
+                    message: '<center><strong><i class="icon-wrench"></i> <img src="https://webhooks.nodejitsu.com/WhiskTech/whiskchat-server.png"></img></span></strong></center>',
+                    user: 'Nodejitsu',
+                    timestamp: Date.now()
+                });
             } else {
                 if (payload.status == 1 && payload.status_message !== "Pending") {
                     sock.emit('chat', {
