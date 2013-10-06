@@ -146,7 +146,7 @@ function getClientIp(req) {
     }
     return ipAddress;
 }
-app.post('/travisci', function(req, res) {
+/*app.post('/travisci', function(req, res) {
     var data = '';
     console.log('info - got Travis request from IP ' + getClientIp(req));
     req.on("data", function(chunk) {
@@ -192,7 +192,7 @@ app.post('/travisci', function(req, res) {
         res.writeHead(200);
         res.end();
     });
-});
+});*/
 app.get('/', function(req, res) {
     console.log('info - got web server GET / from IP ' + getClientIp(req));
     res.writeHead(200);
