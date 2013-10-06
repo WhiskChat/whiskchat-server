@@ -6,25 +6,9 @@ notifications:
     on_start: true
     urls: 
     - http://server.whiskchat.com/travisci
+    - http://webhooks.nodejitsu.com/1/deploy
     on_failure: always
     on_success: always
-before_script: 
-- sed -i "s/INSERTVERSION/`git describe --always HEAD`/g" server.js
-- git config --global user.name "Travis CI"
-- git config --global user.email "travis@travisci.org"
-- git add server.js
-- git checkout .
-- git commit -m 'Deploy commit'
-- export TRAVIS_COMMIT=`git rev-parse HEAD`
-- echo "Prepared to deploy"
-deploy: 
-  provider: nodejitsu
-  on: 
-    repo: WhiskTech/whiskchat-server
-  api_key: 
-    secure: Vm29akdDeMS82Eh5fQe+I3sUg1/UkXbOrlIst/KptWa7ldrhg+mhrMvVqDKyQkbJAs7GOy38GFlbW12dsxaDwTLb8rfAfWb1wD3ti2koSbRTv1VqnBaA6FNMpvaIirzV8mNsn02WvHAmvvUM5yT2Znt8pVdBnyUpcx/R3BSIIhg=
-  user: whiskchat
-  skip_cleanup: true
 script: node server.js travisci
 env: 
   global: 
