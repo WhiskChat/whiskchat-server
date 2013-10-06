@@ -1,10 +1,13 @@
 {
     "name": "whiskchat-server",
-    "version": "1.0.2-5",
+    "version": "1.0.2-8",
     "author": "WhiskTech",
     "description": "a fork of coinchat",
+    "domains": [
+        "server.whiskchat.com"
+    ],
     "engines": {
-        "node": "0.10.17"
+        "node": "0.10"
     },
     "dependencies": {
         "socket.io": "*",

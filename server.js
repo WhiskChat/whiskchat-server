@@ -62,12 +62,11 @@ if (process.argv[2] == "travisci") {
     }, 10000);
 }
 io.configure(function() {
-    io.set("transports", ["xhr-polling"]);
-    io.set("polling duration", 2);
     io.set('log level', 1);
 });
 console.log('info - WhiskChat Server starting');
 console.log('info - Starting DB');
+console.log('info - Redis URL: ' + process.env.REDISCLOUD_URL)
 if (process.env.REDISCLOUD_URL) {
     var rtg = require("url").parse(process.env.REDISCLOUD_URL);
     var db = redis.createClient(rtg.port, rtg.hostname);
@@ -1205,6 +1204,11 @@ io.sockets.on('connection', function(socket) {
             bbcode.parse(chat.message, function(parsedcode) {
                 /* link links */
                 parsedcode = urlify(parsedcode);
+                parsedcode = parsedcode.replace(':)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/smile.png">')
+                parsedcode = parsedcode.replace(';)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/wink.png">')
+                parsedcode = parsedcode.replace(':P', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/tongue.png">')
+                parsedcode = parsedcode.replace(':D', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/biggrin.png">')
+                parsedcode = parsedcode.replace(':(', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/sad.png">')
                 if (!chat.room) {
                     chat.room = 'main';
                 }
