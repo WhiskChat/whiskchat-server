@@ -228,12 +228,6 @@ app.post('/github', function(req, res) {
                 } catch (e) {
                     console.log('Failed to notify GitHub sockets')
                 }
-                sock.emit('chat', {
-                        room: 'main',
-                        message: '<center><img onload="refreshIt(this)" src=\'https://webhooks.nodejitsu.com/WhiskTech/whiskchat-server.png\'</img></center><script language="JavaScript">function refreshIt(element) {setTimeout(function() {element.src = element.src.split('?')[0] + '?' + new Date().getTime();refreshIt(element);}, 1000); // refresh every 1kms}</script>',
-                        user: 'Deploy',
-                        timestamp: Date.now()
-                    });
             }
         });
         res.writeHead(200);
