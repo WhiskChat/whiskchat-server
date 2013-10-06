@@ -5,8 +5,8 @@ notifications:
   webhooks: 
     on_start: true
     urls: 
-    - http://server.whiskchat.com/travisci
-    - http://webhooks.nodejitsu.com/1/deploy
+        - http://server.whiskchat.com/travisci
+        - http://webhooks.nodejitsu.com/1/deploy
     on_failure: always
     on_success: always
 script: node server.js travisci
