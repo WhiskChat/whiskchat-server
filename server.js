@@ -1349,7 +1349,7 @@ io.sockets.on('connection', function(socket) {
                                     sockets.forEach(function(cs) {
                                         cs.emit('tip', {
                                             room: tip.room,
-                                            target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + (Number(tip.tip))).toFixed(2) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2) + ')',
+                                            target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + (Number(tip.tip))).toFixed(2) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2).toFixed(2) + ')',
                                             amount: Number(tip.tip),
                                             message: stripHTML(tip.message),
                                             user: socket.user,
@@ -1362,7 +1362,7 @@ io.sockets.on('connection', function(socket) {
                                             socket.emit('whitelist', {
                                                 whitelisted: (Number(rep1) + (Number(tip.tip) / 2))
                                             });
-                                            socket.rep = (Number(rep1) + (Number(tip.tip) / 2));
+                                            socket.rep = (Number(rep1) + Number((Number(tip.tip) / 2).toFixed(2)));
                                         }
                                     });
                                 } else {
