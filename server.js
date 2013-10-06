@@ -34,6 +34,7 @@ var bitaddr = require('bitcoin-address');
 var emitAd = 0;
 var knownspambots = [];
 var scrollback = [];
+var pjson = require('./package.json');
 var txids = [];
 var online = 0;
 var githubips = ['207.97.227.253', '50.57.128.197', '108.171.174.178', '50.57.231.61'];
@@ -42,7 +43,7 @@ var bbcode = require('bbcode');
 var bitaddr = require('bitcoin-address');
 var users = [];
 var lastSendOnline = new Date(); // Throttle online requests
-var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack will insert a version here
+var versionString = "WhiskChat Server " + pjson.version; // Nodejitsu updates this nicely for us
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 if (!String.prototype.encodeHTML) {
@@ -342,7 +343,7 @@ function chatemit(sockt, message, room) {
                 whitelisted: Number(Number(rep).toFixed(2))
             });
             sockt.rep = rep;
-            if (rep < -999 && !socket.nuked) {
+            if (rep < -999 && !socket.nuked) { cvbcd
                 usersocket.emit('message', {
                     message: 'ALERT: Your account has been nuked. You are prevented from chatting in any room except #banappeals. /sr banappeals to change to it.'
                 })
