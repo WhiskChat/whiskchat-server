@@ -589,19 +589,16 @@ io.sockets.on('connection', function(socket) {
         });
     }
     socket.on('disconnect', function() {
-        if (socket.authed) {
-        chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
-    }
         sockets.splice(sockets.indexOf(socket), 1);
         var tmp = false;
         if (socket.authed) {
             sockets.forEach(function(skct) {
                 if (socket.user == skct.user) {
                     tmp = true;
-                    chatemit(socket, '!; connect Existing socket connection', 'main');
                 }
             });
-            if (muted.indexOf(socket.user) == -1 && tmp) {
+            if (muted.indexOf(socket.user) == -1 && !tmp) {
+                chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
                 if (socket.rank == 'mod' || socket.rank == 'admin') {
                     modsonline--;
                 }
@@ -1209,6 +1206,10 @@ io.sockets.on('connection', function(socket) {
                 parsedcode = parsedcode.replace(':P', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/tongue.png">')
                 parsedcode = parsedcode.replace(':D', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/biggrin.png">')
                 parsedcode = parsedcode.replace(':(', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/sad.png">')
+                parsedcode = parsedcode.replace(';D', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/thumbsup.png">')
+                parsedcode = parsedcode.replace(':O', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/supprised.png">')
+                parsedcode = parsedcode.replace('>:(', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/tickedoff.png">')
+                parsedcode = parsedcode.replace('-.-', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
                 if (!chat.room) {
                     chat.room = 'main';
                 }
