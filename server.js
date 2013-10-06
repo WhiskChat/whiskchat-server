@@ -142,8 +142,6 @@ function getClientIp(req) {
         ipAddress = forwardedIps[0];
     }
     if (!ipAddress) {
-        // Ensure getting client IP address still works in
-        // development environment
         ipAddress = req.connection.remoteAddress;
     }
     return ipAddress;
