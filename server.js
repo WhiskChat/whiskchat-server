@@ -558,7 +558,7 @@ setInterval(function() {
         sockets.forEach(function(ads) {
             ads.emit('chat', {
                 room: 'main',
-                message: '<center><iframe scrolling="no" style="border: 0; width: 728px; height: 90px;" frameborder="no" src="http://coinurl.com/get.php?id=16590"></iframe></center>',
+                message: '<center><iframe scrolling="no" frameborder="0" src="https://bitads.net/gimg.php?id=308" style="overflow:hidden;width:468px;height:60px;"></iframe></center>',
                 user: 'Advertisement',
                 timestamp: Date.now()
             });
