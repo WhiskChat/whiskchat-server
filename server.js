@@ -349,7 +349,7 @@ function chatemit(sockt, message, room) {
                 whitelisted: Number(Number(rep).toFixed(2))
             });
             sockt.rep = rep;
-            if (rep < -999 && !socket.nuked) { cvbcd
+            if (rep < -999 && !socket.nuked) {
                 usersocket.emit('message', {
                     message: 'ALERT: Your account has been nuked. You are prevented from chatting in any room except #banappeals. /sr banappeals to change to it.'
                 })
@@ -555,12 +555,14 @@ db.on('ready', function() {
 });
 setInterval(function() {
     if (emitAd >= 10) {
-        sockets.forEach(function(ads) {
-            ads.emit('chat', {
-                room: 'main',
-                message: '<center><iframe scrolling="no" frameborder="0" src="https://bitads.net/gimg.php?id=308" style="overflow:hidden;width:468px;height:60px;"></iframe></center>',
-                user: 'Advertisement',
-                timestamp: Date.now()
+        db.srandmember('adslist', function(err, res) {
+            sockets.forEach(function(ads) {
+                ads.emit('chat', {
+                    room: 'main',
+                    message: res,
+                    user: 'Advertisement',
+                    timestamp: Date.now()
+                });
             });
         });
         db.get('system/donated', function(err, res) {
