@@ -1,8 +1,8 @@
 /*
-    WhiskChat Server
-    An open source, multimedia, advanced chatroom
-    (with added mBTC)
-    Created by whiskers75, with the help of https://github.com/WhiskTech/whiskchat-server/graphs/contributors
+  WhiskChat Server
+  An open source, multimedia, advanced chatroom
+  (with added mBTC)
+  Created by whiskers75, with the help of https://github.com/WhiskTech/whiskchat-server/graphs/contributors
 */
 var express = require('express');
 var app = express();
@@ -1252,6 +1252,7 @@ io.sockets.on('connection', function(socket) {
                 /* link links */
                 parsedcode = urlify(parsedcode);
                 // Emoji by thomasanderson - thanks! :D
+                parsedcode = parsedcode.replace(':\\', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/eh.png">');
                 parsedcode = parsedcode.replace('>:(', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/tickedoff.png">')
                 parsedcode = parsedcode.replace(':)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/smile.png">')
                 parsedcode = parsedcode.replace(';)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/wink.png">')
@@ -1370,23 +1371,23 @@ io.sockets.on('connection', function(socket) {
             });
         } else {
             /*if (tip.user.split(' ').length == 2 && tip.user.split(' ')[1] == "referrer") {
-                if (socket.rank != 'admin' && socket.rank != 'mod') {
-                    return;
-                }
-                db.get('users/' + tip.user + '/referredby', function(err, res) {
-                    if (res) {
-                        db.incr("users/" + res + '/referred')
-                        db.incr("users/" + res + '/rep')
-                        sockets.forEach(function(cs) {
-                            if (cs.user == res) {
-                                socket.emit('message', {
-                                    message: '<i class="icon-user"></i> ' + tip.user + ': referral confirmed! (+1 rep)'
-                                })
-                            }
-                        });
-                    }
-                })
-            } else {*/
+              if (socket.rank != 'admin' && socket.rank != 'mod') {
+              return;
+              }
+              db.get('users/' + tip.user + '/referredby', function(err, res) {
+              if (res) {
+              db.incr("users/" + res + '/referred')
+              db.incr("users/" + res + '/rep')
+              sockets.forEach(function(cs) {
+              if (cs.user == res) {
+              socket.emit('message', {
+              message: '<i class="icon-user"></i> ' + tip.user + ': referral confirmed! (+1 rep)'
+              })
+              }
+              });
+              }
+              })
+              } else {*/
             if (tip.user == "donate") {
                 db.get('users/' + socket.user + '/balance', function(err, bal1) {
                     db.get('users/' + socket.user + '/rep', function(err, rep1) {
