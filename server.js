@@ -1248,26 +1248,29 @@ io.sockets.on('connection', function(socket) {
                 }
                 return doPayoutLoop(chat.message.split(' ')[1]);
             }
-            bbcode.parse(chat.message, function(parsedcode) {
+	    var parsedcode = chat.message;
+            parsedcode = parsedcode.replace(':/', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/eh.png">');
+            parsedcode = parsedcode.replace(':\\', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/eh.png">');
+            parsedcode = parsedcode.replace('>:(', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/tickedoff.png">')
+            parsedcode = parsedcode.replace(':)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/smile.png">')
+            parsedcode = parsedcode.replace(';)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/wink.png">')
+            parsedcode = parsedcode.replace(':P', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/tongue.png">')
+            parsedcode = parsedcode.replace(';P', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/thumbsup.png">')
+            parsedcode = parsedcode.replace(':D', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/biggrin.png">')
+            parsedcode = parsedcode.replace(':(', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/sad.png">')
+            parsedcode = parsedcode.replace(':S', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/Diamond.png">')
+            parsedcode = parsedcode.replace('8-)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/coolcat.png">')
+            parsedcode = parsedcode.replace('8)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/coolcat.png">')
+            parsedcode = parsedcode.replace('B-)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/coolcat.png">')
+            parsedcode = parsedcode.replace(';D', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/laughter.png">')
+            parsedcode = parsedcode.replace(':O', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/supprised.png">')
+            parsedcode = parsedcode.replace('>:(', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/tickedoff.png">')
+            parsedcode = parsedcode.replace('-.-', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
+            bbcode.parse(parsedcode, function(parsedcode) {
                 /* link links */
                 parsedcode = urlify(parsedcode);
                 // Emoji by thomasanderson - thanks! :D
-                parsedcode = parsedcode.replace(':\\', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/eh.png">');
-                parsedcode = parsedcode.replace('>:(', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/tickedoff.png">')
-                parsedcode = parsedcode.replace(':)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/smile.png">')
-                parsedcode = parsedcode.replace(';)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/wink.png">')
-                parsedcode = parsedcode.replace(':P', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/tongue.png">')
-                parsedcode = parsedcode.replace(';P', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/thumbsup.png">')
-                parsedcode = parsedcode.replace(':D', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/biggrin.png">')
-                parsedcode = parsedcode.replace(':(', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/sad.png">')
-                parsedcode = parsedcode.replace(':S', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/Diamond.png">')
-                parsedcode = parsedcode.replace('8-)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/coolcat.png">')
-                parsedcode = parsedcode.replace('8)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/coolcat.png">')
-                parsedcode = parsedcode.replace('B-)', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/coolcat.png">')
-                parsedcode = parsedcode.replace(';D', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/laughter.png">')
-                parsedcode = parsedcode.replace(':O', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/supprised.png">')
-                parsedcode = parsedcode.replace('>:(', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/tickedoff.png">')
-                parsedcode = parsedcode.replace('-.-', '<img src="http://123e68e994d1959ffef5-5c09fd7f73d4b8446b0ff98c3ec646b9.r61.cf2.rackcdn.com/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
+                
                 if (!chat.room) {
                     chat.room = 'main';
                 }
