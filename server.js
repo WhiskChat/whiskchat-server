@@ -493,7 +493,7 @@ function login(username, usersocket, sess) {
         }
         console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
         if (usersocket.handshake) {
-            console.log(username + ' logged in from IP ' + getClientIp(usersocket.handshake));
+            console.log(JSON.stringify(usersocket.handshake.headers));
         }
     }, 2000);
 }
