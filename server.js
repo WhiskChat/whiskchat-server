@@ -671,7 +671,7 @@ io.sockets.on('connection', function(socket) {
                 type: "alert-success",
                 message: "Checking session cookie..."
             });
-            db.get('sessions/' + data.session, function(err, reply) {
+            db.hget('sessions', data.session, function(err, reply) {
                 db.get('users/' + reply + '/password', function(err, res) {
                     if (reply && reply !== "nuked") {
                         db.hexists('banned', reply, function(err, banned) {
@@ -784,7 +784,7 @@ io.sockets.on('connection', function(socket) {
                                                 db.set("users/" + data.username + "/salt", salt);
                                                 db.set("users/" + data.username + "/email", data.email);
 
-                                                db.set("sessions/" + salt, data.username);
+                                                db.hset("sessions", salt, data.username);
                                                 console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
                                                 socket.emit("message", {
                                                     type: "alert-success",
