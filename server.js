@@ -624,7 +624,7 @@ io.sockets.on('connection', function(socket) {
     socket.emit('joinroom', {
         room: 'main'
     });
-    socket.handshake.address.address = socket.handshake.headers.x-forwarded-for;
+    socket.handshake.address.address = socket.handshake.headers['x-forwarded-for'];
     console.log('info - new connection from IP ' + socket.handshake.address.address);
     socket.emit('chat', {
         room: 'main',
