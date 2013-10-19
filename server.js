@@ -43,7 +43,7 @@ var bbcode = require('bbcode');
 var bitaddr = require('bitcoin-address');
 var users = [];
 var lastSendOnline = new Date(); // Throttle online requests
-var versionString = "WhiskChat Server INSERTVERSION"; // Nodejitsu updates this nicely for us
+var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 if (!String.prototype.encodeHTML) {
@@ -164,12 +164,6 @@ app.post('/travisci', function(req, res) {
                     room: 'main',
                     message: '<center><strong><i class="icon-ok-sign"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message.replace(/\+/g, " ")) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(' + payload.status + ')</span></strong></center>',
                     user: 'Travis CI',
-                    timestamp: Date.now()
-                });
-                sock.emit('chat', {
-                    room: 'main',
-                    message: '<center><strong><i class="icon-wrench"></i> <img src="https://webhooks.nodejitsu.com/WhiskTech/whiskchat-server.png"></img></span></strong></center>',
-                    user: 'Nodejitsu',
                     timestamp: Date.now()
                 });
             } else {
@@ -439,9 +433,17 @@ function login(username, usersocket, sess) {
     db.get('users/' + username + '/rooms', function(err, reply) {
         if (!reply) {
             usersocket.emit('message', {
-                message: 'You should sync your roomlist. Subscribing you to default rooms.'
+                message: 'Welcome to WhiskChat!'
             });
-
+            usersocket.emit('message', {
+                message: 'Need help getting started? We have a guide: <a href="http://bit.cur.lv/whiskchat">bit.cur.lv/whiskchat</a>'
+            });
+            usersocket.emit('message', {
+                message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ') + ' - say hi!'
+            });
+            usersocket.emit('message', {
+                message: '<i class="icon-bell"></i> Payout stats: ' + payoutbal.toFixed(2) + 'mBTC available to earn once you get 5 reputation from a moderator'
+            });
             usersocket.emit('joinroom', {
                 room: 'whiskchat'
             });
@@ -449,6 +451,7 @@ function login(username, usersocket, sess) {
                 room: 'botgames'
             });
             usersocket.sync = [];
+            db.set('users/' + username + '/rooms', JSON.stringify(['whiskchat', 'botgames', 'arena', 'main']))
             return;
         }
         usersocket.sync = [];
