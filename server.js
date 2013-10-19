@@ -492,8 +492,8 @@ function login(username, usersocket, sess) {
             modsonline++;
         }
         console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
-        if (usersocket.request) {
-            console.log(username + ' logged in from IP ' + getClientIp(usersocket.request));
+        if (usersocket.handshake) {
+            console.log(username + ' logged in from IP ' + getClientIp(usersocket.handshake));
         }
     }, 2000);
 }
