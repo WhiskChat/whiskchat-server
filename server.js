@@ -624,6 +624,9 @@ io.sockets.on('connection', function(socket) {
     socket.emit('joinroom', {
         room: 'main'
     });
+    if (socket.request) {
+        console.log('DEBUG ' + getClientIp(socket.request))
+    }
     console.log('info - new connection from IP ' + socket.handshake.address.address);
     socket.emit('chat', {
         room: 'main',
