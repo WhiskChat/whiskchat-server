@@ -43,7 +43,7 @@ var bbcode = require('bbcode');
 var bitaddr = require('bitcoin-address');
 var users = [];
 var lastSendOnline = new Date(); // Throttle online requests
-var versionString = "WhiskChat Server " + pjson.version; // Nodejitsu updates this nicely for us
+var versionString = "WhiskChat Server INSERTVERSION"; // Nodejitsu updates this nicely for us
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = [];
 if (!String.prototype.encodeHTML) {
