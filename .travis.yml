@@ -1,17 +1,31 @@
 language: node_js
-services: 
-- redis-server
-notifications: 
-  webhooks: 
-    on_start: true
-    urls: 
-        - http://server.whiskchat.com/travisci
-        - http://webhooks.nodejitsu.com/1/deploy
-    on_failure: always
-    on_success: always
-script: node server.js travisci
-env: 
-  global: 
+deploy:
+  provider: heroku
+  api_key:
+    secure: ZDJogk3M/00fAHGe6z+O11xKAMHD3YpONcmtLzy+KD6TpMcZmPexh1PXyHwizlIi9PqdJnVSZcdcaMbUAYr6xc5+lqDukeoOEcmblknQEibiykrN8PgtkTL0pPvQWz1y6zsiOZi+x6HWPtzWUJ1BEpF9DdRxAF2R+ti1DkpbCvU=
+  app: whiskchat-server
+  on:
+    repo: WhiskTech/whiskchat-server
+env:
+  global:
   - secure: Hb4kaC/647AyjXzjvx56queFYeFrwEGLMyMzURPShIB7rUjPLm3AOcf5bOEEVTC1DkN1GZ53M0KHAvKEOJDmn3mB+dikmq4bi3evypHSzKOw2bwQ1fDPQuKgErqk9jfkehzgayzt/bL9TKh7cryVjV43ht9YGqb3AdBV0q4P/Qk=
   - secure: WaU+qNDQN3PJVRlxGbbg5RJpFNeq7dC5uh3JVQjgxZO5Ex/BgfIjmfriyFoW/fAB/6puDkqfydQsx/tjVbQ6X/QfGnsKVpmpamWAU8BcAW+mPBth74LERlQlOiN6ADD3oCHqjEX54mvPXx858ULAQ1E6iGXCKCI0w85d2QNmvOM=
-  - secure: h5T+dUr+pHI5kMtVIFTUWVh64TXBcThzkdeZ9AqxffH4JmYtDg5xFBYtOdJZFt/c7WwcNx5+3kyrNzaOLMlQFWraJYe//PVp67H8cPBwNU+g9R4pcdymPpkci3MLuV/xw1pbw6B20wfqpD90vOv3hR4DUYQmJyf4Ifp4lmDZfFQ=
+script: node server.js travisci
+before_script:
+- sed -i "s/INSERTVERSION/`git describe --always HEAD`/g" server.js
+- git config --global user.name "Travis CI"
+- git config --global user.email "travis@travisci.org"
+- git add server.js
+- git checkout .
+- git commit -m 'Deploy commit'
+- export TRAVIS_COMMIT=`git rev-parse HEAD`
+- echo "Prepared to deploy"
+services:
+- redis-server
+notifications:
+  webhooks:
+    urls:
+    - http://server.whiskchat.com/travisci
+    on_success: always
+    on_failure: always
+    on_start: true
