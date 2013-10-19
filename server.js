@@ -492,9 +492,6 @@ function login(username, usersocket, sess) {
             modsonline++;
         }
         console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
-        if (usersocket.handshake) {
-            console.log(JSON.stringify(usersocket.handshake.headers));
-        }
     }, 2000);
 }
 
@@ -627,6 +624,7 @@ io.sockets.on('connection', function(socket) {
     socket.emit('joinroom', {
         room: 'main'
     });
+    socket.handshake.address.address = socket.handshake.headers.x-forwarded-for;
     console.log('info - new connection from IP ' + socket.handshake.address.address);
     socket.emit('chat', {
         room: 'main',
