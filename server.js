@@ -1254,7 +1254,6 @@ io.sockets.on('connection', function(socket) {
             parsedcode = parsedcode.replace(':)', '<img src="http://whiskchat.com/static/img/smileys/smile.png">')
             parsedcode = parsedcode.replace(';)', '<img src="http://whiskchat.com/static/img/smileys/wink.png">')
             parsedcode = parsedcode.replace(':P', '<img src="http://whiskchat.com/static/img/smileys/tongue.png">')
-            // Buggy: parsedcode = parsedcode.replace(';P', '<img src="http://whiskchat.com/static/img/smileys/thumbsup.png">')
             parsedcode = parsedcode.replace(':D', '<img src="http://whiskchat.com/static/img/smileys/biggrin.png">')
             parsedcode = parsedcode.replace(':(', '<img src="http://whiskchat.com/static/img/smileys/sad.png">')
             parsedcode = parsedcode.replace(':S', '<img src="http://whiskchat.com/static/img/smileys/Diamond.png">')
@@ -1265,7 +1264,8 @@ io.sockets.on('connection', function(socket) {
             parsedcode = parsedcode.replace(':O', '<img src="http://whiskchat.com/static/img/smileys/supprised.png">')
             parsedcode = parsedcode.replace('>:(', '<img src="http://whiskchat.com/static/img/smileys/tickedoff.png">')
             parsedcode = parsedcode.replace('-.-', '<img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
-            bbcode.parse(parsedcode, function(parsedcode) {
+            // Buggy: parsedcode = parsedcode.replace(';P', '<img src="http://whiskchat.com/static/img/smileys/thumbsup.png">')
+	    bbcode.parse(parsedcode, function(parsedcode) {
                 /* link links */
                 parsedcode = urlify(parsedcode);
                 // Emoji by thomasanderson - thanks! :D
