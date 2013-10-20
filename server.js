@@ -1273,12 +1273,10 @@ io.sockets.on('connection', function(socket) {
             parsedcode = parsedcode.replace('8-)', '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
             parsedcode = parsedcode.replace('8)', '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
             parsedcode = parsedcode.replace('B-)', '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(';D', '<img src="http://whiskchat.com/static/img/smileys/laughter.png">')
             parsedcode = parsedcode.replace(':O', '<img src="http://whiskchat.com/static/img/smileys/supprised.png">')
             parsedcode = parsedcode.replace('>:(', '<img src="http://whiskchat.com/static/img/smileys/tickedoff.png">')
             parsedcode = parsedcode.replace('-.-', '<img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
-            // Buggy: parsedcode = parsedcode.replace(';P', '<img src="http://whiskchat.com/static/img/smileys/thumbsup.png">')
-	    bbcode.parse(parsedcode, function(parsedcode) {
+            bbcode.parse(parsedcode, function(parsedcode) {
                 /* link links */
                 parsedcode = urlify(parsedcode);
                 // Emoji by thomasanderson - thanks! :D
