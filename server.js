@@ -321,18 +321,19 @@ function chatemit(sockt, message, room) {
             winbtc: winbtc,
             rep: sockt.rep
         });
-        scrollback.push({
-            room: room,
-            message: message,
-            user: sockt.user,
-            timestamp: Date.now(),
-            userShow: sockt.pretag + sockt.user + sockt.tag,
-            winbtc: winbtc,
-            rep: sockt.rep,
-	    scrollback: true
-        });
-	tidyScrollback();
+	// DO NOT PLACE CODE HERE - THIS IS RUN FOR EVERY SOCKET	
     });
+    scrollback.push({
+        room: room,
+        message: message,
+        user: sockt.user,
+        timestamp: Date.now(),
+        userShow: sockt.pretag + sockt.user + sockt.tag,
+        winbtc: winbtc,
+        rep: sockt.rep,
+        scrollback: true
+    });
+    tidyScrollback();
     console.log('#' + room + ': <' + sockt.user + '> ' + message + (winbtc ? '+' + winbtc + 'mBTC' : '') + ' | rep ' + sockt.rep);
     if (winbtc != null) {
         db.get('users/' + sockt.user + '/balance', function(err, reply) {
