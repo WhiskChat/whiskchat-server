@@ -1239,16 +1239,20 @@ io.sockets.on('connection', function(socket) {
                         message: 'You must have 15 reputation to embed media!'
                     });
                 }
-                if (chat.message.substr(4, chat.message.length).indexOf('youtube.com') !== -1) {
-                    chat.yt = chat.message.substr(4, chat.message.length).match(/(\?|&)v=([^&]+)/).pop();
-                } else {
-                    chat.yt = chat.message.substr(4, chat.message.length);
-                }
-                if (chat.yt == '') {
-                    return socket.emit('message', {
-                        message: 'Syntax: /yt (youtube link)'
-                    });
-                }
+		try {
+		    if (chat.message.substr(4, chat.message.length).indexOf('youtube.com') !== -1) {
+			chat.yt = chat.message.substr(4, chat.message.length).match(/(\?|&)v=([^&]+)/).pop();
+		    } else {
+			chat.yt = chat.message.substr(4, chat.message.length);
+		    }
+		}
+		catch(e) {
+                    if (chat.yt == '') {
+			return socket.emit('message', {
+			    message: 'Syntax: /yt (youtube link)'
+			});
+		    }
+		}
                 return chatemit(socket, '<iframe width="400" height="225" src="http://www.youtube.com/embed/' + chat.yt + '" frameborder="0" allowfullscreen></iframe>', chat.room);
             }
             if (chat.message.substr(0, 3) == "/ma") {
