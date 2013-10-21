@@ -62,7 +62,7 @@ function tidyScrollback() {
 	for (index in scrollback) {
 	    index = index - deleted;
 	    if (index > 10) {
-		scrollback.splice(index, 1);
+		scrollback.splice(index - 10, 1);
 		deleted++;
 	    }
 	}
