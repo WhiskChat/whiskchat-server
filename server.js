@@ -42,6 +42,7 @@ var random = require("random");
 var bbcode = require('bbcode');
 var bitaddr = require('bitcoin-address');
 var users = [];
+var scrollback = [];
 var lastSendOnline = new Date(); // Throttle online requests
 var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack
 var alphanumeric = /^[a-z0-9]+$/i;
@@ -53,6 +54,11 @@ if (!String.prototype.encodeHTML) {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;');
     };
+}
+function tidyScrollback() {
+    if (scrollback.length > 10) {
+	scrollback.pop();
+    }
 }
 iottp.listen(process.env.PORT);
 if (process.argv[2] == "travisci") {
@@ -305,7 +311,7 @@ function chatemit(sockt, message, room) {
         if (room == "modsprivate" && sock.rank !== "mod" && sock.rank !== "admin") {
             return; // Mods only!
         }
-
+	
         sock.emit('chat', {
             room: room,
             message: message,
@@ -315,7 +321,17 @@ function chatemit(sockt, message, room) {
             winbtc: winbtc,
             rep: sockt.rep
         });
-
+        scrollback.push({
+            room: room,
+            message: message,
+            user: sockt.user,
+            timestamp: Date.now(),
+            userShow: sockt.pretag + sockt.user + sockt.tag,
+            winbtc: winbtc,
+            rep: sockt.rep,
+	    scrollback: true
+        });
+	tidyScrollback();
     });
     console.log('#' + room + ': <' + sockt.user + '> ' + message + (winbtc ? '+' + winbtc + 'mBTC' : '') + ' | rep ' + sockt.rep);
     if (winbtc != null) {
@@ -370,7 +386,7 @@ function urlify(text) {
 
 function login(username, usersocket, sess) {
     console.log(username + ' logging in from IP ' + usersocket.handshake.address.address);
-
+    
     io.sockets.emit("online", {
         people: users.length,
         array: users
@@ -477,7 +493,9 @@ function login(username, usersocket, sess) {
     usersocket.version = '';
     usersocket.quitmsg = 'Disconnected from server';
     usersocket.authed = true;
-
+    scrollback.forEach(function(chat) {
+	usersocket.emit('chat', chat);
+    });
     setTimeout(function() {
         if (users.indexOf(username) == -1) {
             users.push(username);
@@ -785,7 +803,7 @@ io.sockets.on('connection', function(socket) {
                                                 var salt = Math.floor(Math.random() * 10000000000).toString();
 
                                                 var hashed = hash.sha256(data.password, salt);
-
+						
                                                 db.set("users/" + data.username, true);
                                                 db.set("users/" + data.username + "/password", hashed);
                                                 db.set("users/" + data.username + "/salt", salt);
