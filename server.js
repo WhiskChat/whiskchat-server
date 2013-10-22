@@ -57,15 +57,7 @@ if (!String.prototype.encodeHTML) {
 }
 function tidyScrollback() {
     if (scrollback.length > 10) {
-	var index = 0;
-	var deleted = 0;
-	for (index in scrollback) {
-	    index = index - deleted;
-	    if (index > 10) {
-		scrollback.splice(index - 10, 1);
-		deleted++;
-	    }
-	}
+	scrollback = scrollback.slice(scrollback.length - 10, scrollback.length);
     }
 }
 iottp.listen(process.env.PORT);
@@ -332,16 +324,16 @@ function chatemit(sockt, message, room) {
 	// DO NOT PLACE CODE HERE - THIS IS RUN FOR EVERY SOCKET	
     });
     if (message.substr(0, 2) !== '!;') {
-    scrollback.push({
-        room: room,
-        message: message,
-        user: sockt.user,
-        timestamp: Date.now(),
-        userShow: sockt.pretag + sockt.user + sockt.tag,
-        winbtc: winbtc,
-        rep: sockt.rep,
-        scrollback: true
-    });
+	scrollback.push({
+            room: room,
+            message: message,
+            user: sockt.user,
+            timestamp: Date.now(),
+            userShow: sockt.pretag + sockt.user + sockt.tag,
+            winbtc: winbtc,
+            rep: sockt.rep,
+            scrollback: true
+	});
     }
     tidyScrollback();
     console.log('#' + room + ': <' + sockt.user + '> ' + message + (winbtc ? '+' + winbtc + 'mBTC' : '') + ' | rep ' + sockt.rep);
