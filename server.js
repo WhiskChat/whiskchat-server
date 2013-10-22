@@ -6,6 +6,7 @@
 */
 var express = require('express');
 var app = express();
+var chats = 0;
 var InputsIO = require('inputs.io');
 if (process.env.INPUTSAPIKEY) {
     var inputs = new InputsIO({
@@ -1047,6 +1048,7 @@ io.sockets.on('connection', function(socket) {
             setTimeout(function() {
                 socket.ready = true;
             }, 500);
+	    chats++;
             emitAd++;
             if (chat.message.substr(0, 1) == "\\") {
                 chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + chat.message.substr(1, chat.message.length) + '</span>', chat.room);
@@ -1315,8 +1317,6 @@ io.sockets.on('connection', function(socket) {
                     chat.room = 'main';
                 }
                 chatemit(socket, parsedcode, chat.room);
-		db.incr('users/' + socket.user + '/chats'); // Just some fun analytics :)
-		db.incr('chats')
             });
         }
     });
@@ -1591,7 +1591,7 @@ process.on('SIGTERM', function() {
     sockets.forEach(function(cs) {
         cs.emit('chat', {
             room: 'main',
-            message: '<span style="color: #e00;">Server stopping! (most likely just rebooting)</span>',
+            message: '<center><strong><span style="color: #e00;">Server restarting! ' + chats + ' were made before last restart.</span></strong></center>',
             user: '<strong>Server</strong>',
             timestamp: Date.now()
         });
@@ -1602,7 +1602,9 @@ process.on('SIGTERM', function() {
             return;
         }
         db.set('system/donated', Number(res) + payoutbal, function(err, res) {
-            process.exit(0);
+	    db.incrby('chats', chats, function(err, res) {
+		process.exit(0);
+	    });
         });
     });
 });
