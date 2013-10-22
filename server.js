@@ -1077,6 +1077,7 @@ io.sockets.on('connection', function(socket) {
                         continue; // Skip the PM command and the first argument (target username).
                     msg = msg + chat.message.split(" ")[i] + " ";
                 }
+		bbcode.parse(msg, function(msg) {
                 var foundUser = false; // Was the target user found? 
                 sockets.forEach(function(sock) {
                     if (foundUser) {
@@ -1104,7 +1105,8 @@ io.sockets.on('connection', function(socket) {
                         message: 'PM failed: user ' + chat.message.split(" ")[1] + ' not found.'
                     });
                 }
-                return;
+                    return;
+		}
             }
             if (chat.message.substr(0, 10) == '!; connect') {
                 socket.version = chat.message.substr(11, chat.message.length);
