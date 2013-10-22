@@ -730,10 +730,12 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (res) {
+		db.hget('bannedips', socket.handshake.address.address, function(err, reason) {
                 return socket.emit("message", {
                     type: "alert-error",
-                    message: socket.handshake.address.address + " has been IP banned: " + res
+                    message: socket.handshake.address.address + " has been IP banned: " + reason
                 });
+		    });
             } else {
                 db.hexists('banned', data.username, function(err, res) {
                     if (err) {
@@ -1313,6 +1315,8 @@ io.sockets.on('connection', function(socket) {
                     chat.room = 'main';
                 }
                 chatemit(socket, parsedcode, chat.room);
+		db.incr('users/' + socket.user + '/chats'); // Just some fun analytics :)
+		db.incr('chats')
             });
         }
     });
