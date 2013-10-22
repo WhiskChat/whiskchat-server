@@ -1106,7 +1106,7 @@ io.sockets.on('connection', function(socket) {
                     });
                 }
                     return;
-		}
+		});
             }
             if (chat.message.substr(0, 10) == '!; connect') {
                 socket.version = chat.message.substr(11, chat.message.length);
