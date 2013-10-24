@@ -75,11 +75,10 @@ io.configure(function() {
 });
 console.log('info - WhiskChat Server starting');
 console.log('info - Starting DB');
-console.log('info - Redis URL: ' + process.env.REDISCLOUD_URL)
 if (process.env.REDISCLOUD_URL) {
     var rtg = require("url").parse(process.env.REDISCLOUD_URL);
     var db = redis.createClient(rtg.port, rtg.hostname);
-
+    
     db.auth(rtg.auth.split(":")[1]);
 } else {
     var db = redis.createClient();
@@ -98,6 +97,18 @@ function stripHTML(html) { // Prevent XSS
 
 function isNumber(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+// DB UPDATED DEFINES
+var earnrooms = ['main'];
+function updateVars() {
+    db.smembers('earnrooms', function(err, res) {
+	if (err) {
+	    handle(err);
+	    return;
+	}
+	earnrooms = res;
+    });
 }
 setInterval(doPayoutLoop, 900000);
 setTimeout(doPayoutLoop, 10000);
@@ -282,7 +293,7 @@ app.get('/inputs', function(req, resp) {
                                 balance: Number(reply) + Number(req.query.amount * 1000)
                             });
                             so.emit('message', {
-                                message: 'You deposited ' + req.query.amount * 1000 + ' mBTC using Inputs.io'
+                                message: 'You deposited ' + req.query.amount * 1000 + ' mBTC using Inputs.io!'
                             });
                             console.log('info - deposited ' + req.query.amount + ' into ' + req.query.note + '\'s account');
                         }
@@ -299,7 +310,7 @@ app.get('/inputs', function(req, resp) {
 
 function chatemit(sockt, message, room) {
     var winbtc = null;
-    if (room == "main" || room == "botgames" || room == "whiskchat") { // Temp solution to prevent spammers
+    if (earnrooms.indexOf(room) !== -1) {
         winbtc = calculateEarns(sockt.user, sockt, 0, message);
     }
     sockets.forEach(function(sock) {
@@ -344,7 +355,7 @@ function chatemit(sockt, message, room) {
                 handle(err);
                 return;
             }
-            db.set('users/' + sockt.user + '/balance', Number(reply) + Number(winbtc), function(err, res) {
+            db.set('users/' + sockt.user + '/balance', Number((Number(reply) + Number(winbtc)).toFixed(2)), function(err, res) {
                 if (err) {
                     handle(err);
                     return;
@@ -364,14 +375,14 @@ function chatemit(sockt, message, room) {
                 whitelisted: Number(Number(rep).toFixed(2))
             });
             sockt.rep = rep;
-            if (rep < -999 && !socket.nuked) {
-                usersocket.emit('message', {
+            if (rep < -999 && !sockt.nuked) {
+		sockt.emit('message', {
                     message: 'ALERT: Your account has been nuked. You are prevented from chatting in any room except #banappeals. /sr banappeals to change to it.'
-                })
-                socket.nuked = true
-                usersocket.emit('joinroom', {
+                });
+                sockt.nuked = true;
+                sockt.emit('joinroom', {
                     room: 'banappeals'
-                })
+                });
             }
         });
     }
@@ -428,11 +439,11 @@ function login(username, usersocket, sess) {
         if (rep < -999) {
             usersocket.emit('message', {
                 message: 'ALERT: Your account has been nuked. You are prevented from chatting in any room except #banappeals. /sr banappeals to change to it.'
-            })
-            socket.nuked = true
+            });
+            usersocket.nuked = true;
             usersocket.emit('joinroom', {
                 room: 'banappeals'
-            })
+            });
         }
     });
     db.get('users/' + username + '/tag', function(err, reply) {
@@ -471,7 +482,7 @@ function login(username, usersocket, sess) {
                 room: 'botgames'
             });
             usersocket.sync = [];
-            db.set('users/' + username + '/rooms', JSON.stringify(['whiskchat', 'botgames', 'arena', 'main']))
+            db.set('users/' + username + '/rooms', JSON.stringify(['whiskchat', 'botgames', 'arena', 'main']));
             return;
         }
         usersocket.sync = [];
@@ -612,7 +623,7 @@ setInterval(function() {
 }, 350000);
 io.sockets.on('connection', function(socket) {
     sockets.push(socket);
-
+    
     if (lastSendOnline.getTime() < new Date().getTime() - 2.5 * 1000) {
         io.sockets.emit("online", {
             people: users.length,
@@ -807,14 +818,14 @@ io.sockets.on('connection', function(socket) {
                                             // Generate seed for password
                                             try {
                                                 var salt = Math.floor(Math.random() * 10000000000).toString();
-
+						
                                                 var hashed = hash.sha256(data.password, salt);
 						
                                                 db.set("users/" + data.username, true);
                                                 db.set("users/" + data.username + "/password", hashed);
                                                 db.set("users/" + data.username + "/salt", salt);
                                                 db.set("users/" + data.username + "/email", data.email);
-
+						
                                                 db.hset("sessions", salt, data.username);
                                                 console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
                                                 socket.emit("message", {
@@ -831,7 +842,7 @@ io.sockets.on('connection', function(socket) {
                                                                 message: "<i class='icon-user'></i> Thanks for referring " + data.username + "!"
                                                             });
                                                         }
-                                                    })
+                                                    });
                                                 }
                                             } catch (e) {
                                                 console.log(e.stack);
@@ -909,7 +920,7 @@ io.sockets.on('connection', function(socket) {
                                                     message: "Error logging you in. Full stacktrace: " + e.stack
                                                 });
                                             }
-
+					    
                                         });
                                     }
                                 });
@@ -948,26 +959,30 @@ io.sockets.on('connection', function(socket) {
                 message: "You do not have the permissions to do that."
             });
         } else {
-            db.hmset('banned', nuke.target, 'by ' + socket.user + ' for ' + nuke.reason, redis.print)
+            db.hmset('banned', nuke.target, 'by ' + socket.user + ' for ' + nuke.reason, redis.print);
             db.del('users/' + nuke.target);
             db.del('users/' + nuke.target + '/balance');
             db.del('users/' + nuke.target + '/rep');
             db.del('users/' + nuke.target + '/salt');
             db.del('users/' + nuke.target + '/password');
             db.del('users/' + nuke.target + '/email');
+            db.del('users/' + nuke.target + '/rank');
+            db.del('users/' + nuke.target + '/tag');
+            db.del('users/' + nuke.target + '/pretag');
             if (users.indexOf(nuke.target) !== -1) {
-                users.splice(users.indexOf(nuke.target), 1)
+                users.splice(users.indexOf(nuke.target), 1);
             }
             muted.push(nuke.target);
             sockets.forEach(function(cs) {
                 cs.emit('chat', {
                     room: 'main',
-                    message: '<span style="color: #e00">' + stripHTML(socket.user) + ' has banned ' + stripHTML(nuke.target) + '' + (nuke.reason ? ' for ' + stripHTML(nuke.reason) : '') + '!</span>',
+                    message: '<span style="color: #e00">' + stripHTML(socket.user) + ' has banned ' + stripHTML(nuke.target) + (nuke.reason ? ' for ' + stripHTML(nuke.reason) : '') + '!</span>',
                     user: '<strong>Server</strong>',
                     timestamp: Date.now()
                 });
                 if (cs.user == nuke.target) {
-                    db.hmset('bannedips', cs.handshake.address.address, 'by ' + socket.user + ' for ' + nuke.reason, redis.print)
+                    db.hmset('bannedips', cs.handshake.address.address, 'by ' + socket.user + ' for ' + nuke.reason, redis.print);
+		    cs.authed = false;
                     cs.disconnect();
                 }
             });
@@ -1023,7 +1038,7 @@ io.sockets.on('connection', function(socket) {
                 timestamp: Date.now()
             });
         } else {
-            chat.message = stripHTML(chat.message) // Prevented XSS - forever!
+            chat.message = stripHTML(chat.message); // Prevented XSS - forever!
             if (muted.indexOf(socket.user) !== -1) {
                 socket.volatile.emit("message", {
                     type: "alert-error",
@@ -1128,6 +1143,11 @@ io.sockets.on('connection', function(socket) {
                 });
                 return;
             }
+            if (chat.message.substr(0, 6) == "/rooms") {
+                return socket.emit('message', {
+                    message: 'Room directory: ' + earnrooms.join(', ');
+                });
+            }
             if (chat.message.substr(0, 5) == "/ping") {
                 if (chat.message.substr(6, chat.message.length).length < 1) {
                     return socket.emit('message', {
@@ -1160,7 +1180,7 @@ io.sockets.on('connection', function(socket) {
                             chatemit(socket, '<span style="color: #090"><i class="icon-user"></i> Whitelisted ' + chat.message.split(' ')[1] + '</span>', chat.room)
                             db.set('users/' + chat.message.split(' ')[1] + '/rep', 5);
                             if (res != 'whiskers75') {
-
+				
                                 db.get('users/' + res + '/rep', function(err, rep) {
                                     if (err) {
                                         handle(err);
@@ -1265,7 +1285,7 @@ io.sockets.on('connection', function(socket) {
                 return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
             }
             if (chat.message.substr(0, 3) == '/mi') {
-
+		
             }
             if (chat.message.substr(0, 3) == "/aa") { // Peapodamus: I'm climbin' in your windows, stealing your codes up
                 if (socket.rank !== 'admin') {
@@ -1294,20 +1314,20 @@ io.sockets.on('connection', function(socket) {
                 return doPayoutLoop(chat.message.split(' ')[1]);
             }
 	    var parsedcode = chat.message;
-            parsedcode = parsedcode.replace(':\\', '<img src="http://whiskchat.com/static/img/smileys/eh.png">');
-            parsedcode = parsedcode.replace('>:(', '<img src="http://whiskchat.com/static/img/smileys/tickedoff.png">')
-            parsedcode = parsedcode.replace(':)', '<img src="http://whiskchat.com/static/img/smileys/smile.png">')
-            parsedcode = parsedcode.replace(';)', '<img src="http://whiskchat.com/static/img/smileys/wink.png">')
-            parsedcode = parsedcode.replace(':P', '<img src="http://whiskchat.com/static/img/smileys/tongue.png">')
-            parsedcode = parsedcode.replace(':D', '<img src="http://whiskchat.com/static/img/smileys/biggrin.png">')
-            parsedcode = parsedcode.replace(':(', '<img src="http://whiskchat.com/static/img/smileys/sad.png">')
-            parsedcode = parsedcode.replace(':S', '<img src="http://whiskchat.com/static/img/smileys/Diamond.png">')
-            parsedcode = parsedcode.replace('8-)', '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace('8)', '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace('B-)', '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(':O', '<img src="http://whiskchat.com/static/img/smileys/supprised.png">')
-            parsedcode = parsedcode.replace('>:(', '<img src="http://whiskchat.com/static/img/smileys/tickedoff.png">')
-            parsedcode = parsedcode.replace('-.-', '<img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
+            parsedcode = parsedcode.replace(' :\\', '<img src="http://whiskchat.com/static/img/smileys/eh.png">');
+            parsedcode = parsedcode.replace(' &gt;:(', '<img src="http://whiskchat.com/static/img/smileys/tickedoff.png">')
+            parsedcode = parsedcode.replace(' :)', '<img src="http://whiskchat.com/static/img/smileys/smile.png">')
+            parsedcode = parsedcode.replace(' D:&lt;', '<img src="http://whiskchat.com/static/img/smileys/iamgoingtomurderyou.png">')
+            parsedcode = parsedcode.replace(' ;)', '<img src="http://whiskchat.com/static/img/smileys/wink.png">')
+            parsedcode = parsedcode.replace(' :P', '<img src="http://whiskchat.com/static/img/smileys/tongue.png">')
+            parsedcode = parsedcode.replace(' :D', '<img src="http://whiskchat.com/static/img/smileys/Laughter.png">')
+            parsedcode = parsedcode.replace(' :(', '<img src="http://whiskchat.com/static/img/smileys/sad.png">')
+            parsedcode = parsedcode.replace(' :S', '<img src="http://whiskchat.com/static/img/smileys/Diamond.png">')
+            parsedcode = parsedcode.replace(' 8-)', '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
+            parsedcode = parsedcode.replace(' 8)', '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
+            parsedcode = parsedcode.replace(' B-)', '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
+            parsedcode = parsedcode.replace(' :O', '<img src="http://whiskchat.com/static/img/smileys/supprised.png">')
+            parsedcode = parsedcode.replace(' -.-', '<img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
             bbcode.parse(parsedcode, function(parsedcode) {
                 /* link links */
                 parsedcode = urlify(parsedcode);
@@ -1338,7 +1358,7 @@ io.sockets.on('connection', function(socket) {
         socket.emit('message', {
             message: "Withdrawing " + draw.amount + "mBTC to address " + draw.address + "..."
         });
-
+	
         socket.wlocked = true;
         db.get('users/' + socket.user + '/balance', function(err, bal1) {
             if (Number(draw.amount) > 0 && bal1 >= (Number(draw.amount) + draw.fees)) {
@@ -1415,25 +1435,7 @@ io.sockets.on('connection', function(socket) {
                 }
             });
         } else {
-            /*if (tip.user.split(' ').length == 2 && tip.user.split(' ')[1] == "referrer") {
-              if (socket.rank != 'admin' && socket.rank != 'mod') {
-              return;
-              }
-              db.get('users/' + tip.user + '/referredby', function(err, res) {
-              if (res) {
-              db.incr("users/" + res + '/referred')
-              db.incr("users/" + res + '/rep')
-              sockets.forEach(function(cs) {
-              if (cs.user == res) {
-              socket.emit('message', {
-              message: '<i class="icon-user"></i> ' + tip.user + ': referral confirmed! (+1 rep)'
-              })
-              }
-              });
-              }
-              })
-              } else {*/
-            if (tip.user == "donate") {
+	    if (tip.user == "donate") {
                 db.get('users/' + socket.user + '/balance', function(err, bal1) {
                     db.get('users/' + socket.user + '/rep', function(err, rep1) {
                         db.get('system/personal', function(err, per) {
@@ -1509,7 +1511,7 @@ io.sockets.on('connection', function(socket) {
                         });
                     }
                 });
-
+		
             }
         }
     });
