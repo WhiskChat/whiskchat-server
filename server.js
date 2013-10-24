@@ -1313,21 +1313,25 @@ io.sockets.on('connection', function(socket) {
                 }
                 return doPayoutLoop(chat.message.split(' ')[1]);
             }
+	    var a = '';
+	    if (parsedcode.length > 5) {
+		a = ' ';
+	    }
 	    var parsedcode = chat.message;
-            parsedcode = parsedcode.replace(' :\\', ' <img src="http://whiskchat.com/static/img/smileys/eh.png">');
-            parsedcode = parsedcode.replace(' &gt;:(', ' <img src="http://whiskchat.com/static/img/smileys/tickedoff.png">')
-            parsedcode = parsedcode.replace(' :)', ' <img src="http://whiskchat.com/static/img/smileys/smile.png">')
-            parsedcode = parsedcode.replace(' D:&lt;', ' <img src="http://whiskchat.com/static/img/smileys/iamgoingtomurderyou.png">')
-            parsedcode = parsedcode.replace(' ;)', ' <img src="http://whiskchat.com/static/img/smileys/wink.png">')
-            parsedcode = parsedcode.replace(' :P', ' <img src="http://whiskchat.com/static/img/smileys/tongue.png">')
-            parsedcode = parsedcode.replace(' :D', ' <img src="http://whiskchat.com/static/img/smileys/Laughter.png">')
-            parsedcode = parsedcode.replace(' :(', ' <img src="http://whiskchat.com/static/img/smileys/sad.png">')
-            parsedcode = parsedcode.replace(' :S', ' <img src="http://whiskchat.com/static/img/smileys/Diamond.png">')
-            parsedcode = parsedcode.replace(' 8-)', ' <img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(' 8)', ' <img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(' B-)', ' <img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(' :O', ' <img src="http://whiskchat.com/static/img/smileys/supprised.png">')
-            parsedcode = parsedcode.replace(' -.-', ' <img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
+            parsedcode = parsedcode.replace(a + ':\\', a + '<img src="http://whiskchat.com/static/img/smileys/eh.png">');
+            parsedcode = parsedcode.replace(a + '&gt;:(', a + '<img src="http://whiskchat.com/static/img/smileys/tickedoff.png">')
+            parsedcode = parsedcode.replace(a + ':)', a + '<img src="http://whiskchat.com/static/img/smileys/smile.png">')
+            parsedcode = parsedcode.replace(a + 'D:&lt;', a + '<img src="http://whiskchat.com/static/img/smileys/iamgoingtomurderyou.png">')
+            parsedcode = parsedcode.replace(a + ';)', a + '<img src="http://whiskchat.com/static/img/smileys/wink.png">')
+            parsedcode = parsedcode.replace(a + ':P', a + '<img src="http://whiskchat.com/static/img/smileys/tongue.png">')
+            parsedcode = parsedcode.replace(a + ':D', a + '<img src="http://whiskchat.com/static/img/smileys/Laughter.png">')
+            parsedcode = parsedcode.replace(a + ':(', a + '<img src="http://whiskchat.com/static/img/smileys/sad.png">')
+            parsedcode = parsedcode.replace(a + ':S', a + '<img src="http://whiskchat.com/static/img/smileys/Diamond.png">')
+            parsedcode = parsedcode.replace(a + '8-)', a + '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
+            parsedcode = parsedcode.replace(a + '8)', a + '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
+            parsedcode = parsedcode.replace(a + 'B-)', a + '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
+            parsedcode = parsedcode.replace(a + ':O', a + '<img src="http://whiskchat.com/static/img/smileys/supprised.png">')
+            parsedcode = parsedcode.replace(a + '-.-', a + '<img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
             bbcode.parse(parsedcode, function(parsedcode) {
                 /* link links */
                 parsedcode = urlify(parsedcode);
