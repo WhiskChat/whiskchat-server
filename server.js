@@ -732,11 +732,11 @@ io.sockets.on('connection', function(socket) {
             }
             if (res) {
 		db.hget('bannedips', socket.handshake.address.address, function(err, reason) {
-                return socket.emit("message", {
-                    type: "alert-error",
-                    message: socket.handshake.address.address + " has been IP banned: " + reason
-                });
-		    });
+                    return socket.emit("message", {
+			type: "alert-error",
+			message: socket.handshake.address.address + " has been IP banned: " + reason
+                    });
+		});
             } else {
                 db.hexists('banned', data.username, function(err, res) {
                     if (err) {
@@ -1082,33 +1082,33 @@ io.sockets.on('connection', function(socket) {
                     msg = msg + chat.message.split(" ")[i] + " ";
                 }
 		bbcode.parse(msg, function(msg) {
-                var foundUser = false; // Was the target user found? 
-                sockets.forEach(function(sock) {
+                    var foundUser = false; // Was the target user found? 
+                    sockets.forEach(function(sock) {
+			if (foundUser) {
+                            return;
+			}
+			if (sock.user == chat.message.split(" ")[1]) {
+                            sock.emit('chat', {
+				room: 'main',
+				message: '<span class="muted">[' + socket.user + ' -> me]</span> ' + msg,
+				user: '<strong>PM</strong>',
+				timestamp: Date.now()
+                            });
+                            foundUser = true;
+			}
+                    });
                     if (foundUser) {
-                        return;
-                    }
-                    if (sock.user == chat.message.split(" ")[1]) {
-                        sock.emit('chat', {
+			socket.emit('chat', {
                             room: 'main',
-                            message: '<span class="muted">[' + socket.user + ' -> me]</span> ' + msg,
+                            message: '<span class="muted">[me ->' + chat.message.split(" ")[1] + ']</span> ' + msg,
                             user: '<strong>PM</strong>',
                             timestamp: Date.now()
-                        });
-                        foundUser = true;
+			});
+                    } else {
+			socket.emit('message', {
+                            message: 'PM failed: user ' + chat.message.split(" ")[1] + ' not found.'
+			});
                     }
-                });
-                if (foundUser) {
-                    socket.emit('chat', {
-                        room: 'main',
-                        message: '<span class="muted">[me ->' + chat.message.split(" ")[1] + ']</span> ' + msg,
-                        user: '<strong>PM</strong>',
-                        timestamp: Date.now()
-                    });
-                } else {
-                    socket.emit('message', {
-                        message: 'PM failed: user ' + chat.message.split(" ")[1] + ' not found.'
-                    });
-                }
                     return;
 		});
 		return;
@@ -1438,7 +1438,7 @@ io.sockets.on('connection', function(socket) {
                     db.get('users/' + socket.user + '/rep', function(err, rep1) {
                         db.get('system/personal', function(err, per) {
                             db.get('system/donated', function(err, bal2) {
-                                if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) >= 0.1 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
+                                if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
                                     db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
                                     db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
                                     db.set('users/' + socket.user + '/rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
@@ -1464,7 +1464,7 @@ io.sockets.on('connection', function(socket) {
                                 } else {
                                     socket.emit('message', {
                                         type: "alert-error",
-                                        message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself. Donations must be more than or equal to 0.1 mBTC to prevent spam."
+                                        message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."
                                     });
                                 }
                             });
