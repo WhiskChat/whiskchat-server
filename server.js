@@ -1597,7 +1597,7 @@ process.on('SIGTERM', function() {
     sockets.forEach(function(cs) {
         cs.emit('chat', {
             room: 'main',
-            message: '<center><strong><span style="color: #e00;">Server restarting! ' + chats + ' were made before last restart.</span></strong></center>',
+            message: '<span style="color: #e00;">Server restarting! ' + chats + ' chats were made before last restart.</span>',
             user: '<strong>Server</strong>',
             timestamp: Date.now()
         });
