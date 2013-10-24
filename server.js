@@ -662,7 +662,9 @@ io.sockets.on('connection', function(socket) {
     socket.emit('joinroom', {
         room: 'main'
     });
-    socket.handshake.address.address = socket.handshake.headers['x-forwarded-for'];
+    if (socket.handshake && socket.handshake.headers && socket.handshake.headers['x-forwarded-for']) {
+	socket.handshake.address.address = socket.handshake.headers['x-forwarded-for'];
+    }
     console.log('info - new connection from IP ' + socket.handshake.address.address);
     socket.emit('chat', {
         room: 'main',
@@ -1284,9 +1286,6 @@ io.sockets.on('connection', function(socket) {
                 }
                 return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
             }
-            if (chat.message.substr(0, 3) == '/mi') {
-		
-            }
             if (chat.message.substr(0, 3) == "/aa") { // Peapodamus: I'm climbin' in your windows, stealing your codes up
                 if (socket.rank !== 'admin') {
                     socket.emit("message", {
@@ -1338,6 +1337,8 @@ io.sockets.on('connection', function(socket) {
                 // Emoji by thomasanderson - thanks! :D
                 
                 if (!chat.room) {
+		    socket.emit('message', {
+			message: 'Please give your messages a room in future.'});
                     chat.room = 'main';
                 }
                 chatemit(socket, parsedcode, chat.room);
