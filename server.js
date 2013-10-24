@@ -1145,7 +1145,7 @@ io.sockets.on('connection', function(socket) {
             }
             if (chat.message.substr(0, 6) == "/rooms") {
                 return socket.emit('message', {
-                    message: 'Room directory: ' + earnrooms.join(', ')
+                    message: 'Rooms where earning is ON: ' + earnrooms.join(', ')
                 });
             }
             if (chat.message.substr(0, 5) == "/ping") {
@@ -1314,20 +1314,20 @@ io.sockets.on('connection', function(socket) {
                 return doPayoutLoop(chat.message.split(' ')[1]);
             }
 	    var parsedcode = chat.message;
-            parsedcode = parsedcode.replace(' :\\', '<img src="http://whiskchat.com/static/img/smileys/eh.png">');
-            parsedcode = parsedcode.replace(' &gt;:(', '<img src="http://whiskchat.com/static/img/smileys/tickedoff.png">')
-            parsedcode = parsedcode.replace(' :)', '<img src="http://whiskchat.com/static/img/smileys/smile.png">')
-            parsedcode = parsedcode.replace(' D:&lt;', '<img src="http://whiskchat.com/static/img/smileys/iamgoingtomurderyou.png">')
-            parsedcode = parsedcode.replace(' ;)', '<img src="http://whiskchat.com/static/img/smileys/wink.png">')
-            parsedcode = parsedcode.replace(' :P', '<img src="http://whiskchat.com/static/img/smileys/tongue.png">')
-            parsedcode = parsedcode.replace(' :D', '<img src="http://whiskchat.com/static/img/smileys/Laughter.png">')
-            parsedcode = parsedcode.replace(' :(', '<img src="http://whiskchat.com/static/img/smileys/sad.png">')
-            parsedcode = parsedcode.replace(' :S', '<img src="http://whiskchat.com/static/img/smileys/Diamond.png">')
-            parsedcode = parsedcode.replace(' 8-)', '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(' 8)', '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(' B-)', '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(' :O', '<img src="http://whiskchat.com/static/img/smileys/supprised.png">')
-            parsedcode = parsedcode.replace(' -.-', '<img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
+            parsedcode = parsedcode.replace(' :\\', ' <img src="http://whiskchat.com/static/img/smileys/eh.png">');
+            parsedcode = parsedcode.replace(' &gt;:(', ' <img src="http://whiskchat.com/static/img/smileys/tickedoff.png">')
+            parsedcode = parsedcode.replace(' :)', ' <img src="http://whiskchat.com/static/img/smileys/smile.png">')
+            parsedcode = parsedcode.replace(' D:&lt;', ' <img src="http://whiskchat.com/static/img/smileys/iamgoingtomurderyou.png">')
+            parsedcode = parsedcode.replace(' ;)', ' <img src="http://whiskchat.com/static/img/smileys/wink.png">')
+            parsedcode = parsedcode.replace(' :P', ' <img src="http://whiskchat.com/static/img/smileys/tongue.png">')
+            parsedcode = parsedcode.replace(' :D', ' <img src="http://whiskchat.com/static/img/smileys/Laughter.png">')
+            parsedcode = parsedcode.replace(' :(', ' <img src="http://whiskchat.com/static/img/smileys/sad.png">')
+            parsedcode = parsedcode.replace(' :S', ' <img src="http://whiskchat.com/static/img/smileys/Diamond.png">')
+            parsedcode = parsedcode.replace(' 8-)', ' <img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
+            parsedcode = parsedcode.replace(' 8)', ' <img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
+            parsedcode = parsedcode.replace(' B-)', ' <img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
+            parsedcode = parsedcode.replace(' :O', ' <img src="http://whiskchat.com/static/img/smileys/supprised.png">')
+            parsedcode = parsedcode.replace(' -.-', ' <img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
             bbcode.parse(parsedcode, function(parsedcode) {
                 /* link links */
                 parsedcode = urlify(parsedcode);
