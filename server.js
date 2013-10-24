@@ -1315,7 +1315,7 @@ io.sockets.on('connection', function(socket) {
             }
 	    var parsedcode = chat.message;
             var a = '';
-            if (parsedcode.length > 5) {
+            if (parsedcode.length > 7) {
                 a = ' ';
             }
             parsedcode = parsedcode.replace(a + ':\\', a + '<img src="http://whiskchat.com/static/img/smileys/eh.png">');
