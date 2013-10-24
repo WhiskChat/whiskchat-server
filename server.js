@@ -1313,11 +1313,11 @@ io.sockets.on('connection', function(socket) {
                 }
                 return doPayoutLoop(chat.message.split(' ')[1]);
             }
-	    var a = '';
-	    if (parsedcode.length > 5) {
-		a = ' ';
-	    }
 	    var parsedcode = chat.message;
+            var a = '';
+            if (parsedcode.length > 5) {
+                a = ' ';
+            }
             parsedcode = parsedcode.replace(a + ':\\', a + '<img src="http://whiskchat.com/static/img/smileys/eh.png">');
             parsedcode = parsedcode.replace(a + '&gt;:(', a + '<img src="http://whiskchat.com/static/img/smileys/tickedoff.png">')
             parsedcode = parsedcode.replace(a + ':)', a + '<img src="http://whiskchat.com/static/img/smileys/smile.png">')
