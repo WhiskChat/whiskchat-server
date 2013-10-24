@@ -1145,7 +1145,7 @@ io.sockets.on('connection', function(socket) {
             }
             if (chat.message.substr(0, 6) == "/rooms") {
                 return socket.emit('message', {
-                    message: 'Room directory: ' + earnrooms.join(', ');
+                    message: 'Room directory: ' + earnrooms.join(', ')
                 });
             }
             if (chat.message.substr(0, 5) == "/ping") {
