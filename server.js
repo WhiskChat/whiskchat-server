@@ -1413,6 +1413,7 @@ io.sockets.on('connection', function(socket) {
                     db.get('users/' + tip.user + '/rep', function(err, bal2) {
                         if (!isNaN(Number(tip.tip)) && muted.indexOf(socket.user) == -1) {
                             db.set('users/' + tip.user + '/rep', Number(tip.tip), redis.print);
+			    console.log('Moderator ' + socket.user + ' set ' + tip.user + '\'s rep to ' + tip.tip);
                             sockets.forEach(function(cs) {
                                 cs.emit('tip', {
                                     room: tip.room,
