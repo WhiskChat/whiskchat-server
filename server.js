@@ -529,7 +529,17 @@ function login(username, usersocket, sess) {
         if (usersocket.rank == 'mod' || usersocket.rank == 'admin') {
             modsonline++;
         }
-        console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
+	try {
+            console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
+	}
+	catch(e) {
+            usersocket.emit('message', {
+                message: '<i class="icon-ban-circle"></i> Your connection does not provide an IP address. Timing out in 2 seconds...'
+            });
+	    setTimeout(function() {
+		usersocket.disconnect();
+	    }, 2000);
+	}
     }, 2000);
 }
 
