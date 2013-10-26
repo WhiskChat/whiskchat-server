@@ -148,6 +148,7 @@ function emitOnline() {
     db.smembers('online', function(err, res) {
 	io.sockets.emit({
 	    online: res.length,
+	    people: res.length,
 	    array: res
 	});
     });
