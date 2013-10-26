@@ -140,7 +140,9 @@ function userOnline(user, callback) {
     });
 }
 function getUserArray(cb) {
-    db.smembers('online', cb);
+    db.smembers('online', function(err, res) {
+	cb(res);
+    });
 }
 function emitOnline() {
     db.smembers('online', function(err, res) {
