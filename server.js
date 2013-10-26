@@ -399,7 +399,7 @@ function chatemit(sockt, message, room) {
         });
     }
 }
-					   
+
 function urlify(text) {
     if (text.indexOf('<') !== -1) {
         // The BBCode parser has made HTML from this, so we don't touch it
@@ -523,7 +523,7 @@ function login(username, usersocket, sess) {
             message: '<img src="http://whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="http://whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="http://whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="http://whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="http://whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="http://whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="http://whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="http://whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="http://whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="http://whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="http://whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="http://whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="http://whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="http://whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="http://whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="http://whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="http://whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="http://whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="http://whiskchat.com/static/img/smileys/tickedoff.png"><img src="http://whiskchat.com/static/img/smileys/tongue.png"><img src="http://whiskchat.com/static/img/smileys/wink.png"></span>'
 	});
     });
-    usersocket.version = '';
+    usersocket.version = 'Connected';
     usersocket.quitmsg = 'Disconnected from server';
     usersocket.authed = true;
     scrollback.forEach(function(chat) {
@@ -543,7 +543,7 @@ function login(username, usersocket, sess) {
                 message: '<i class="icon-user"></i> You were referred by ' + usersocket.refer + '!'
             });
         }
-        chatemit(usersocket, '!; connect ' + usersocket.version, 'main');
+        chatemit(usersocket, '!; connect ' + usersocket.version + ' [Server: ' + process.env.SERVER_NAME + ']', 'main');
         if (usersocket.rank == 'mod' || usersocket.rank == 'admin') {
             modsonline++;
         }
