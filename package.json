@@ -1,6 +1,6 @@
 {
     "name": "whiskchat-server",
-    "version": "5.0.0-22",
+    "version": "5.0.0-24",
     "author": "WhiskTech",
     "description": "a fork of coinchat",
     "domains": [

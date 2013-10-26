@@ -323,7 +323,10 @@ app.get('/inputs', function(req, resp) {
 
 db2.on('message', function(channel, message) {
     if (channel == 'whiskchat') {
-    var obj = JSON.parse(message);
+	var obj = JSON.parse(message);
+	if (muted.indexOf(obj.user) !== -1) {
+	    return;
+	}
     sockets.forEach(function(sock) {
         if (!sock.authed) {
             return;
