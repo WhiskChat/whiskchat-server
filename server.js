@@ -318,6 +318,7 @@ app.get('/inputs', function(req, resp) {
 
 
 db2.on('message', function(channel, message) {
+    if (channel == 'whiskchat') {
     var obj = JSON.parse(message);
     sockets.forEach(function(sock) {
         if (!sock.authed) {
@@ -340,6 +341,21 @@ db2.on('message', function(channel, message) {
             rep: obj.rep
         });  
     });
+    }
+    if (channel == 'tips') {
+        var tip = JSON.parse(message);
+	sockets.forEach(function(cs) {
+        cs.emit('tip', {
+            room: tip.room,
+            target: tip.target,
+            amount: tip.amount,
+            message: tip.message,
+            rep: tip.rep,
+            user: tip.user,
+            timestamp: Date.now()
+        });
+	});
+    }
 });
 function chatemit(sockt, message, room) {
     var winbtc = null;
@@ -622,6 +638,8 @@ db.on('ready', function() {
 });
 db2.on('ready', function() {
     console.log('info - DB2 connected');
+    db2.subscribe('tips');
+    db2.subscribe('pms');
     db2.subscribe('whiskchat'); // SUBSCRIBER ONLY DB - DON'T SEND NORMAL COMMANDS HERE!
 });
 setInterval(function() {
@@ -1448,16 +1466,8 @@ io.sockets.on('connection', function(socket) {
                         if (!isNaN(Number(tip.tip)) && muted.indexOf(socket.user) == -1) {
                             db.set('users/' + tip.user + '/rep', Number(tip.tip), redis.print);
 			    console.log('Moderator ' + socket.user + ' set ' + tip.user + '\'s rep to ' + tip.tip);
+			    db2.publish('tips', JSON.stringify({room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: stripTML(tip.message), rep: true, user: socket.user});
                             sockets.forEach(function(cs) {
-                                cs.emit('tip', {
-                                    room: tip.room,
-                                    target: stripHTML(tip.user),
-                                    amount: Number(tip.tip),
-                                    message: stripHTML(tip.message),
-                                    rep: true,
-                                    user: socket.user,
-                                    timestamp: Date.now()
-                                });
                                 if (cs.user == tip.user) {
                                     cs.emit('whitelist', {
                                         whitelisted: Number(tip.tip)
@@ -1484,15 +1494,14 @@ io.sockets.on('connection', function(socket) {
                                     db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
                                     db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
                                     db.set('users/' + socket.user + '/rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
+                                    db2.publish('tips', JSON.stringify({
+					room: tip.room,
+					target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + (Number(tip.tip))).toFixed(2) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2).toFixed(2) + ')',
+					amount: Number(tip.tip),
+					message: stripHTML(tip.message),
+					user: socket.user
+				    });
                                     sockets.forEach(function(cs) {
-                                        cs.emit('tip', {
-                                            room: tip.room,
-                                            target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + (Number(tip.tip))).toFixed(2) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2).toFixed(2) + ')',
-                                            amount: Number(tip.tip),
-                                            message: stripHTML(tip.message),
-                                            user: socket.user,
-                                            timestamp: Date.now()
-                                        });
                                         if (cs.user == socket.user) {
                                             socket.emit('balance', {
                                                 balance: Number(bal1) - Number(tip.tip)
@@ -1521,6 +1530,13 @@ io.sockets.on('connection', function(socket) {
                                 if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
                                     db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
                                     db.set('users/' + tip.user + '/balance', Number(bal2) + Number(tip.tip), redis.print);
+                                    db2.publish('tips', {
+                                        room: tip.room,
+                                        target: stripHTML(tip.user),
+                                        amount: Number(tip.tip),
+                                        message: stripHTML(tip.message),
+                                        user: socket.user
+                                    });
                                     sockets.forEach(function(cs) {
                                         cs.emit('tip', {
                                             room: tip.room,
