@@ -388,6 +388,7 @@ function chatemit(sockt, message, room) {
         winbtc = calculateEarns(sockt.user, sockt, 0, message);
     }
     db.publish('whiskchat', JSON.stringify({room: room, message: message, user: sockt.user, userShow: sockt.pretag + sockt.user + sockt.tag, winbtc: winbtc, rep: sockt.rep}));
+    sockt.msg = message;
     if (message.substr(0, 2) !== '!;') {
 	scrollback.push({
             room: room,
@@ -645,11 +646,14 @@ function calculateEarns(user, socket, rep, msg) {
         socket.stage = socket.stage + 0.015 + (rep * 0.0001);
         return null;
     }
-    if (socket.rep < 5 || msg.length < (10 * Math.random().toFixed(2))) {
+    if (socket.rep < 5 || msg.length < (15 * Math.random().toFixed(2))) {
         return null;
     }
     if (payoutbal < 0.01) {
         return null;
+    }
+    if (socket.msg == msg) {
+	return null;
     }
     socket.stage = 0.015;
     if (rnd > 0.25) {
@@ -782,6 +786,7 @@ io.sockets.on('connection', function(socket) {
     socket.wlocked = false;
     socket.ready = true;
     socket.tag = '';
+    socket.msg = '';
     socket.pretag = '';
     socket.rank = '';
     socket.on('login', function(data) {
