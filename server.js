@@ -73,6 +73,10 @@ io.configure(function() {
     io.set('log level', 1);
     io.set('trust proxy', true);
 });
+if (process.env.OPENSHIFT_NODEJS_PORT) {
+    console.log('info - Running on OpenShift');
+    process.env.PORT = process.env.OPENSHIFT_NODEJS_PORT;
+}
 console.log('info - WhiskChat Server starting');
 console.log('info - Starting DB');
 if (process.env.REDISCLOUD_URL) {
