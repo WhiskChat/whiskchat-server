@@ -87,7 +87,7 @@ if (process.env.REDISCLOUD_URL) {
     var rtg = require("url").parse(process.env.REDISCLOUD_URL);
     var db2 = redis.createClient(rtg.port, rtg.hostname);
     
-    db.auth(rtg.auth.split(":")[1]);
+    db2.auth(rtg.auth.split(":")[1]);
 } else {
     var db2 = redis.createClient();
 }
