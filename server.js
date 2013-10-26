@@ -105,7 +105,7 @@ function stripHTML(html) { // Prevent XSS
     if (!html) {
         return '';
     }
-    return html.encodeHTML();
+    return String(html).encodeHTML();
     //return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>?/gi, '');
 }
 
