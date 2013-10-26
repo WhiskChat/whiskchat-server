@@ -147,14 +147,14 @@ function getUserArray(cb) {
 function emitOnline(socket) {
     db.smembers('online', function(err, res) {
 	if (!socket) {
-	    io.sockets.emit({
+	    io.sockets.emit('online', {
 		online: res.length,
 		people: res.length,
 		array: res
 	    });
 	}
 	else {
-	    socket.emit({
+	    socket.emit('online', {
 		online: res.length,
 		people: res.length,
 		array: res
