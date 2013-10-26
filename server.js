@@ -368,7 +368,7 @@ db2.on('message', function(channel, message) {
                 if (foundUser) {
                     return;
                 }
-                if (sock.user == pm.user) {
+                if (sock.user == pm.target) {
                     sock.emit('chat', {
                         room: 'main',
                         message: '<span class="muted">[' + pm.user + ' -> me]</span> ' + msg,
@@ -1181,7 +1181,7 @@ io.sockets.on('connection', function(socket) {
                         continue; // Skip the PM command and the first argument (target username).
                     msg = msg + chat.message.split(" ")[i] + " ";
                 }
-		db.publish('pms', JSON.stringify({user: socket.user, msg: msg}));
+                db.publish('pms', JSON.stringify({user: socket.user, target: chat.message.split(" ")[1], msg: msg}));
                 socket.emit('chat', {
                     room: 'main',
                     message: '<span class="muted">[me ->' + chat.message.split(" ")[1] + ']</span> ' + msg,
