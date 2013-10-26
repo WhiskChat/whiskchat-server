@@ -144,13 +144,22 @@ function getUserArray(cb) {
 	cb(res);
     });
 }
-function emitOnline() {
+function emitOnline(socket) {
     db.smembers('online', function(err, res) {
-	io.sockets.emit({
-	    online: res.length,
-	    people: res.length,
-	    array: res
-	});
+	if (!socket) {
+	    io.sockets.emit({
+		online: res.length,
+		people: res.length,
+		array: res
+	    });
+	}
+	else {
+	    socket.emit({
+		online: res.length,
+		people: res.length,
+		array: res
+	    });
+	}
     });
 }
 // DB UPDATED DEFINES
@@ -632,6 +641,7 @@ function login(username, usersocket, sess) {
         if (usersocket.rank == 'mod' || usersocket.rank == 'admin') {
             modsonline++;
         }
+	emitOnline(usersocket);
 	try {
             console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
 	}
