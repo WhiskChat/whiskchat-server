@@ -112,7 +112,44 @@ function stripHTML(html) { // Prevent XSS
 function isNumber(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
-
+function addUser(user, version, socket) {
+    db.smembers('online', function(err, res) {
+	if (res.indexOf(user) == -1) {
+	    db.sadd('online', user);
+            chatemit(socket, '!; connect ' + version + ' [Server: ' + process.env.SERVER_NAME + ']', 'main');
+	    emitOnline();
+	}
+    });
+}
+function deleteUser(user) {
+    db.smembers('online', function(err, res) {
+	if (res.indexOf(user) !== -1) {
+	    db.srem('online', res.indexOf(user));
+	    emitOnline();
+	}
+    });
+}
+function userOnline(user, callback) {
+    db.smembers('online', function(err, res) {
+	if (res.indexOf(user) !== -1) {
+	    callback(true);
+	}
+	else {
+	    callback(false);
+	}
+    });
+}
+function getUserArray(cb) {
+    db.smembers('online', cb);
+}
+function emitOnline() {
+    db.smembers('online', function(err, res) {
+	io.sockets.emit({
+	    online: res.length,
+	    array: res
+	});
+    });
+}
 // DB UPDATED DEFINES
 var earnrooms = ['main'];
 function updateVars() {
@@ -459,10 +496,7 @@ function urlify(text) {
 function login(username, usersocket, sess) {
     console.log(username + ' logging in from IP ' + usersocket.handshake.address.address);
     
-    io.sockets.emit("online", {
-        people: users.length,
-        array: users
-    });
+    emitOnline();
     usersocket.emit('chat', {
         room: 'main',
         message: 'Signed in as ' + username + '!',
@@ -518,6 +552,7 @@ function login(username, usersocket, sess) {
             usersocket.rank = reply;
         }
     });
+    getUserArray(function(users) {
     db.get('users/' + username + '/rooms', function(err, reply) {
         if (!reply) {
             usersocket.emit('message', {
@@ -568,6 +603,7 @@ function login(username, usersocket, sess) {
             message: '<img src="http://whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="http://whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="http://whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="http://whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="http://whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="http://whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="http://whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="http://whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="http://whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="http://whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="http://whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="http://whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="http://whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="http://whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="http://whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="http://whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="http://whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="http://whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="http://whiskchat.com/static/img/smileys/tickedoff.png"><img src="http://whiskchat.com/static/img/smileys/tongue.png"><img src="http://whiskchat.com/static/img/smileys/wink.png"></span>'
 	});
     });
+    });
     usersocket.version = 'Connected';
     usersocket.quitmsg = 'Disconnected from server';
     usersocket.authed = true;
@@ -580,6 +616,7 @@ function login(username, usersocket, sess) {
         } else {
             return;
         }
+	addUser(username, usersocket.version, usersocket);
         if (muted.indexOf(username) !== -1) {
             return;
         }
@@ -624,16 +661,6 @@ function handle(err) {
 
 function randomerr(type, code, string) {
     handle(new Error("RANDOM.ORG Error: Type: " + type + ", Status Code: " + code + ", Response Data: " + string));
-}
-
-function genRoomText() {
-    var tmp = {};
-    users.forEach(function(sock) {
-        sock.sync.forEach(function(room) {
-            tmp.room += 1;
-        });
-    });
-    return "Rooms object: " + JSON.stringify(tmp);
 }
 
 function calculateEarns(user, socket, rep, msg) {
@@ -705,19 +732,7 @@ setInterval(function() {
 }, 350000);
 io.sockets.on('connection', function(socket) {
     sockets.push(socket);
-    
-    if (lastSendOnline.getTime() < new Date().getTime() - 2.5 * 1000) {
-        io.sockets.emit("online", {
-            people: users.length,
-            array: users
-        });
-        lastSendOnline = new Date();
-    } else {
-        socket.emit("online", {
-            people: users.length,
-            array: users
-        });
-    }
+    emitOnline();
     socket.on('disconnect', function() {
         sockets.splice(sockets.indexOf(socket), 1);
         var tmp = false;
@@ -728,15 +743,12 @@ io.sockets.on('connection', function(socket) {
                 }
             });
             if (muted.indexOf(socket.user) == -1 && !tmp) {
+		deleteUser(socket.user);
                 chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
                 if (socket.rank == 'mod' || socket.rank == 'admin') {
                     modsonline--;
                 }
-                users.splice(users.indexOf(socket.user), 1);
-                io.sockets.emit("online", {
-                    people: users.length,
-                    array: users
-                });
+                
             }
             console.log('info - ' + socket.user + ' disconnected');
         }
@@ -756,7 +768,7 @@ io.sockets.on('connection', function(socket) {
     });
     socket.emit('chat', {
         room: 'main',
-        message: 'You are connected to <strong>' + process.env.SERVER_NAME + '</strong>. The version here is <strong>' + versionString + '</strong>. <strong>' + users.length + '</strong> users connected.',
+        message: 'You are connected to <strong>' + process.env.SERVER_NAME + '</strong>. The version here is <strong>' + versionString + '</strong>.',
         user: '<strong>Server</strong>',
         timestamp: Date.now()
     });
@@ -780,10 +792,6 @@ io.sockets.on('connection', function(socket) {
         user: '<strong>Server</strong>',
 	clientonly: true,
         timestamp: Date.now()
-    });
-    socket.emit("online", {
-        people: users.length,
-        array: users
     });
     socket.authed = false;
     socket.wlocked = false;
@@ -1057,9 +1065,7 @@ io.sockets.on('connection', function(socket) {
             db.del('users/' + nuke.target + '/rank');
             db.del('users/' + nuke.target + '/tag');
             db.del('users/' + nuke.target + '/pretag');
-            if (users.indexOf(nuke.target) !== -1) {
-                users.splice(users.indexOf(nuke.target), 1);
-            }
+            deleteUser(nuke.target);
             muted.push(nuke.target);
             sockets.forEach(function(cs) {
                 cs.emit('chat', {
@@ -1203,9 +1209,11 @@ io.sockets.on('connection', function(socket) {
                 return;
             }
             if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online" || chat.message.substr(0, 6) == "/users") {
-                socket.emit('message', {
-                    message: '<i class="icon-user"></i> ' + users.length + ' online users: </strong>' + users.join(', ') + '.'
-                });
+		getUserArray(function(users) {
+		    socket.emit('message', {
+			message: '<i class="icon-user"></i> ' + users.length + ' online users: </strong>' + users.join(', ') + '.'
+		    });
+		});
                 return;
             }
             if (chat.message.substr(0, 6) == "/rooms") {
@@ -1219,7 +1227,9 @@ io.sockets.on('connection', function(socket) {
                         message: 'You must include a message to ping to all users.'
                     });
 		}
-                chatemit(socket, '<span style="display: none;">' + users.join(', ') + '</span><span class="muted">Ping to all users:</span> ' + chat.message.substr(6, chat.message.length), chat.room);
+		getUserArray(function(users) {
+                    chatemit(socket, '<span style="display: none;">' + users.join(', ') + '</span><span class="muted">Ping to all users:</span> ' + chat.message.substr(6, chat.message.length), chat.room);
+		});
                 return;
             }
             if (chat.message == '/preload') {
