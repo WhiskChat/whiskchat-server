@@ -356,6 +356,27 @@ db2.on('message', function(channel, message) {
         });
 	});
     }
+    if (channel == 'pms') {
+	var pm = JSON.parse(message);
+        bbcode.parse(pm.msg, function(msg) {
+            var foundUser = false; // Was the target user found? 
+            sockets.forEach(function(sock) {
+                if (foundUser) {
+                    return;
+                }
+                if (sock.user == pm.user) {
+                    sock.emit('chat', {
+                        room: 'main',
+                        message: '<span class="muted">[' + pm.user + ' -> me]</span> ' + msg,
+                        user: '<strong>PM</strong>',
+                        timestamp: Date.now()
+                    });
+                    foundUser = true;
+                }
+            });
+            return;	    
+        });
+    }
 });
 function chatemit(sockt, message, room) {
     var winbtc = null;
@@ -718,19 +739,20 @@ io.sockets.on('connection', function(socket) {
     console.log('info - new connection from IP ' + socket.handshake.address.address);
     socket.emit('chat', {
         room: 'main',
-        message: '<strong>Welcome to WhiskChat Server!</strong>',
+        message: '<strong>Welcome to the WhiskChat Network!</strong>',
         user: '<strong>Server</strong>',
         timestamp: Date.now()
     });
     socket.emit('chat', {
         room: 'main',
-        message: 'The version here is <strong>' + versionString + '</strong>. <strong>' + users.length + '</strong> users connected.',
+        message: 'You are connected to <strong>' + process.env.SERVER_NAME + '</strong>. The version here is <strong>' + versionString + '</strong>. <strong>' + users.length + '</strong> users connected.',
         user: '<strong>Server</strong>',
         timestamp: Date.now()
     });
     socket.emit('chat', {
         room: 'main',
         message: '<a href="http://bit.cur.lv/whiskchat"><strong>Need help? Check out our guide!</strong></a> (uses coinurl, max 5 second ad shown)',
+	clientonly: true,
         user: '<strong>Server</strong>',
         timestamp: Date.now()
     });
@@ -1150,36 +1172,13 @@ io.sockets.on('connection', function(socket) {
                         continue; // Skip the PM command and the first argument (target username).
                     msg = msg + chat.message.split(" ")[i] + " ";
                 }
-		bbcode.parse(msg, function(msg) {
-                    var foundUser = false; // Was the target user found? 
-                    sockets.forEach(function(sock) {
-			if (foundUser) {
-                            return;
-			}
-			if (sock.user == chat.message.split(" ")[1]) {
-                            sock.emit('chat', {
-				room: 'main',
-				message: '<span class="muted">[' + socket.user + ' -> me]</span> ' + msg,
-				user: '<strong>PM</strong>',
-				timestamp: Date.now()
-                            });
-                            foundUser = true;
-			}
-                    });
-                    if (foundUser) {
-			socket.emit('chat', {
-                            room: 'main',
-                            message: '<span class="muted">[me ->' + chat.message.split(" ")[1] + ']</span> ' + msg,
-                            user: '<strong>PM</strong>',
-                            timestamp: Date.now()
-			});
-                    } else {
-			socket.emit('message', {
-                            message: 'PM failed: user ' + chat.message.split(" ")[1] + ' not found.'
-			});
-                    }
-                    return;
-		});
+		db.publish('pms', JSON.stringify({user: socket.user, msg: msg});
+                socket.emit('chat', {
+                    room: 'main',
+                    message: '<span class="muted">[me ->' + chat.message.split(" ")[1] + ']</span> ' + msg,
+                    user: '<strong>PM</strong>',
+                    timestamp: Date.now()
+                });
 		return;
             }
             if (chat.message.substr(0, 10) == '!; connect') {
