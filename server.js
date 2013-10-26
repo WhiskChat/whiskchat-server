@@ -83,10 +83,20 @@ if (process.env.REDISCLOUD_URL) {
 } else {
     var db = redis.createClient();
 }
+if (process.env.REDISCLOUD_URL) {
+    var rtg = require("url").parse(process.env.REDISCLOUD_URL);
+    var db2 = redis.createClient(rtg.port, rtg.hostname);
+    
+    db.auth(rtg.auth.split(":")[1]);
+} else {
+    var db2 = redis.createClient();
+}
 db.on('error', function(err) {
     console.log('error - DB error: ' + err);
 });
-
+db2.on('error', function(err) {
+    console.log('error - DB error: ' + err);
+});
 function stripHTML(html) { // Prevent XSS
     if (!html) {
         return '';
@@ -307,7 +317,30 @@ app.get('/inputs', function(req, resp) {
 });
 
 
-
+db2.on('message', function(channel, message) {
+    var obj = JSON.parse(message);
+    sockets.forEach(function(sock) {
+        if (!sock.authed) {
+            return;
+        }
+        if (!obj.room) {
+            obj.room = "main";
+        }
+        if (obj.room == "modsprivate" && sock.rank !== "mod" && sock.rank !== "admin") {
+            return; // Mods only!
+        }
+        
+        sock.emit('chat', {
+            room: obj.room,
+            message: obj.message,
+            user: obj.user,
+            timestamp: Date.now(),
+            userShow: obj.userShow,
+            winbtc: obj.winbtc,
+            rep: obj.rep
+        });  
+    });
+});
 function chatemit(sockt, message, room) {
     var winbtc = null;
     if (earnrooms.indexOf(room) !== -1) {
@@ -602,6 +635,10 @@ function calculateEarns(user, socket, rep, msg) {
 db.on('ready', function() {
     console.log('info - DB connected');
 });
+db2.on('ready', function() {
+    console.log('info - DB2 connected');
+    db2.subscribe('whiskchat'); // SUBSCRIBER ONLY DB - DON'T SEND NORMAL COMMANDS HERE!
+});
 setInterval(function() {
     if (emitAd >= 10) {
         db.srandmember('adslist', function(err, res) {
@@ -697,6 +734,7 @@ io.sockets.on('connection', function(socket) {
     socket.emit('chat', {
         room: 'main',
         message: 'Please login or register below!',
+	clientonly: true,
         user: '<strong>Server</strong>',
         timestamp: Date.now()
     });
@@ -704,6 +742,7 @@ io.sockets.on('connection', function(socket) {
         room: 'main',
         message: '<input type="text" id="login-username" placeholder="Username" style="margin-bottom: 0px;"><div class="input-append" style="margin-bottom: 0px;"><input type="password" id="login-password" placeholder="Password"><button class="btn btn-success" id="login-button">Login</button></div><p style="display: inline-block; margin-left: 2px;">+ email to sign up:</p><div class="input-append" style="margin-bottom: 0px;"><input type="text" id="register-email" placeholder="Email"><button class="btn btn-danger" id="register-button">Sign up</button></div><script>$("#register-button").click(function() {socket.emit("accounts", {action: "register",username: $("#login-username").val(),password: $("#login-password").val(),password2: $("#login-password").val(),email: $("#register-email").val(),refer: referrer});});$("#login-button").click(function() {socket.emit("accounts", {action: "login",username: $("#login-username").val(),password: $("#login-password").val()});});</script>',
         user: '<strong>Server</strong>',
+	clientonly: true,
         timestamp: Date.now()
     });
     socket.emit("online", {
