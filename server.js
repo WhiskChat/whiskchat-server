@@ -347,28 +347,6 @@ function chatemit(sockt, message, room) {
         winbtc = calculateEarns(sockt.user, sockt, 0, message);
     }
     db.publish('whiskchat', JSON.stringify({room: room, message: message, user: sockt.user, userShow: sockt.pretag + sockt.user + sockt.tag, winbtc: winbtc, rep: sockt.rep}));
-    sockets.forEach(function(sock) {
-        if (!sock.authed) {
-            return;
-        }
-        if (!room) {
-            room = "main";
-        }
-        if (room == "modsprivate" && sock.rank !== "mod" && sock.rank !== "admin") {
-            return; // Mods only!
-        }
-	
-        sock.emit('chat', {
-            room: room,
-            message: message,
-            user: sockt.user,
-            timestamp: Date.now(),
-            userShow: sockt.pretag + sockt.user + sockt.tag,
-            winbtc: winbtc,
-            rep: sockt.rep
-        });
-	// DO NOT PLACE CODE HERE - THIS IS RUN FOR EVERY SOCKET	
-    });
     if (message.substr(0, 2) !== '!;') {
 	scrollback.push({
             room: room,
