@@ -1172,7 +1172,7 @@ io.sockets.on('connection', function(socket) {
                         continue; // Skip the PM command and the first argument (target username).
                     msg = msg + chat.message.split(" ")[i] + " ";
                 }
-		db.publish('pms', JSON.stringify({user: socket.user, msg: msg});
+		db.publish('pms', JSON.stringify({user: socket.user, msg: msg}));
                 socket.emit('chat', {
                     room: 'main',
                     message: '<span class="muted">[me ->' + chat.message.split(" ")[1] + ']</span> ' + msg,
