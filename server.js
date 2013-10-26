@@ -1466,7 +1466,7 @@ io.sockets.on('connection', function(socket) {
                         if (!isNaN(Number(tip.tip)) && muted.indexOf(socket.user) == -1) {
                             db.set('users/' + tip.user + '/rep', Number(tip.tip), redis.print);
 			    console.log('Moderator ' + socket.user + ' set ' + tip.user + '\'s rep to ' + tip.tip);
-			    db2.publish('tips', JSON.stringify({room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: stripTML(tip.message), rep: true, user: socket.user});
+			    db2.publish('tips', JSON.stringify({room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: stripTML(tip.message), rep: true, user: socket.user}));
                             sockets.forEach(function(cs) {
                                 if (cs.user == tip.user) {
                                     cs.emit('whitelist', {
@@ -1500,7 +1500,7 @@ io.sockets.on('connection', function(socket) {
 					amount: Number(tip.tip),
 					message: stripHTML(tip.message),
 					user: socket.user
-				    });
+				    }));
                                     sockets.forEach(function(cs) {
                                         if (cs.user == socket.user) {
                                             socket.emit('balance', {
@@ -1530,13 +1530,13 @@ io.sockets.on('connection', function(socket) {
                                 if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
                                     db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
                                     db.set('users/' + tip.user + '/balance', Number(bal2) + Number(tip.tip), redis.print);
-                                    db2.publish('tips', {
+                                    db2.publish('tips', JSON.stringify({
                                         room: tip.room,
                                         target: stripHTML(tip.user),
                                         amount: Number(tip.tip),
                                         message: stripHTML(tip.message),
                                         user: socket.user
-                                    });
+                                    }));
                                     sockets.forEach(function(cs) {
                                         cs.emit('tip', {
                                             room: tip.room,
