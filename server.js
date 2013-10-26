@@ -505,13 +505,19 @@ function login(username, usersocket, sess) {
             usersocket.sync.push(rm);
         });
         usersocket.emit('message', {
+            message: '<i class="icon-certificate"></i> Welcome back to the WhiskChat Network!'
+        });
+        usersocket.emit('message', {
+            message: '<i class="icon-signal"></i> You are connected to ' + process.env.SERVER_NAME + '!'
+        });
+        usersocket.emit('message', {
             message: '<i class="icon-ok-sign"></i> Your rooms: ' + JSON.parse(reply).join(', ')
         });
         usersocket.emit('message', {
             message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ')
         });
         usersocket.emit('message', {
-            message: '<i class="icon-bell"></i> Payout stats: ' + payoutbal.toFixed(2) + 'mBTC in play'
+            message: '<i class="icon-bell"></i> Payout stats: ' + payoutbal.toFixed(2) + ' mBTC this round'
         });
 	usersocket.emit('message', {
             message: '<img src="http://whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="http://whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="http://whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="http://whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="http://whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="http://whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="http://whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="http://whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="http://whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="http://whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="http://whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="http://whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="http://whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="http://whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="http://whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="http://whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="http://whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="http://whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="http://whiskchat.com/static/img/smileys/tickedoff.png"><img src="http://whiskchat.com/static/img/smileys/tongue.png"><img src="http://whiskchat.com/static/img/smileys/wink.png"></span>'
