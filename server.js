@@ -346,6 +346,7 @@ function chatemit(sockt, message, room) {
     if (earnrooms.indexOf(room) !== -1) {
         winbtc = calculateEarns(sockt.user, sockt, 0, message);
     }
+    db.publish('whiskchat', JSON.stringify({room: room, message: message, user: sockt.user, userShow: sockt.pretag + sockt.user + sockt.tag, winbtc: winbtc, rep: sockt.rep}));
     sockets.forEach(function(sock) {
         if (!sock.authed) {
             return;
@@ -420,7 +421,7 @@ function chatemit(sockt, message, room) {
         });
     }
 }
-
+					   
 function urlify(text) {
     if (text.indexOf('<') !== -1) {
         // The BBCode parser has made HTML from this, so we don't touch it
