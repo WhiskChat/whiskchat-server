@@ -1538,14 +1538,6 @@ io.sockets.on('connection', function(socket) {
                                         user: socket.user
                                     }));
                                     sockets.forEach(function(cs) {
-                                        cs.emit('tip', {
-                                            room: tip.room,
-                                            target: stripHTML(tip.user),
-                                            amount: Number(tip.tip),
-                                            message: stripHTML(tip.message),
-                                            user: socket.user,
-                                            timestamp: Date.now()
-                                        });
                                         if (cs.user == socket.user) {
                                             cs.emit('balance', {
                                                 balance: Number(bal1) - Number(tip.tip)
