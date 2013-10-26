@@ -1469,7 +1469,7 @@ io.sockets.on('connection', function(socket) {
                         if (!isNaN(Number(tip.tip)) && muted.indexOf(socket.user) == -1) {
                             db.set('users/' + tip.user + '/rep', Number(tip.tip), redis.print);
 			    console.log('Moderator ' + socket.user + ' set ' + tip.user + '\'s rep to ' + tip.tip);
-			    db.publish('tips', JSON.stringify({room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: stripTML(tip.message), rep: true, user: socket.user}));
+			    db.publish('tips', JSON.stringify({room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: stripHTML(tip.message), rep: true, user: socket.user}));
                             sockets.forEach(function(cs) {
                                 if (cs.user == tip.user) {
                                     cs.emit('whitelist', {
