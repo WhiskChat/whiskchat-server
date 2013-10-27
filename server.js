@@ -1713,10 +1713,13 @@ process.on('SIGTERM', function() {
     sockets.forEach(function(cs) {
         cs.emit('chat', {
             room: 'main',
-            message: '<span style="color: #e00;">Server restarting! ' + chats + ' chats were made before last restart.</span>',
+            message: '<span style="color: #e00;">' + process.env.SERVER_NAME + ' restarting! ' + chats + ' chats were made before last restart.</span>',
             user: '<strong>Server</strong>',
             timestamp: Date.now()
         });
+	if (cs.user) {
+	    deleteUser(cs.user);
+	}
     });
     db.get('system/donated', function(err, res) {
         if (err) {
