@@ -19,6 +19,7 @@ if (process.env.INPUTSAPIKEY) {
         pin: 'none'
     });
 }
+var round = 0;
 var iottp = require('http').createServer(app);
 var io = require('socket.io').listen(iottp);
 var querystring = require("querystring");
@@ -179,13 +180,16 @@ setTimeout(doPayoutLoop, 10000);
 function doPayoutLoop(amount) { // This is called to update the payout pool
     console.log('info - doPayoutLoop() called');
     if (isNumber(amount) == false) {
-        amount = 5;
+        amount = process.env.ROUND_WORTH;
     }
     db.get('system/donated', function(err, reply) {
         if (err) {
             handle(err);
             return;
         }
+	if (!process.env.ROUND_WORTH) {
+	    return;
+	}
         if (Number(reply) < amount) {
             return;
         }
@@ -197,16 +201,19 @@ function doPayoutLoop(amount) { // This is called to update the payout pool
                 handle(err);
                 return;
             }
-            payoutbal = Number(payoutbal) + Number(amount);
-            sockets.forEach(function(ads) {
-                ads.emit('chat', {
-                    room: 'main',
-                    message: 'Please donate to the payout pool! ' + (Number(reply) - amount).toFixed(2) + ' mBTC has been donated. /tip donate (amount) to donate more to the pool, and win half your donation in rep!',
-                    user: '<strong>Payout system</strong>',
-                    timestamp: Date.now()
-                });
-            });
-            console.log('info - ' + (Number(reply) - amount) + ' mBTC donated, ' + payoutbal + ' mBTC in pool');
+	    db.incr('round', function(err, res) {
+		round = res;
+		payoutbal = Number(payoutbal) + Number(amount);
+		sockets.forEach(function(ads) {
+		    ads.emit('chat', {
+			room: 'main',
+			message: '<strong style="color: #090;">Starting round ' + round + ': ' + amount + ' mBTC to give away!',
+			user: '<strong>Payout system</strong>',
+			timestamp: Date.now()
+		    });
+		});
+		console.log('info - ' + (Number(reply) - amount) + ' mBTC donated, ' + payoutbal + ' mBTC in pool');
+	    });
         });
     });
 }
@@ -376,40 +383,40 @@ db2.on('message', function(channel, message) {
 	if (muted.indexOf(obj.user) !== -1) {
 	    return;
 	}
-    sockets.forEach(function(sock) {
-        if (!sock.authed) {
-            return;
-        }
-        if (!obj.room) {
-            obj.room = "main";
-        }
-        if (obj.room == "modsprivate" && sock.rank !== "mod" && sock.rank !== "admin") {
-            return; // Mods only!
-        }
-        
-        sock.emit('chat', {
-            room: obj.room,
-            message: obj.message,
-            user: obj.user,
-            timestamp: Date.now(),
-            userShow: obj.userShow,
-            winbtc: obj.winbtc,
-            rep: obj.rep
-        });  
-    });
+	sockets.forEach(function(sock) {
+            if (!sock.authed) {
+		return;
+            }
+            if (!obj.room) {
+		obj.room = "main";
+            }
+            if (obj.room == "modsprivate" && sock.rank !== "mod" && sock.rank !== "admin") {
+		return; // Mods only!
+            }
+            
+            sock.emit('chat', {
+		room: obj.room,
+		message: obj.message,
+		user: obj.user,
+		timestamp: Date.now(),
+		userShow: obj.userShow,
+		winbtc: obj.winbtc,
+		rep: obj.rep
+            });  
+	});
     }
     if (channel == 'tips') {
         var tip = JSON.parse(message);
 	sockets.forEach(function(cs) {
-        cs.emit('tip', {
-            room: tip.room,
-            target: tip.target,
-            amount: tip.amount,
-            message: tip.message,
-            rep: tip.rep,
-            user: tip.user,
-            timestamp: Date.now()
-        });
+            cs.emit('tip', {
+		room: tip.room,
+		target: tip.target,
+		amount: tip.amount,
+		message: tip.message,
+		rep: tip.rep,
+		user: tip.user,
+		timestamp: Date.now()
+            });
 	});
     }
     if (channel == 'pms') {
@@ -565,56 +572,59 @@ function login(username, usersocket, sess) {
         }
     });
     getUserArray(function(users) {
-    db.get('users/' + username + '/rooms', function(err, reply) {
-        if (!reply) {
-            usersocket.emit('message', {
-                message: 'Welcome to WhiskChat!'
-            });
-            usersocket.emit('message', {
-                message: 'Need help getting started? We have a guide: <a href="http://bit.cur.lv/whiskchat">bit.cur.lv/whiskchat</a>'
-            });
-            usersocket.emit('message', {
-                message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ') + ' - say hi!'
-            });
-            usersocket.emit('message', {
-                message: '<i class="icon-bell"></i> Payout stats: ' + payoutbal.toFixed(2) + 'mBTC available to earn once you get 5 reputation from a moderator'
-            });
-            usersocket.emit('joinroom', {
-                room: 'whiskchat'
-            });
-            usersocket.emit('joinroom', {
-                room: 'botgames'
-            });
+	var tmp = false;
+	
+	db.get('users/' + username + '/rooms', function(err, reply) {
+            if (!reply) {
+		usersocket.emit('message', {
+                    message: 'Welcome to WhiskChat!'
+		});
+		usersocket.emit('message', {
+                    message: 'Need help getting started? We have a guide: <a href="http://bit.cur.lv/whiskchat">bit.cur.lv/whiskchat</a>'
+		});
+		usersocket.emit('message', {
+                    message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ') + ' - say hi!'
+		});
+		usersocket.emit('message', {
+                    message: '<i class="icon-bell"></i> Payout stats: Round ' + round + '. ' + payoutbal.toFixed(2) + 'mBTC available to earn once you get 5 reputation from a moderator.'
+		});
+		usersocket.emit('joinroom', {
+                    room: 'whiskchat'
+		});
+		usersocket.emit('joinroom', {
+                    room: 'botgames'
+		});
+		usersocket.sync = [];
+		db.set('users/' + username + '/rooms', JSON.stringify(['whiskchat', 'botgames', 'arena', 'main']));
+		return;
+            }
             usersocket.sync = [];
-            db.set('users/' + username + '/rooms', JSON.stringify(['whiskchat', 'botgames', 'arena', 'main']));
-            return;
-        }
-        usersocket.sync = [];
-        JSON.parse(reply).forEach(function(rm) {
-            usersocket.emit('joinroom', {
-                room: rm
+            JSON.parse(reply).forEach(function(rm) {
+		usersocket.emit('joinroom', {
+                    room: rm
+		});
+		usersocket.sync.push(rm);
             });
-            usersocket.sync.push(rm);
-        });
-        usersocket.emit('message', {
-            message: '<i class="icon-certificate"></i> Welcome back to the WhiskChat Network!'
-        });
-        usersocket.emit('message', {
-            message: '<i class="icon-signal"></i> You are connected to ' + process.env.SERVER_NAME + '!'
-        });
-        usersocket.emit('message', {
-            message: '<i class="icon-ok-sign"></i> Your rooms: ' + JSON.parse(reply).join(', ')
-        });
-        usersocket.emit('message', {
-            message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ')
-        });
-        usersocket.emit('message', {
-            message: '<i class="icon-bell"></i> Payout stats: ' + payoutbal.toFixed(2) + ' mBTC this round'
-        });
-	usersocket.emit('message', {
-            message: '<img src="http://whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="http://whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="http://whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="http://whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="http://whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="http://whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="http://whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="http://whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="http://whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="http://whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="http://whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="http://whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="http://whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="http://whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="http://whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="http://whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="http://whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="http://whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="http://whiskchat.com/static/img/smileys/tickedoff.png"><img src="http://whiskchat.com/static/img/smileys/tongue.png"><img src="http://whiskchat.com/static/img/smileys/wink.png"></span>'
+            usersocket.emit('message', {
+		message: '<i class="icon-certificate"></i> Welcome back to the WhiskChat Network!'
+            });
+            usersocket.emit('message', {
+		message: '<i class="icon-signal"></i> You are connected to ' + process.env.SERVER_NAME + '!'
+            });
+            usersocket.emit('message', {
+		message: '<i class="icon-ok-sign"></i> Your rooms: ' + JSON.parse(reply).join(', ')
+            });
+            usersocket.emit('message', {
+		message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ')
+            });
+            usersocket.emit('message', {
+		message: '<i class="icon-bell"></i> Round ' + round + ': ' + payoutbal.toFixed(2) + ' mBTC to give away!'
+            });
+	    usersocket.emit('message', {
+		message: '<img src="http://whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="http://whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="http://whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="http://whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="http://whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="http://whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="http://whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="http://whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="http://whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="http://whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="http://whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="http://whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="http://whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="http://whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="http://whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="http://whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="http://whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="http://whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="http://whiskchat.com/static/img/smileys/tickedoff.png"><img src="http://whiskchat.com/static/img/smileys/tongue.png"><img src="http://whiskchat.com/static/img/smileys/wink.png"></span>',
+		clientonly: true
+	    });
 	});
-    });
     });
     usersocket.version = 'Connected';
     usersocket.quitmsg = 'Disconnected from server';
@@ -679,11 +689,20 @@ function randomerr(type, code, string) {
 function calculateEarns(user, socket, rep, msg) {
     rep = socket.rep;
     var rnd = Math.random();
+    var tmp = false;
+    sockets.forEach(function(socket) {
+	if (socket.rank == 'mod' || socket.rank == 'admin') {
+	    tmp = true;
+	}
+    });
+    if (!tmp) {
+	return null;
+    }
     if (typeof socket.stage !== "number") {
         socket.stage = 0.015;
     }
-    if (rep > 150) {
-        rep = 150;
+    if (rep > 25) {
+        rep = 25;
     }
     if (rnd > socket.stage) {
         socket.stage = socket.stage + 0.015 + (rep * 0.0001);
@@ -701,6 +720,9 @@ function calculateEarns(user, socket, rep, msg) {
     socket.stage = 0.015;
     if (rnd > 0.25) {
         rnd = 0.25;
+    }
+    if (rnd > (rep / 100)) {
+	rnd = (rep / 100);
     }
     payoutbal = payoutbal - Number(rnd.toFixed(2));
     return Number(rnd.toFixed(2));
@@ -1069,15 +1091,15 @@ io.sockets.on('connection', function(socket) {
             });
         } else {
             db.hmset('banned', nuke.target, 'by ' + socket.user + ' for ' + nuke.reason, redis.print);
-            db.del('users/' + nuke.target);
-            db.del('users/' + nuke.target + '/balance');
-            db.del('users/' + nuke.target + '/rep');
-            db.del('users/' + nuke.target + '/salt');
-            db.del('users/' + nuke.target + '/password');
-            db.del('users/' + nuke.target + '/email');
-            db.del('users/' + nuke.target + '/rank');
-            db.del('users/' + nuke.target + '/tag');
-            db.del('users/' + nuke.target + '/pretag');
+            db.expire('users/' + nuke.target, 86400);
+            db.expire('users/' + nuke.target + '/balance', 86400);
+            db.expire('users/' + nuke.target + '/rep', 86400);
+            db.expire('users/' + nuke.target + '/salt', 86400);
+            db.expire('users/' + nuke.target + '/password', 86400);
+            db.expire('users/' + nuke.target + '/email', 86400);
+            db.expire('users/' + nuke.target + '/rank', 86400);
+            db.expire('users/' + nuke.target + '/tag', 86400);
+            db.expire('users/' + nuke.target + '/pretag', 86400);
             deleteUser(nuke.target);
             muted.push(nuke.target);
             sockets.forEach(function(cs) {
@@ -1524,7 +1546,7 @@ io.sockets.on('connection', function(socket) {
                     db.get('users/' + socket.user + '/rep', function(err, rep1) {
                         db.get('system/personal', function(err, per) {
                             db.get('system/donated', function(err, bal2) {
-                                if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
+                                if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && tip.user != socket.user && muted.indexOf(socket.user) == -1 && rep1 >= 5) {
                                     db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
                                     db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
                                     db.set('users/' + socket.user + '/rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
@@ -1549,7 +1571,7 @@ io.sockets.on('connection', function(socket) {
                                 } else {
                                     socket.emit('message', {
                                         type: "alert-error",
-                                        message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."
+                                        message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself. You must be whitelisted to donate."
                                     });
                                 }
                             });
