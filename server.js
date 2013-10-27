@@ -910,16 +910,12 @@ io.sockets.on('connection', function(socket) {
                         if (socket.failed) {
                             return socket.emit("message", {
                                 type: "alert-error",
-                                message: "Please wait 20 seconds in between logins."
+                                message: "Please wait 20 seconds in between logins/registers."
                             });
                         }
                         if (data && data.action) {
                             if (data.action == "register") {
-                                return socket.emit("message", {
-                                    type: "alert-error",
-                                    message: "We are currently recovering from a spam attack. Signups are blocked."
-                                });
-                                if (data.username && data.password && data.password2 && data.email) {
+                                if (data.username && data.password && data.password2 && data.email && data.captcha) {
                                     if (data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>" || alphanumeric.test(data.username) == false) {
                                         return socket.emit("message", {
                                             type: "alert-error",
@@ -932,6 +928,13 @@ io.sockets.on('connection', function(socket) {
                                             message: "You have been IP banned by an admin."
                                         });
                                     }
+				    if (data.captcha !== socket.captcha.text()) {
+                                        socket.failed = true;
+                                        return socket.emit("message", {
+                                            type: "alert-error",
+                                            message: "Please fill in the CAPTCHA correctly."
+                                        });
+				    }
                                     lastip.push(socket.handshake.address.address);
                                     if (data.username.indexOf('<') !== -1 || data.username.indexOf('>') !== -1) {
                                         return socket.emit("message", {
