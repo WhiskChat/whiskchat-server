@@ -15,6 +15,7 @@
         "redis": "*",
         "node_hash": "*",
         "crypto": "*",
+        "captchagen": "*",
         "express": "*",
         "bitcoin-address": "*",
         "inputs.io": "git://github.com/WhiskTech/whiskchat-inputs#master",

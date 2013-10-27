@@ -8,6 +8,7 @@ var express = require('express');
 var app = express();
 var chats = 0;
 var InputsIO = require('inputs.io');
+var captchagen = require('captchagen');
 if (process.env.INPUTSAPIKEY) {
     var inputs = new InputsIO({
         APIKey: process.env.INPUTSAPIKEY,
@@ -795,6 +796,8 @@ io.sockets.on('connection', function(socket) {
 	socket.handshake.address.address = socket.handshake.headers['x-forwarded-for'];
     }
     console.log('info - new connection from IP ' + socket.handshake.address.address);
+    socket.captcha = captchagen.create();
+    socket.captcha.generate();
     socket.emit('chat', {
         room: 'main',
         message: '<strong>Welcome to the WhiskChat Network!</strong>',
@@ -823,7 +826,14 @@ io.sockets.on('connection', function(socket) {
     });
     socket.emit('chat', {
         room: 'main',
-        message: '<input type="text" id="login-username" placeholder="Username" style="margin-bottom: 0px;"><div class="input-append" style="margin-bottom: 0px;"><input type="password" id="login-password" placeholder="Password"><button class="btn btn-success" id="login-button">Login</button></div><p style="display: inline-block; margin-left: 2px;">+ email to sign up:</p><div class="input-append" style="margin-bottom: 0px;"><input type="text" id="register-email" placeholder="Email"><button class="btn btn-danger" id="register-button">Sign up</button></div><script>$("#register-button").click(function() {socket.emit("accounts", {action: "register",username: $("#login-username").val(),password: $("#login-password").val(),password2: $("#login-password").val(),email: $("#register-email").val(),refer: referrer});});$("#login-button").click(function() {socket.emit("accounts", {action: "login",username: $("#login-username").val(),password: $("#login-password").val()});});</script>',
+        message: '<center><img src="' + socket.captcha.uri() + '"></img></center>',
+        clientonly: true,
+        user: '<strong>Server</strong>',
+        timestamp: Date.now()
+    });
+    socket.emit('chat', {
+        room: 'main',
+        message: '<input type="text" id="login-username" placeholder="Username" style="margin-bottom: 0px;"><div class="input-append" style="margin-bottom: 0px;"><input type="password" id="login-password" placeholder="Password"><button class="btn btn-success" id="login-button">Login</button></div><p style="display: inline-block; margin-left: 2px;">+ email + captcha to sign up:</p><div class="input-append" style="margin-bottom: 0px;"><input type="text" id="register-email" placeholder="Email"><input type="text" id="register-captcha" placeholder="CAPTCHA answer"><button class="btn btn-danger" id="register-button">Sign up</button></div><script>$("#register-button").click(function() {socket.emit("accounts", {action: "register",username: $("#login-username").val(),password: $("#login-password").val(),password2: $("#login-password").val(),email: $("#register-email").val(),captcha: $("#register-captcha").val(),refer: referrer});});$("#login-button").click(function() {socket.emit("accounts", {action: "login",username: $("#login-username").val(),password: $("#login-password").val()});});</script>',
         user: '<strong>Server</strong>',
 	clientonly: true,
         timestamp: Date.now()
