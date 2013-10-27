@@ -116,6 +116,7 @@ function isNumber(n) {
 }
 function addUser(user, version, socket) {
     db.smembers('online', function(err, res) {
+        console.log(JSON.stringify(res));
 	if (res.indexOf(user) == -1) {
 	    db.sadd('online', user);
             chatemit(socket, '!; connect ' + version + ' [Server: ' + process.env.SERVER_NAME + ']', 'main');
@@ -125,6 +126,7 @@ function addUser(user, version, socket) {
 }
 function deleteUser(user) {
     db.smembers('online', function(err, res) {
+	console.log(JSON.stringify(res));
 	if (res.indexOf(user) !== -1) {
 	    db.srem('online', res.indexOf(user));
 	    emitOnline();
@@ -728,7 +730,7 @@ function calculateEarns(user, socket, rep, msg) {
     payoutbal = payoutbal - Number(rnd.toFixed(2));
     return Number(rnd.toFixed(2));
 }
-db.on('ready', function() {
+db.once('ready', function() {
     console.log('info - DB connected');
 });
 db2.on('ready', function() {
@@ -826,9 +828,16 @@ io.sockets.on('connection', function(socket) {
     });
     socket.emit('chat', {
         room: 'main',
-        message: '<img src="' + socket.captcha.uri() + '"></img><input type="text" id="login-username" placeholder="Username" style="margin-bottom: 0px;"><div class="input-append" style="margin-bottom: 0px;"><input type="password" id="login-password" placeholder="Password"><button class="btn btn-success" id="login-button">Login</button></div><p style="display: inline-block; margin-left: 2px;">+ email + captcha to sign up:</p><div class="input-append" style="margin-bottom: 0px;"><input type="text" id="register-email" placeholder="Email"><input type="text" id="register-captcha" placeholder="CAPTCHA answer"><button class="btn btn-danger" id="register-button">Sign up</button></div><script>$("#register-button").click(function() {socket.emit("accounts", {action: "register",username: $("#login-username").val(),password: $("#login-password").val(),password2: $("#login-password").val(),email: $("#register-email").val(),captcha: $("#register-captcha").val(),refer: referrer});});$("#login-button").click(function() {socket.emit("accounts", {action: "login",username: $("#login-username").val(),password: $("#login-password").val()});});</script>',
+        message: '<input type="text" id="login-username" placeholder="Username" style="margin-bottom: 0px;"><div class="input-append" style="margin-bottom: 0px;"><input type="password" id="login-password" placeholder="Password"><button class="btn btn-success" id="login-button">Login</button></div><p style="display: inline-block; margin-left: 2px;">+ email + captcha to sign up:</p><div class="input-append" style="margin-bottom: 0px;"><input type="text" id="register-email" placeholder="Email"><input type="text" id="register-captcha" placeholder="CAPTCHA answer"><button class="btn btn-danger" id="register-button">Sign up</button></div><script>$("#register-button").click(function() {socket.emit("accounts", {action: "register",username: $("#login-username").val(),password: $("#login-password").val(),password2: $("#login-password").val(),email: $("#register-email").val(),captcha: $("#register-captcha").val(),refer: referrer});});$("#login-button").click(function() {socket.emit("accounts", {action: "login",username: $("#login-username").val(),password: $("#login-password").val()});});</script>',
         user: '<strong>Server</strong>',
 	clientonly: true,
+        timestamp: Date.now()
+    });
+    socket.emit('chat', {
+        room: 'main',
+        message: '<center><img src="' + socket.captcha.uri() + '"></img></center>',
+        clientonly: true,
+        user: '<strong>Server</strong>',
         timestamp: Date.now()
     });
     socket.authed = false;
