@@ -929,6 +929,9 @@ io.sockets.on('connection', function(socket) {
                                         });
                                     }
 				    if (data.captcha !== socket.captcha.text()) {
+                                        setTimeout(function() {
+                                            socket.failed = false;
+                                        }, 20000);
                                         socket.failed = true;
                                         return socket.emit("message", {
                                             type: "alert-error",
