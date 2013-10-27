@@ -116,19 +116,16 @@ function isNumber(n) {
 }
 function addUser(user, version, socket) {
     db.smembers('online', function(err, res) {
-        console.log(JSON.stringify(res));
 	if (res.indexOf(user) == -1) {
 	    db.sadd('online', user);
-            chatemit(socket, '!; connect ' + version + ' [Server: ' + process.env.SERVER_NAME + ']', 'main');
 	    emitOnline();
 	}
     });
 }
 function deleteUser(user) {
     db.smembers('online', function(err, res) {
-	console.log(JSON.stringify(res));
 	if (res.indexOf(user) !== -1) {
-	    db.srem('online', res.indexOf(user));
+	    db.srem('online', user);
 	    emitOnline();
 	}
     });
