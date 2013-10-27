@@ -905,6 +905,10 @@ io.sockets.on('connection', function(socket) {
                         }
                         if (data && data.action) {
                             if (data.action == "register") {
+                                return socket.emit("message", {
+                                    type: "alert-error",
+                                    message: "We are currently recovering from a spam attack. Signups are blocked."
+                                });
                                 if (data.username && data.password && data.password2 && data.email) {
                                     if (data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>" || alphanumeric.test(data.username) == false) {
                                         return socket.emit("message", {
