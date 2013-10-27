@@ -633,11 +633,6 @@ function login(username, usersocket, sess) {
 	usersocket.emit('chat', chat);
     });
     setTimeout(function() {
-        if (users.indexOf(username) == -1) {
-            users.push(username);
-        } else {
-            return;
-        }
 	addUser(username, usersocket.version, usersocket);
         if (muted.indexOf(username) !== -1) {
             return;
