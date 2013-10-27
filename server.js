@@ -701,8 +701,8 @@ function calculateEarns(user, socket, rep, msg) {
     if (typeof socket.stage !== "number") {
         socket.stage = 0.015;
     }
-    if (rep > 25) {
-        rep = 25;
+    if (rep > 150) {
+        rep = 150;
     }
     if (rnd > socket.stage) {
         socket.stage = socket.stage + 0.015 + (rep * 0.0001);
@@ -720,9 +720,6 @@ function calculateEarns(user, socket, rep, msg) {
     socket.stage = 0.015;
     if (rnd > 0.25) {
         rnd = 0.25;
-    }
-    if (rnd > (rep / 100)) {
-	rnd = (rep / 100);
     }
     payoutbal = payoutbal - Number(rnd.toFixed(2));
     return Number(rnd.toFixed(2));
