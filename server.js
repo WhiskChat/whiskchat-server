@@ -451,7 +451,9 @@ db2.on('message', function(channel, message) {
                 timestamp: Date.now()
             });
         });
-	muted.push(mute.target);
+        if (muted.indexOf(mute.target) == -1) {
+	    muted.push(mute.target);
+	}
         setTimeout(function() {
             if (muted.indexOf(mute.target) !== -1) {
                 muted.splice(muted.indexOf(mute.target), 1);
