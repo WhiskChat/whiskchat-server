@@ -1,6 +1,6 @@
 {
     "name": "whiskchat-server",
-    "version": "5.0.0-39",
+    "version": "5.0.0-40",
     "author": "WhiskTech",
     "description": "a fork of coinchat",
     "domains": [
@@ -15,7 +15,7 @@
         "redis": "*",
         "node_hash": "*",
         "captchagen": "*",
-        "spamcheck": "*",
+        "spamcheck": "git@github.com:WhiskTech/whiskchat-spamcheck.git",
         "crypto": "*",
         "express": "*",
         "bitcoin-address": "*",

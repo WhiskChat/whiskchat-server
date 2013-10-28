@@ -900,10 +900,10 @@ io.sockets.on('connection', function(socket) {
 		handle(err);
 		return;
 	    }
-	    if (spam) {
+	    if (spam > 50) {
                 return socket.emit("message", {
                     type: "alert-error",
-                    message: socket.handshake.address.address + " has been marked as a spammer on StopForumSpam."
+                    message: socket.handshake.address.address + " is banned: StopForumSpam reports a " + spam + "% chance of spam."
                 });
 	    }
         db.hexists('bannedips', socket.handshake.address.address, function(err, res) {
