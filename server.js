@@ -446,7 +446,7 @@ db2.on('message', function(channel, message) {
         sockets.forEach(function(cs) {
             cs.emit('chat', {
                 room: 'main',
-                message: '<span style="color: #e00">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(mute.user) + ' for ' + mute.mute / 60 + ' minutes! Reason: ' + stripHTML(mute.reason) + '</span>',
+                message: '<span style="color: #e00">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(mute.user) + ' for ' + mute.mute + ' seconds! Reason: ' + stripHTML(mute.reason) + '</span>',
                 user: '<strong>Server</strong>',
                 timestamp: Date.now()
             });
@@ -1482,10 +1482,6 @@ io.sockets.on('connection', function(socket) {
         }
     });
     socket.on('withdraw', function(draw) {
-        socket.emit('message', {
-            message: "Withdrawals are currently down."
-        });
-        return;
         if (socket.wlocked) {
             socket.emit('message', {
                 message: "A withdrawal is already in progress, or your account has been blocked by a moderator."
