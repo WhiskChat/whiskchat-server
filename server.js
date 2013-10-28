@@ -228,7 +228,7 @@ function getClientIp(req) {
         // the format: "client IP, proxy 1 IP, proxy 2 IP" so take the
         // the first one
         var forwardedIps = forwardedIpsStr.split(',');
-        ipAddress = forwardedIps[0];
+        ipAddress = forwardedIps[forwardedIps.length - 1];
     }
     if (!ipAddress) {
         ipAddress = req.connection.remoteAddress;
@@ -1465,6 +1465,10 @@ io.sockets.on('connection', function(socket) {
         }
     });
     socket.on('withdraw', function(draw) {
+        socket.emit('message', {
+            message: "Withdrawals are currently down."
+        });
+        return;
         if (socket.wlocked) {
             socket.emit('message', {
                 message: "A withdrawal is already in progress, or your account has been blocked by a moderator."
