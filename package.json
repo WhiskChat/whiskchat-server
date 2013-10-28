@@ -15,7 +15,7 @@
         "redis": "*",
         "node_hash": "*",
         "captchagen": "*",
-        "spamcheck": "git@github.com:WhiskTech/whiskchat-spamcheck.git",
+        "spamcheck": "git://github.com/WhiskTech/whiskchat-spamcheck.git",
         "crypto": "*",
         "express": "*",
         "bitcoin-address": "*",
