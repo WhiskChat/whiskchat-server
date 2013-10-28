@@ -21,6 +21,7 @@ if (process.env.INPUTSAPIKEY) {
     });
 }
 var round = 0;
+var sfs = require('spamcheck');
 var iottp = require('http').createServer(app);
 var io = require('socket.io').listen(iottp);
 var querystring = require("querystring");
@@ -784,7 +785,8 @@ io.sockets.on('connection', function(socket) {
         room: 'main'
     });
     if (socket.handshake && socket.handshake.headers && socket.handshake.headers['x-forwarded-for']) {
-	socket.handshake.address.address = socket.handshake.headers['x-forwarded-for'];
+        var forwardedIps = socket.handshake.headers['x-forwarded-for'].split(',');
+	socket.handshake.address.address = forwardedIps[forwardedIps.length - 1];
     }
     console.log('info - new connection from IP ' + socket.handshake.address.address);
     socket.captcha = captchagen.create();
@@ -868,6 +870,17 @@ io.sockets.on('connection', function(socket) {
         }
     });
     socket.on('accounts', function(data) {
+	sfs.checkSpammer({ip: socket.handshake.address.address}, function(err, spam) {
+	    if (err) {
+		handle(err);
+		return;
+	    }
+	    if (spam) {
+                return socket.emit("message", {
+                    type: "alert-error",
+                    message: socket.handshake.address.address + " has been marked as a spammer on StopForumSpam."
+                });
+	    }
         db.hexists('bannedips', socket.handshake.address.address, function(err, res) {
             if (err) {
                 handle(err);
@@ -1093,6 +1106,7 @@ io.sockets.on('connection', function(socket) {
                 });
             }
         });
+	    });
     });
     socket.on('nuke', function(nuke) {
         if (socket.rank !== 'admin') {
