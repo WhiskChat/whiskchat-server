@@ -446,7 +446,7 @@ db2.on('message', function(channel, message) {
         sockets.forEach(function(cs) {
             cs.emit('chat', {
                 room: 'main',
-                message: '<span style="color: #e00">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(mute.user) + ' for ' + Number(stripHTML(mute.mute)) / 60 + ' minutes! Reason: ' + stripHTML(mute.reason) + '</span>',
+                message: '<span style="color: #e00">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(mute.user) + ' for ' + mute.mute / 60 + ' minutes! Reason: ' + stripHTML(mute.reason) + '</span>',
                 user: '<strong>Server</strong>',
                 timestamp: Date.now()
             });
@@ -1182,7 +1182,7 @@ io.sockets.on('connection', function(socket) {
                 message: "You do not have the permissions to do that."
             });
         } else {
-            db.publish('mutes', JSON.stringify({target: stripHTML(mute.target), user: stripHTML(socket.user), time: Number(stripHTML(mute.mute)), reason: stripHTML(mute.reason)}));
+            db.publish('mutes', JSON.stringify({target: stripHTML(mute.target), user: stripHTML(socket.user), mute: Number(stripHTML(mute.mute)), reason: stripHTML(mute.reason)}));
             
         }
     });
