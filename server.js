@@ -441,6 +441,30 @@ db2.on('message', function(channel, message) {
             return;	    
         });
     }
+    if (channel == 'mutes') {
+	var mute = JSON.parse(message);
+        sockets.forEach(function(cs) {
+            cs.emit('chat', {
+                room: 'main',
+                message: '<span style="color: #e00">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(mute.user) + ' for ' + Number(stripHTML(mute.mute)) / 60 + ' minutes! Reason: ' + stripHTML(mute.reason) + '</span>',
+                user: '<strong>Server</strong>',
+                timestamp: Date.now()
+            });
+        });
+        setTimeout(function() {
+            if (muted.indexOf(mute.target) !== -1) {
+                muted.splice(muted.indexOf(mute.target), 1);
+                sockets.forEach(function(cs) {
+                    cs.emit('chat', {
+                        room: 'main',
+                        message: '<span style="color: #090">' + stripHTML(mute.target) + '\'s mute expired!</span>',
+                        user: '<strong>Server</strong>',
+                        timestamp: Date.now()
+                    });
+                });
+            }
+        }, mute.mute * 1000);
+    }
 });
 function chatemit(sockt, message, room) {
     var winbtc = null;
@@ -727,6 +751,7 @@ db2.on('ready', function() {
     console.log('info - DB2 connected');
     db2.subscribe('tips');
     db2.subscribe('pms');
+    db2.subscribe('mutes');
     db2.subscribe('whiskchat'); // SUBSCRIBER ONLY DB - DON'T SEND NORMAL COMMANDS HERE!
 });
 setInterval(function() {
@@ -1157,30 +1182,8 @@ io.sockets.on('connection', function(socket) {
                 message: "You do not have the permissions to do that."
             });
         } else {
-            if (muted.indexOf(mute.target) == -1) {
-                muted.push(mute.target);
-            }
-            sockets.forEach(function(cs) {
-                cs.emit('chat', {
-                    room: 'main',
-                    message: '<span style="color: #e00">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(socket.user) + ' for ' + Number(stripHTML(mute.mute)) / 60 + ' minutes! Reason: ' + stripHTML(mute.reason) + '</span>',
-                    user: '<strong>Server</strong>',
-                    timestamp: Date.now()
-                });
-            });
-            setTimeout(function() {
-                if (muted.indexOf(mute.target) !== -1) {
-                    muted.splice(muted.indexOf(mute.target), 1);
-                    sockets.forEach(function(cs) {
-                        cs.emit('chat', {
-                            room: 'main',
-                            message: '<span style="color: #090">' + stripHTML(mute.target) + '\'s mute expired!</span>',
-                            user: '<strong>Server</strong>',
-                            timestamp: Date.now()
-                        });
-                    });
-                }
-            }, mute.mute * 1000);
+            db.publish('mutes', JSON.stringify({target: stripHTML(mute.target), user: stripHTML(socket.user), time: Number(stripHTML(mute.mute)), reason: stripHTML(mute.reason)}));
+            
         }
     });
     socket.on('chat', function(chat) {
