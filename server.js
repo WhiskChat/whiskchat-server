@@ -785,7 +785,7 @@ setInterval(function() {
         });
         emitAd = 0;
     }
-}, 350000);
+}, 180000);
 io.sockets.on('connection', function(socket) {
     sockets.push(socket);
     emitOnline();
