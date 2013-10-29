@@ -50,7 +50,7 @@ var scrollback = [];
 var lastSendOnline = new Date(); // Throttle online requests
 var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack
 var alphanumeric = /^[a-z0-9]+$/i;
-var muted = [];
+var muted = ['listenwhiskchat'];
 if (!String.prototype.encodeHTML) {
     String.prototype.encodeHTML = function() {
         return this.replace(/&/g, '&amp;')
