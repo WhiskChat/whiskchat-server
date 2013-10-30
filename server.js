@@ -48,7 +48,13 @@ var bitaddr = require('bitcoin-address');
 var users = [];
 var scrollback = [];
 var lastSendOnline = new Date(); // Throttle online requests
-var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack
+var herokuv = 'INSERTVERSION';
+if (herokuv == 'INSERTVERSIO' + 'N') {
+    var versionString = "WhiskChat Server " + pjson.version;
+}
+else {
+    var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack
+}
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = ['listenwhiskchat'];
 if (!String.prototype.encodeHTML) {
@@ -818,7 +824,13 @@ io.sockets.on('connection', function(socket) {
     }
     console.log('info - new connection from IP ' + socket.handshake.address.address);
     socket.captcha = captchagen.create();
-    socket.captcha.generate({height: 50});
+    socket.captcha.generate({height: 100, width: 150});
+    socket.emit('captcha', {html: '<img src="' + socket.captcha.uri() + '"></img>'});
+    var roomsHTML = '';
+    earnrooms.forEach(function(room) {
+        roomsHTML += '<div class="media"><a class="pull-left" onclick="srwrap(\'' + room + '\')"><img class="media-object" src="/rooms/' + room + '" alt="rooms" style="width: 64px;"></a><div class="media-body"><a onclick="srwrap(\'' + room + '\')"><h4 class="media-heading">' + room + '</h4></a><p><iframe src="/rooms/' + room + '.html" style="height: 60px; width: 100%;"></iframe></div></div></br>';
+    });
+    socket.emit('rooms', {html: roomsHTML});
     socket.emit('chat', {
         room: 'main',
         message: '<strong>Welcome to the WhiskChat Network!</strong>',
@@ -833,29 +845,7 @@ io.sockets.on('connection', function(socket) {
     });
     socket.emit('chat', {
         room: 'main',
-        message: '<a href="http://bit.cur.lv/whiskchat"><strong>Need help? Check out our guide!</strong></a> (uses coinurl, max 5 second ad shown)',
-	clientonly: true,
-        user: '<strong>Server</strong>',
-        timestamp: Date.now()
-    });
-    socket.emit('chat', {
-        room: 'main',
-        message: 'Please login or register below!',
-	clientonly: true,
-        user: '<strong>Server</strong>',
-        timestamp: Date.now()
-    });
-    socket.emit('chat', {
-        room: 'main',
-        message: '<input type="text" id="login-username" placeholder="Username" style="margin-bottom: 0px;"><div class="input-append" style="margin-bottom: 0px;"><input type="password" id="login-password" placeholder="Password"><button class="btn btn-success" id="login-button">Login</button></div><p style="display: inline-block; margin-left: 2px;">+ email + captcha to sign up:</p><div class="input-append" style="margin-bottom: 0px;"><input type="text" id="register-email" placeholder="Email"><input type="text" id="register-captcha" placeholder="CAPTCHA answer"><button class="btn btn-danger" id="register-button">Sign up</button></div><script>$("#register-button").click(function() {socket.emit("accounts", {action: "register",username: $("#login-username").val(),password: $("#login-password").val(),password2: $("#login-password").val(),email: $("#register-email").val(),captcha: $("#register-captcha").val(),refer: referrer});});$("#login-button").click(function() {socket.emit("accounts", {action: "login",username: $("#login-username").val(),password: $("#login-password").val()});});</script>',
-        user: '<strong>Server</strong>',
-	clientonly: true,
-        timestamp: Date.now()
-    });
-    socket.emit('chat', {
-        room: 'main',
-        message: '<center><img src="' + socket.captcha.uri() + '"></img></center>',
-        clientonly: true,
+        message: '<center><button onclick="$(\'#login\').modal()" class="btn btn-large btn-success">Log in/signup</button></center>',
         user: '<strong>Server</strong>',
         timestamp: Date.now()
     });
