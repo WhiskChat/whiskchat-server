@@ -828,7 +828,7 @@ io.sockets.on('connection', function(socket) {
     socket.emit('captcha', {html: '<img src="' + socket.captcha.uri() + '"></img>'});
     var roomsHTML = '';
     earnrooms.forEach(function(room) {
-        roomsHTML += '<div class="media"><a class="pull-left" onclick="srwrap(\'' + room + '\')"><img class="media-object" src="/rooms/' + room + '" alt="rooms" style="width: 64px;"></a><div class="media-body"><a onclick="srwrap(\'' + room + '\')"><h4 class="media-heading">' + room + '</h4></a><p><iframe src="/rooms/' + room + '.html" style="height: 60px; width: 100%;"></iframe></div></div></br>';
+        roomsHTML += '<div class="media"><a class="pull-left" onclick="srwrap(\'' + room + '\')"><img class="media-object" src="/rooms/' + room + '" alt="rooms" style="width: 64px;"></a><div class="media-body"><a onclick="srwrap(\'' + room + '\')"><h4 class="media-heading">' + room + '</h4></a><p><iframe frameborder="0" hspace="0" vspace="0" marginheight="0" marginwidth="0" src="/rooms/' + room + '.html" style="height: 60px; width: 100%;"></iframe></div></div></br>';
     });
     socket.emit('rooms', {html: roomsHTML});
     socket.emit('chat', {
