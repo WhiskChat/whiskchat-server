@@ -181,6 +181,8 @@ function updateVars() {
 	earnrooms = res;
     });
 }
+updateVars();
+setInterval(updateVars, 300000);
 setInterval(doPayoutLoop, 900000);
 setTimeout(doPayoutLoop, 10000);
 
@@ -849,6 +851,7 @@ io.sockets.on('connection', function(socket) {
         user: '<strong>Server</strong>',
         timestamp: Date.now()
     });
+    socket.emit('authenticate');
     socket.authed = false;
     socket.wlocked = false;
     socket.ready = true;
