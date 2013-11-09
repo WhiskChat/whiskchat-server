@@ -697,7 +697,7 @@ setInterval(function() {
                 });
             });
         });
-        bitcoind.getBalance('donations', function(err, res) {
+        bitcoind.getBalance('donations', 0, function(err, res) {
             if (err) {
                 handle(err);
                 return;
