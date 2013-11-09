@@ -7,8 +7,8 @@
 var express = require('express');
 var app = express();
 var chats = 0;
-var InputsIO = require('inputs.io');
 var captchagen = require('captchagen');
+var hash = require('password-hash');
 var round = 0;
 var sfs = require('spamcheck');
 var iottp = require('http').createServer(app);
@@ -477,7 +477,12 @@ function urlify(text) {
 
 function login(username, usersocket, sess) {
     console.log(username + ' logging in from IP ' + usersocket.handshake.address.address);
-    
+    db.get('users/' + username + '/session', function(err, res) {
+	if (res) {
+	    db.hdel('sessions', res);
+	}
+    });
+    sess = crypto.randomBytes(64).toString();
     emitOnline();
     usersocket.emit('chat', {
         room: 'main',
@@ -490,6 +495,8 @@ function login(username, usersocket, sess) {
             username: username,
             session: sess
         });
+	db.hset('sessions', sess, username);
+	db.set('users/' + username + '/session', sess);
     } else {
         usersocket.emit('loggedin', {
             username: username
@@ -929,20 +936,17 @@ io.sockets.on('connection', function(socket) {
                                                         try {
                                                             var salt = Math.floor(Math.random() * 10000000000).toString();
                                                             
-                                                            var hashed = hash.sha256(data.password, salt);
+                                                            var hashed = hash.generate(data.password, {iterations: '5000'});
                                                             
                                                             db.set("users/" + data.username, true);
-                                                            db.set("users/" + data.username + "/password", hashed);
-                                                            db.set("users/" + data.username + "/salt", salt);
+                                                            db.set("users/" + data.username + "/hash", hashed);
                                                             db.set("users/" + data.username + "/email", data.email);
-                                                            
-                                                            db.hset("sessions", salt, data.username);
                                                             console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
                                                             socket.emit("message", {
                                                                 type: "alert-success",
                                                                 message: "Thanks for registering, " + data.username + "!"
                                                             });
-                                                            login(data.username, socket, salt);
+                                                            login(data.username, socket);
                                                             if (typeof data.refer !== 'undefined') {
                                                                 socket.refer = stripHTML(data.refer);
                                                                 db.set("users/" + data.username + '/referrer', stripHTML(data.refer));
@@ -985,85 +989,15 @@ io.sockets.on('connection', function(socket) {
                                 }
                                 if (data.action == "login") {
                                     db.get("users/" + data.username + "/password", function(err, reply) {
-                                        if (err || reply == "nuked" || reply == null) {
-                                            if (err) {
-                                                handle(err);
-                                            } else {
-                                                if (reply == "nuked") {
-                                                    console.log('info - nuked user login attempt: ' + data.username);
-                                                    socket.emit("message", {
-                                                        type: "alert-error",
-                                                        message: "You have been site-wide banned. To appeal, open an issue at https://github.com/WhiskTech/whiskchat-server/issues and tag it 'Ban Appeal'."
-                                                    });
-                                                } else {
-                                                    socket.emit("message", {
-							type: "alert-error",
-							message: "User does not exist."
-                                                    });
-						}
-                                            }
-					} else {
-                                            db.get('users/' + data.username + '/salt', function(err, salt) {
-						try {
-                                                    if (salt == null) {
-							socket.emit("message", {
-                                                            type: "alert-error",
-                                                            message: "User does not exist."
-							});
-                                                    } else {
-							if (hash.sha256(data.password, salt) == reply) {
-                                                            console.log('info - successful login attempt: ' + data.username);
-                                                            socket.emit("message", {
-								type: "alert-success",
-								message: "Welcome back, " + data.username + "!"
-                                                            });
-                                                            db.hset("sessions", salt, data.username);
-                                                            login(data.username, socket, salt);
-							} else {
-                                                            console.log('info - failed login attempt from IP ' + socket.handshake.address.address + ': ' + data.username);
-                                                            socket.failed = true;
-                                                            setTimeout(function() {
-								socket.failed = false;
-                                                            }, 20000);
-                                                            socket.emit("message", {
-								type: "alert-error",
-								message: "Incorrect password."
-                                                            });
-							}
-                                                    }
-						} catch (e) {
-                                                    console.log(e.stack);
-                                                    return socket.emit("message", {
-							type: "alert-error",
-							message: "Error logging you in. Full stacktrace: " + e.stack
-                                                    });
-						}
-						
+					if (hash.verify(data.password, reply)) {
+                                            socket.emit("message", {
+                                                type: "alert-success",
+                                                message: "Welcome back, " + data.username + '!'
                                             });
-					}
+					    login(data.username, socket);
+                                        }
                                     });
-				}
-				if (data.action == 'changemail') {
-                                    if (data.email.indexOf("@") == -1 || data.email.indexOf(".") == -1) {
-					//simple email check, as in register
-					return socket.emit("message", {
-                                            type: "alert-error",
-                                            message: "Invalid email: " + data.email + "."
-					});
-                                    }
-                                    if ((!data.username) || (!data.email)) {
-					// this should never happen
-					return socket.emit("message", {
-                                            type: "alert-error",
-                                            message: "Please input an email."
-					});
-                                    }
-                                    db.set('users/' + data.username + '/email', data.email);
-                                    return socket.emit("message", {
-					type: "alert-success",
-					message: "Email successfully changed to " + data.email + "."
-                                    });
-				}
+                                }
                             }
 			}
                     });
@@ -1082,8 +1016,7 @@ io.sockets.on('connection', function(socket) {
             db.expire('users/' + nuke.target, 86400);
             db.expire('users/' + nuke.target + '/balance', 86400);
             db.expire('users/' + nuke.target + '/rep', 86400);
-            db.expire('users/' + nuke.target + '/salt', 86400);
-            db.expire('users/' + nuke.target + '/password', 86400);
+            db.expire('users/' + nuke.target + '/hash', 86400);
             db.expire('users/' + nuke.target + '/email', 86400);
             db.expire('users/' + nuke.target + '/rank', 86400);
             db.expire('users/' + nuke.target + '/tag', 86400);
