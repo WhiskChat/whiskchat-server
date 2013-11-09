@@ -1284,6 +1284,7 @@ io.sockets.on('connection', function(socket) {
                 socket.emit('message', {
                     message: '(This is stored as a SHA512 hash: "' + hashed + '")'
                 });
+		return;
             }
             if (chat.message.substr(0, 3) == "/yt") {
                 if (socket.rep < 15) {
