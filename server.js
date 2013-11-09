@@ -699,7 +699,7 @@ setInterval(function() {
                 });
             });
         });
-        db.get('system/donated', function(err, res) {
+        bitcoind.getBalance('donations', function(err, res) {
             if (err) {
                 handle(err);
                 return;
@@ -707,7 +707,7 @@ setInterval(function() {
             sockets.forEach(function(ads) {
                 ads.emit('chat', {
                     room: 'main',
-		    message: 'Please donate to support hosting of WhiskChat! ' + (Number(res)).toFixed(2) + ' mBTC has been donated.',
+                    message: 'Please donate to support hosting of WhiskChat! ' + (Number(res) / 1000).toFixed(2) + ' mBTC has been donated. Donate by sending BTC to: 1AQwd4vtKMSuBMEA2s2GQmmNZdWLm2sdkE. Thanks!',
                     user: '<strong>Payout system</strong>',
                     timestamp: Date.now()
                 });
