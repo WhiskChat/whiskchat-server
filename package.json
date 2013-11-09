@@ -20,7 +20,7 @@
         "express": "*",
         "bitcoin-address": "*",
         "password-hash": "*",
-        "gith": "*",
+        "kapitalize": "*",
         "random": "*",
         "bbcode": "git://github.com/whiskers75/whiskchat-bbcode#master"
     },

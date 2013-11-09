@@ -6,6 +6,7 @@
 */
 var express = require('express');
 var app = express();
+var kt = require('kapitalize')();
 var chats = 0;
 var captchagen = require('captchagen');
 var passwordHash = require('password-hash');
@@ -63,6 +64,8 @@ function tidyScrollback() {
     }
 }
 iottp.listen(process.env.PORT);
+
+kt.auth(process.env.BTCUSER, process.env.BTCPASS);
 if (process.argv[2] == "travisci") {
     console.log('Travis CI mode active');
     setTimeout(function() {
@@ -425,43 +428,6 @@ function chatemit(sockt, message, room) {
     }
     tidyScrollback();
     console.log('#' + room + ': <' + sockt.user + '> ' + message + (winbtc ? '+' + winbtc + 'mBTC' : '') + ' | rep ' + sockt.rep);
-    if (winbtc != null) {
-        db.get('users/' + sockt.user + '/balance', function(err, reply) {
-            if (err) {
-                handle(err);
-                return;
-            }
-            db.set('users/' + sockt.user + '/balance', Number((Number(reply) + Number(winbtc)).toFixed(2)), function(err, res) {
-                if (err) {
-                    handle(err);
-                    return;
-                }
-                sockt.emit('balance', {
-                    balance: Number(reply) + Number(winbtc)
-                });
-            });
-        });
-        db.get('users/' + sockt.user + '/balance', function(err, balance) {
-            sockt.emit('balance', {
-                balance: balance
-            });
-        });
-        db.get('users/' + sockt.user + '/rep', function(err, rep) {
-            sockt.emit('whitelist', {
-                whitelisted: Number(Number(rep).toFixed(2))
-            });
-            sockt.rep = rep;
-            if (rep < -999 && !sockt.nuked) {
-		sockt.emit('message', {
-                    message: 'ALERT: Your account has been nuked. You are prevented from chatting in any room except #banappeals. /sr banappeals to change to it.'
-                });
-                sockt.nuked = true;
-                sockt.emit('joinroom', {
-                    room: 'banappeals'
-                });
-            }
-        });
-    }
 }
 
 function urlify(text) {
@@ -1328,7 +1294,19 @@ io.sockets.on('connection', function(socket) {
                 }
                 return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
             }
-            if (chat.message.substr(0, 10) == "/newinvite") { 
+	    if (chat.message.substr(0, 4) == "/btc") {
+		kt.getBalance(chat.user, function(err, bal) {
+		    if (err) {
+			handle(err);
+			return;
+		    }
+                    socket.emit("message", {
+                        message: "Your balance: " + (bal / 1000) + ' mBTC'
+                    });
+		    return;
+		});
+	    }
+            if (chat.message.substr(0, 10) == "/newinvite") {
                 if (socket.rank !== 'admin' && socket.rank !== 'mod') {
                     socket.emit("message", {
                         type: "alert-error",
