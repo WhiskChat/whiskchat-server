@@ -9,17 +9,6 @@ var app = express();
 var chats = 0;
 var InputsIO = require('inputs.io');
 var captchagen = require('captchagen');
-if (process.env.INPUTSAPIKEY) {
-    var inputs = new InputsIO({
-        APIKey: process.env.INPUTSAPIKEY,
-        pin: process.env.INPUTSPIN
-    });
-} else {
-    var inputs = new InputsIO({
-        APIKey: 'none',
-        pin: 'none'
-    });
-}
 var round = 0;
 var sfs = require('spamcheck');
 var iottp = require('http').createServer(app);
@@ -57,6 +46,9 @@ else {
 }
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = ['listenwhiskchat'];
+if (!process.env.PORT) {
+    process.env.PORT = 4500;
+}
 if (!String.prototype.encodeHTML) {
     String.prototype.encodeHTML = function() {
         return this.replace(/&/g, '&amp;')
@@ -82,28 +74,10 @@ io.configure(function() {
     io.set('log level', 1);
     io.set('trust proxy', true);
 });
-if (process.env.OPENSHIFT_NODEJS_PORT) {
-    console.log('info - Running on OpenShift');
-    process.env.PORT = process.env.OPENSHIFT_NODEJS_PORT;
-}
 console.log('info - WhiskChat Server starting');
 console.log('info - Starting DB');
-if (process.env.REDISCLOUD_URL) {
-    var rtg = require("url").parse(process.env.REDISCLOUD_URL);
-    var db = redis.createClient(rtg.port, rtg.hostname);
-    
-    db.auth(rtg.auth.split(":")[1]);
-} else {
-    var db = redis.createClient();
-}
-if (process.env.REDISCLOUD_URL) {
-    var rtg = require("url").parse(process.env.REDISCLOUD_URL);
-    var db2 = redis.createClient(rtg.port, rtg.hostname);
-    
-    db2.auth(rtg.auth.split(":")[1]);
-} else {
-    var db2 = redis.createClient();
-}
+var db = redis.createClient();
+var db2 = redis.createClient();
 db.on('error', function(err) {
     console.log('error - DB error: ' + err);
 });
@@ -333,56 +307,8 @@ app.post('/github', function(req, res) {
     });
 });
 app.get('/inputs', function(req, resp) {
-    console.log('info - Got Inputs request');
-    if (getClientIp(req).substr(0, 9) !== '64.22.68.') {
-        console.log('info - request was fake (' + getClientIp(req) + ')');
-        resp.writeHead(401);
-        resp.end('Request failed! Your IP failed to match.');
-        return;
-    }
-    console.log('info - request is authentic');
-    db.get('users/' + req.query.note, function(err, user) {
-        if (err) {
-            handle(err); // Wait for next callback
-            return;
-        }
-        if (txids.indexOf(req.query.txid) !== -1) {
-            // This is a hacky tx ;P
-            console.log('info - this tx already has been handled');
-            return;
-        }
-        txids.push(req.query.txid);
-        if (!user || Number(req.query.amount) < 0.00001) {
-            console.log('info - returning money');
-            inputs.transactions.send(req.query.from, req.query.amount, 'Error depositing. Reasons: the user does not exist (specify the username in the note field) or the deposit is too little (min deposit 0.00001 BTC)', function(err, tx) {
-                if (err) {
-                    handle(err); // Inputs will callback again
-                    return;
-                }
-                console.log('tx sent: ' + tx);
-            });
-            resp.send('*OK*');
-            return;
-        } else {
-            db.get('users/' + req.query.note + '/balance', function(err, reply) {
-                db.set('users/' + req.query.note + '/balance', Number(reply) + (Number(req.query.amount) * 1000), function(err, res) {
-                    sockets.forEach(function(so) {
-                        if (so.user == req.query.note) {
-                            so.emit('balance', {
-                                balance: Number(reply) + Number(req.query.amount * 1000)
-                            });
-                            so.emit('message', {
-                                message: 'You deposited ' + req.query.amount * 1000 + ' mBTC using Inputs.io!'
-                            });
-                            console.log('info - deposited ' + req.query.amount + ' into ' + req.query.note + '\'s account');
-                        }
-                    });
-                    resp.send("*OK*");
-                    return;
-                });
-            });
-        }
-    });
+    resp.writeHead(200);
+    resp.end('Inputs is dead. For more information, see their main site.');
 });
 
 
@@ -1478,59 +1404,7 @@ io.sockets.on('connection', function(socket) {
         }
     });
     socket.on('withdraw', function(draw) {
-        if (socket.wlocked) {
-            socket.emit('message', {
-                message: "A withdrawal is already in progress, or your account has been blocked by a moderator."
-            });
-            return;
-        }
-        if (bitaddr.validate(draw.address)) {
-            draw.fees = 0.5;
-            socket.emit('message', {
-                message: 'This transaction will incur a 0.5 mBTC fee for sending using the blockchain.'
-            });
-        } else {
-            draw.fees = 0;
-        }
-        socket.emit('message', {
-            message: "Withdrawing " + draw.amount + "mBTC to address " + draw.address + "..."
-        });
-	
-        socket.wlocked = true;
-        db.get('users/' + socket.user + '/balance', function(err, bal1) {
-            if (Number(draw.amount) > 0 && bal1 >= (Number(draw.amount) + draw.fees)) {
-                inputs.transactions.send(draw.address, Number(draw.amount) / 1000, 'WhiskChat', function(err, tx) {
-                    socket.wlocked = false;
-                    if (tx != 'OK' && tx.indexOf('VOUCHER') == -1) {
-                        console.log('info - ' + socket.user + ' failed to withdraw ' + draw.amount + ' to ' + draw.address + ' (' + tx + ')');
-                        socket.emit('message', {
-                            message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (" + tx + ")"
-                        });
-                        return;
-                    }
-                    db.set('users/' + socket.user + '/balance', Number(bal1) - (Number(draw.amount) + draw.fees), function(err, res) {
-                        console.log('info - ' + socket.user + ' withdrew ' + draw.amount + ' to ' + draw.address);
-                        socket.emit('message', {
-                            message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " completed."
-                        });
-                        socket.emit('balance', {
-                            balance: Number(bal1) - Number(draw.amount)
-                        });
-                    });
-                });
-            } else {
-                socket.wlocked = false;
-                if (bal1 < (Number(draw.amount) + draw.fees)) {
-                    socket.emit('message', {
-                        message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (not enough money - need " + (bal1 - draw.amount + draw.fees) + " mBTC more)"
-                    });
-                } else {
-                    socket.emit('message', {
-                        message: "Withdrawal of " + draw.amount + "mBTC to address " + draw.address + " failed! (tip more than 0)"
-                    });
-                }
-            }
-        });
+	return;
     });
     socket.on('tip', function(tip) {
         if (tip.rep) {
