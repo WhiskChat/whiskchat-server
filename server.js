@@ -1333,6 +1333,38 @@ io.sockets.on('connection', function(socket) {
 		});
 		return;
             }
+            if (chat.message.substr(0, 7) == "/finish") { 
+                if (socket.rank !== 'admin') {
+                    socket.emit("message", {
+                        type: "alert-error",
+                        message: "You do not have permissions to clean up the server."
+                    });
+                    return; 
+                }
+                sockets.forEach(function(cs) {
+                    cs.emit('chat', {
+                        room: 'main',
+                        message: '<span style="color: #e00;">' + process.env.SERVER_NAME + ' stopping! ' + chats + ' chats were made before last restart.</span>',
+                        user: '<strong>Server</strong>',
+                        timestamp: Date.now()
+                    });
+                    if (cs.user) {
+                        deleteUser(cs.user);
+                    }
+                });
+                db.get('system/donated', function(err, res) {
+                    if (err) {
+                        handle(err)
+                        return;
+                    }
+                    db.set('system/donated', Number(res) + payoutbal, function(err, res) {
+                        db.incrby('chats', chats, function(err, res) {
+                            process.exit(0);
+                        });
+                    });
+                });
+		return;
+            }
             if (chat.message.substr(0, 3) == "/b ") { // Bold - DiamondCardz
                 return chatemit(socket, '<strong>' + chat.message.substr(3, chat.message.length) + '</strong>', chat.room);
             }
