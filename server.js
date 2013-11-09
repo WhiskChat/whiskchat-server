@@ -79,9 +79,6 @@ function getbalance(socket) {
             handle(err);
             return;
         }
-        socket.emit("message", {
-            message: "Your balance (6 confirmations): " + (bal * 1000) + ' mBTC'
-        });
         socket.emit('balance', {
             balance: bal * 1000
         });
@@ -493,11 +490,7 @@ function login(username, usersocket, sess) {
         room: '--connectedmsg'
     }); // For whiskchat-client's Connected header
     usersocket.user = username;
-    db.get('users/' + username + '/balance', function(err, reply) {
-        usersocket.emit('balance', {
-            balance: reply
-        });
-    });
+    getbalance(usersocket);
     db.get('users/' + username + '/rep', function(err, rep) {
         usersocket.emit('whitelist', {
             whitelisted: Number(Number(rep).toFixed(2))
@@ -1484,82 +1477,21 @@ io.sockets.on('connection', function(socket) {
                 }
             });
         } else {
-	    if (tip.user == "donate") {
-                db.get('users/' + socket.user + '/balance', function(err, bal1) {
-                    db.get('users/' + socket.user + '/rep', function(err, rep1) {
-                        db.get('system/personal', function(err, per) {
-                            db.get('system/donated', function(err, bal2) {
-                                if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && tip.user != socket.user && muted.indexOf(socket.user) == -1 && rep1 >= 5) {
-                                    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
-                                    db.set('system/donated', Number(bal2) + Number(tip.tip), redis.print);
-                                    db.set('users/' + socket.user + '/rep', (Number(rep1) + (Number(tip.tip) / 2)), redis.print);
-                                    db.publish('tips', JSON.stringify({
-					room: tip.room,
-					target: 'the WhiskChat Server Payout Pool [' + (Number(bal2) + (Number(tip.tip))).toFixed(2) + ' mBTC] (+ <i class="icon-gift"></i> ' + (Number(tip.tip) / 2).toFixed(2) + ')',
-					amount: Number(tip.tip),
-					message: stripHTML(tip.message),
-					user: socket.user
-				    }));
-                                    sockets.forEach(function(cs) {
-                                        if (cs.user == socket.user) {
-                                            socket.emit('balance', {
-                                                balance: Number(bal1) - Number(tip.tip)
-                                            });
-                                            socket.emit('whitelist', {
-                                                whitelisted: (Number(rep1) + (Number(tip.tip) / 2))
-                                            });
-                                            socket.rep = (Number(rep1) + Number((Number(tip.tip) / 2).toFixed(2)));
-                                        }
-                                    });
-                                } else {
-                                    socket.emit('message', {
-                                        type: "alert-error",
-                                        message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself. You must be whitelisted to donate."
-                                    });
-                                }
-                            });
-                        });
-                    });
-                });
-            } else {
-                db.get('users/' + tip.user, function(err, exists) {
-                    if (exists) {
-                        db.get('users/' + socket.user + '/balance', function(err, bal1) {
-                            db.get('users/' + tip.user + '/balance', function(err, bal2) {
-                                if ((Number(tip.tip) < bal1 || Number(tip.tip) == bal1) && Number(tip.tip) > 0 && tip.user != socket.user && muted.indexOf(socket.user) == -1) {
-                                    db.set('users/' + socket.user + '/balance', Number(bal1) - Number(tip.tip), redis.print);
-                                    db.set('users/' + tip.user + '/balance', Number(bal2) + Number(tip.tip), redis.print);
-                                    db.publish('tips', JSON.stringify({
-                                        room: tip.room,
-                                        target: stripHTML(tip.user),
-                                        amount: Number(tip.tip),
-                                        message: stripHTML(tip.message),
-                                        user: socket.user
-                                    }));
-                                    sockets.forEach(function(cs) {
-                                        if (cs.user == socket.user) {
-                                            cs.emit('balance', {
-                                                balance: Number(bal1) - Number(tip.tip)
-                                            });
-                                        }
-                                        if (cs.user == tip.user) {
-                                            cs.emit('balance', {
-                                                balance: Number(bal2) + Number(tip.tip)
-                                            });
-                                        }
-                                    });
-                                } else {
-                                    socket.emit('message', {
-                                        type: "alert-error",
-                                        message: "Your current balance is " + bal1 + " mBTC. Tip: " + tip.tip + "mBTC. Tip failed - you might not have enough, you may be muted or you are tipping yourself."
-                                    });
-                                }
-                            });
-                        });
-                    }
-                });
-		
-            }
+	    if (data.user == "donate" || data.user == "Donate") {
+		data.user == "donations";
+	    }
+	    bitcoind.getBalance(socket.user, 0, function(err, bal1) {
+		if (Number(tip.tip) > (bal1 * 1000)) {
+		    return socket.emit('message', {message: 'You do not have enough BTC to tip that amount. (need ' + (Number(tip.tip) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'});
+		}
+		if (tip.user == socket.user) {
+		    return socket.emit('message', {message: 'You cannot tip yourself.'});
+		}
+		if (muted.indexOf(socket.user) !== -1) {
+                    return socket.emit('message', {message: 'You have been muted!'});
+		}
+		return socket.emit('message', {message: 'Insert code to tip ' + stripHTML(tip.tip) + ' mBTC to ' + stripHTML(tip.user) + ' here.'}):
+	    });
         }
     });
     socket.on('getbalance', function() {
