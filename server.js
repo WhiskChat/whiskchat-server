@@ -165,6 +165,7 @@ function doPayoutLoop(amount) { // This is called to update the payout pool
     if (isNumber(amount) == false) {
         amount = process.env.ROUND_WORTH;
     }
+    return;
     db.get('system/donated', function(err, reply) {
         if (err) {
             handle(err);
@@ -711,7 +712,7 @@ setInterval(function() {
             sockets.forEach(function(ads) {
                 ads.emit('chat', {
                     room: 'main',
-                    message: 'Please donate to the payout pool! ' + (Number(res)).toFixed(2) + ' mBTC has been donated. /tip donate (amount) to donate more to the pool, and win half your donation in rep!',
+		    message: 'Please donate to support hosting of WhiskChat! ' + (Number(res)).toFixed(2) + ' mBTC has been donated.',
                     user: '<strong>Payout system</strong>',
                     timestamp: Date.now()
                 });
