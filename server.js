@@ -71,9 +71,12 @@ var bitcoind = new bitcoin.Client({
     pass: 'whiskchatrpc'
 });
 function getbalance(socket) {
-    if (!socket.authed) {
+    if (!socket.user) {
         return;
     }
+    socket.emit('message', {
+	message: '<i class="icon-ok"> Fetching your balance...'
+    });
     bitcoind.getBalance(socket.user, 6, function(err, bal) {
         if (err) {
             handle(err);
