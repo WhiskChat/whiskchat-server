@@ -1295,7 +1295,10 @@ io.sockets.on('connection', function(socket) {
                 return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
             }
 	    if (chat.message.substr(0, 4) == "/bal") {
-		kt.getBalance(chat.user, function(err, bal) {
+                socket.emit("message", {
+                    message: 'Checking balance...'
+                });
+                kt.getBalance(chat.user, function(err, bal) {
 		    if (err) {
 			handle(err);
 			return;
@@ -1303,8 +1306,8 @@ io.sockets.on('connection', function(socket) {
                     socket.emit("message", {
                         message: "Your balance: " + (bal / 1000) + ' mBTC'
                     });
-		    return;
 		});
+                return;
 	    }
             if (chat.message.substr(0, 10) == "/newinvite") {
                 if (socket.rank !== 'admin' && socket.rank !== 'mod') {
