@@ -8,7 +8,7 @@ var express = require('express');
 var app = express();
 var chats = 0;
 var captchagen = require('captchagen');
-var hash = require('password-hash');
+var passwordHash = require('password-hash');
 var round = 0;
 var sfs = require('spamcheck');
 var iottp = require('http').createServer(app);
@@ -936,7 +936,7 @@ io.sockets.on('connection', function(socket) {
                                                         try {
                                                             var salt = Math.floor(Math.random() * 10000000000).toString();
                                                             
-                                                            var hashed = hash.generate(data.password, {iterations: '5000'});
+                                                            var hashed = passwordHash.generate(data.password, {iterations: '5000'});
                                                             
                                                             db.set("users/" + data.username, true);
                                                             db.set("users/" + data.username + "/hash", hashed);
@@ -989,7 +989,7 @@ io.sockets.on('connection', function(socket) {
                                 }
                                 if (data.action == "login") {
                                     db.get("users/" + data.username + "/password", function(err, reply) {
-					if (hash.verify(data.password, reply)) {
+					if (passwordHash.verify(data.password, reply)) {
                                             socket.emit("message", {
                                                 type: "alert-success",
                                                 message: "Welcome back, " + data.username + '!'
