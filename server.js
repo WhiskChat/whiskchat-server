@@ -79,6 +79,9 @@ function getbalance(socket) {
             handle(err);
             return;
         }
+	socket.emit('message', {
+	    message: '<i class="icon-ok"> Your balance: ' + bal * 1000 + ' mBTC.'
+	});
         socket.emit('balance', {
             balance: bal * 1000
         });
@@ -490,7 +493,6 @@ function login(username, usersocket, sess) {
         room: '--connectedmsg'
     }); // For whiskchat-client's Connected header
     usersocket.user = username;
-    getbalance(usersocket);
     db.get('users/' + username + '/rep', function(err, rep) {
         usersocket.emit('whitelist', {
             whitelisted: Number(Number(rep).toFixed(2))
@@ -1490,7 +1492,22 @@ io.sockets.on('connection', function(socket) {
 		if (muted.indexOf(socket.user) !== -1) {
                     return socket.emit('message', {message: 'You have been muted!'});
 		}
-		return socket.emit('message', {message: 'Insert code to tip ' + stripHTML(tip.tip) + ' mBTC to ' + stripHTML(tip.user) + ' here.'});
+		var tmp = false;
+		sockets.forEach(function(cs) {
+		    if (cs.user == tip.user) {
+			tmp = true;
+		    }
+		});
+		if (!tmp) {
+                    return socket.emit('message', {message: 'That user is not online.'});
+		}
+		bitcoind.move(socket.user, tip.user, Number(tip.tip) / 1000, function(err, res) {
+		    if (err) {
+			handle(err);
+			return;
+		    }
+                    db.publish('tips', JSON.stringify({room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: stripHTML(tip.message), user: socket.user}));
+		});
 	    });
         }
     });
