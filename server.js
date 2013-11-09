@@ -64,6 +64,7 @@ function tidyScrollback() {
     }
 }
 iottp.listen(process.env.PORT);
+console.log('Authenticating as ' + process.env.BTCUSER);
 var bitcoind = new bitcoin.Client({
     host: 'localhost',
     port: 8332,
