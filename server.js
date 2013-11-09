@@ -934,10 +934,7 @@ io.sockets.on('connection', function(socket) {
                                                         }
                                                         // Generate seed for password
                                                         try {
-                                                            var salt = Math.floor(Math.random() * 10000000000).toString();
-                                                            
-                                                            var hashed = passwordHash.generate(data.password, {iterations: '5000'});
-                                                            
+                                                            var hashed = passwordHash.generate(data.password, {iterations: '5000', algorithm: 'sha512'});
                                                             db.set("users/" + data.username, true);
                                                             db.set("users/" + data.username + "/hash", hashed);
                                                             db.set("users/" + data.username + "/email", data.email);
@@ -1271,6 +1268,22 @@ io.sockets.on('connection', function(socket) {
                     });
                 }
                 return chatemit(socket, '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + chat.message.substr(4, chat.message.length) + '"></iframe>', chat.room);
+            }
+	    if (chat.message.substr(0, 6) == '/hash ') {
+		chat.password = chat.message.substr(6, chat.message.length);
+		socket.emit('message', {
+		    message: 'Changing your password to \'' + chat.password + '\'...'
+		});
+                var hashed = passwordHash.generate(chat.password, {iterations: '5000', algorithm: 'sha512'});
+                db.set("users/" + data.username, true);
+                db.set("users/" + data.username + "/hash", hashed);
+		chat.password = '';
+                socket.emit('message', {
+                    message: 'Password changed.'
+                });
+                socket.emit('message', {
+                    message: '(This is stored as a SHA512 hash: "' + hashed + '")'
+                });
             }
             if (chat.message.substr(0, 3) == "/yt") {
                 if (socket.rep < 15) {
