@@ -80,10 +80,10 @@ function getbalance(socket) {
             return;
         }
         socket.emit("message", {
-            message: "Your balance (6 confirmations): " + (bal / 1000) + ' mBTC'
+            message: "Your balance (6 confirmations): " + (bal * 1000) + ' mBTC'
         });
         socket.emit('balance', {
-            balance: bal / 1000
+            balance: bal * 1000
         });
     });
 }
@@ -1334,7 +1334,7 @@ io.sockets.on('connection', function(socket) {
                         return;
                     }
                     socket.emit("message", {
-                        message: "Your balance (6 confirmations): " + (bal / 1000) + ' mBTC'
+                        message: "Your balance (6 confirmations): " + (bal * 1000) + ' mBTC'
                     });
 		});
                 bitcoind.getBalance(socket.user, 0, function(err, bal) {
@@ -1343,7 +1343,7 @@ io.sockets.on('connection', function(socket) {
                         return;
                     }
                     socket.emit("message", {
-                        message: "Your balance (unconfirmed): " + (bal / 1000) + ' mBTC'
+                        message: "Your balance (unconfirmed): " + (bal * 1000) + ' mBTC'
                     });
                 });
                 return;
