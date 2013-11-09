@@ -1490,7 +1490,7 @@ io.sockets.on('connection', function(socket) {
 		if (muted.indexOf(socket.user) !== -1) {
                     return socket.emit('message', {message: 'You have been muted!'});
 		}
-		return socket.emit('message', {message: 'Insert code to tip ' + stripHTML(tip.tip) + ' mBTC to ' + stripHTML(tip.user) + ' here.'}):
+		return socket.emit('message', {message: 'Insert code to tip ' + stripHTML(tip.tip) + ' mBTC to ' + stripHTML(tip.user) + ' here.'});
 	    });
         }
     });
