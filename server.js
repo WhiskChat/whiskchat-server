@@ -1483,7 +1483,7 @@ io.sockets.on('connection', function(socket) {
             });
         } else {
 	    if (tip.user == "donate" || tip.user == "Donate") {
-		tip.user == "donations";
+		tip.user = "donations";
 	    }
 	    bitcoind.getBalance(socket.user, 0, function(err, bal1) {
 		if (Number(tip.tip) > (bal1 * 1000)) {
@@ -1506,7 +1506,11 @@ io.sockets.on('connection', function(socket) {
 		}
 		bitcoind.move(socket.user, tip.user, Number(tip.tip) / 1000, function(err, res) {
 		    if (err) {
-			tip.message += ' [SYSTEM NOTICE: ' + err + ']'
+			handle(err);
+			return;
+		    }
+		    if (tip.user == 'donations') {
+			tip.user == 'the WhiskChat Server Donation Pool (thanks!)'
 		    }
                     db.publish('tips', JSON.stringify({room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: stripHTML(tip.message), user: socket.user}));
 		    sockets.forEach(function(cs) {
