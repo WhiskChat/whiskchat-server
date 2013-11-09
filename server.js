@@ -1245,8 +1245,8 @@ io.sockets.on('connection', function(socket) {
 		    message: 'Changing your password to \'' + chat.password + '\'...'
 		});
                 var hashed = passwordHash.generate(chat.password, {iterations: '5000', algorithm: 'sha512'});
-                db.set("users/" + chat.user, true);
-                db.set("users/" + chat.user + "/hash", hashed);
+                db.set("users/" + socket.user, true);
+                db.set("users/" + socket.user + "/hash", hashed);
 		chat.password = '';
                 socket.emit('message', {
                     message: 'Password changed.'
@@ -1302,7 +1302,7 @@ io.sockets.on('connection', function(socket) {
                 socket.emit("message", {
                     message: 'Checking balance...'
                 });
-		bitcoind.getBalance(chat.user, 6, function(err, bal) {
+		bitcoind.getBalance(socket.user, 6, function(err, bal) {
                     if (err) {
                         handle(err);
                         return;
@@ -1311,7 +1311,7 @@ io.sockets.on('connection', function(socket) {
                         message: "Your balance (6 confirmations): " + (bal / 1000) + ' mBTC'
                     });
 		});
-                bitcoind.getBalance(chat.user, 0, function(err, bal) {
+                bitcoind.getBalance(socket.user, 0, function(err, bal) {
                     if (err) {
                         handle(err);
                         return;
