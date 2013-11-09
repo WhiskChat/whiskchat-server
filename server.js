@@ -1510,6 +1510,11 @@ io.sockets.on('connection', function(socket) {
 			return;
 		    }
                     db.publish('tips', JSON.stringify({room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: stripHTML(tip.message), user: socket.user}));
+		    sockets.forEach(function(cs) {
+			if (cs.user == tip.user || cs.user == socket.user) {
+			    getBalance(cs)
+			}
+		    });
 		});
 	    });
         }
