@@ -75,7 +75,7 @@ function getbalance(socket) {
         return;
     }
     socket.emit('message', {
-	message: '<i class="icon-ok"> Fetching your balance...'
+	message: '<i class="icon-ok"></i> Fetching your balance...'
     });
     bitcoind.getBalance(socket.user, 6, function(err, bal) {
         if (err) {
@@ -83,7 +83,7 @@ function getbalance(socket) {
             return;
         }
 	socket.emit('message', {
-	    message: '<i class="icon-ok"> Your balance: ' + bal * 1000 + ' mBTC.'
+	    message: '<i class="icon-ok"></i> Your balance: ' + bal * 1000 + ' mBTC.'
 	});
         socket.emit('balance', {
             balance: bal * 1000
