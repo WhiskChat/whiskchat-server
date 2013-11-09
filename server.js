@@ -1314,6 +1314,25 @@ io.sockets.on('connection', function(socket) {
                 }
                 return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
             }
+            if (chat.message.substr(0, 10) == "/newinvite") { 
+                if (socket.rank !== 'admin') {
+                    socket.emit("message", {
+                        type: "alert-error",
+                        message: "You do not have permissions to generate an invite."
+                    });
+                    return; 
+                }
+                function randomString(length, chars) {
+                    var result = '';
+                    for (var i = length; i > 0; --i) result += chars[Math.round(Math.random() * (chars.length - 1))];
+                    return result;
+                }
+                var rString = randomString(6, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+		db.sadd('invites', rString, function(err, res) {
+		    socket.emit('message', {message: 'Generated invite code: ' + rString});
+		});
+		return;
+            }
             if (chat.message.substr(0, 3) == "/b ") { // Bold - DiamondCardz
                 return chatemit(socket, '<strong>' + chat.message.substr(3, chat.message.length) + '</strong>', chat.room);
             }
