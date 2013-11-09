@@ -1275,8 +1275,8 @@ io.sockets.on('connection', function(socket) {
 		    message: 'Changing your password to \'' + chat.password + '\'...'
 		});
                 var hashed = passwordHash.generate(chat.password, {iterations: '5000', algorithm: 'sha512'});
-                db.set("users/" + data.username, true);
-                db.set("users/" + data.username + "/hash", hashed);
+                db.set("users/" + chat.user, true);
+                db.set("users/" + chat.user + "/hash", hashed);
 		chat.password = '';
                 socket.emit('message', {
                     message: 'Password changed.'
