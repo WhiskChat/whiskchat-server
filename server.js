@@ -996,6 +996,16 @@ io.sockets.on('connection', function(socket) {
                                             });
 					    login(data.username, socket);
                                         }
+					else {
+					    socket.failed = true;
+					    setTimeout(function() {
+						socket.failed = false;
+					    }, 20000);
+                                            return socket.emit("message", {
+                                                type: "alert-error",
+                                                message: "Password incorrect."
+                                            });
+					}
                                     });
                                 }
                             }
