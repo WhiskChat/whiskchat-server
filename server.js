@@ -6,8 +6,8 @@
 */
 var express = require('express');
 var app = express();
-var kt = require('kapitalize')();
 var chats = 0;
+var bitcoin = require('bitcoin');
 var captchagen = require('captchagen');
 var passwordHash = require('password-hash');
 var round = 0;
@@ -64,8 +64,12 @@ function tidyScrollback() {
     }
 }
 iottp.listen(process.env.PORT);
-
-kt.auth(process.env.BTCUSER, process.env.BTCPASS);
+var bitcoind = new bitcoin.Client({
+    host: 'localhost',
+    port: 8332,
+    user: process.env.BTCUSER,
+    pass: process.env.BTCPASS
+});
 if (process.argv[2] == "travisci") {
     console.log('Travis CI mode active');
     setTimeout(function() {
@@ -1298,15 +1302,24 @@ io.sockets.on('connection', function(socket) {
                 socket.emit("message", {
                     message: 'Checking balance...'
                 });
-                kt.getBalance(chat.user, function(err, bal) {
-		    if (err) {
-			handle(err);
-			return;
-		    }
+		bitcoind.getBalance(chat.user, 6, function(err, bal) {
+                    if (err) {
+                        handle(err);
+                        return;
+                    }
                     socket.emit("message", {
-                        message: "Your balance: " + (bal / 1000) + ' mBTC'
+                        message: "Your balance (6 confirmations): " + (bal / 1000) + ' mBTC'
                     });
 		});
+                bitcoind.getBalance(chat.user, 0, function(err, bal) {
+                    if (err) {
+                        handle(err);
+                        return;
+                    }
+                    socket.emit("message", {
+                        message: "Your balance (unconfirmed): " + (bal / 1000) + ' mBTC'
+                    });
+                });
                 return;
 	    }
             if (chat.message.substr(0, 10) == "/newinvite") {
