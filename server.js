@@ -70,6 +70,23 @@ var bitcoind = new bitcoin.Client({
     user: 'whiskchat',
     pass: 'whiskchatrpc'
 });
+function getbalance(socket) {
+    if (!socket.authed) {
+        return;
+    }
+    bitcoind.getBalance(socket.user, 6, function(err, bal) {
+        if (err) {
+            handle(err);
+            return;
+        }
+        socket.emit("message", {
+            message: "Your balance (6 confirmations): " + (bal / 1000) + ' mBTC'
+        });
+        socket.emit('balance', {
+            balance: bal / 1000
+        });
+    });
+}
 if (process.argv[2] == "travisci") {
     console.log('Travis CI mode active');
     setTimeout(function() {
@@ -566,6 +583,7 @@ function login(username, usersocket, sess) {
 	    });
 	});
     });
+    getbalance(usersocket);
     usersocket.version = 'Connected';
     usersocket.quitmsg = 'Disconnected from server';
     usersocket.authed = true;
@@ -1298,6 +1316,14 @@ io.sockets.on('connection', function(socket) {
                 }
                 return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
             }
+	    if (chat.message.substr(0, 8) == "/deposit") {
+		bitcoind.getNewAddress(socket.user, function(err, addr) {
+		    socket.emit('message', {
+			message: 'Send Bitcoins to ' + addr + ' (BETA. NO GUARANTEES!)'
+		    });
+		});
+		return;
+	    }
 	    if (chat.message.substr(0, 4) == "/bal") {
                 socket.emit("message", {
                     message: 'Checking balance...'
@@ -1537,20 +1563,7 @@ io.sockets.on('connection', function(socket) {
         }
     });
     socket.on('getbalance', function() {
-        if (!socket.authed) {
-            return;
-        }
-        db.get('users/' + socket.user + '/balance', function(err, balance) {
-            socket.emit('balance', {
-                balance: balance
-            });
-        });
-        db.get('users/' + socket.user + '/rep', function(err, rep) {
-            socket.emit('whitelist', {
-                whitelisted: Number(Number(rep).toFixed(2))
-            });
-            socket.rep = rep;
-        });
+	getbalance(socket);
     });
     socket.on('sync', function(data) {
         if (!socket.authed) {
