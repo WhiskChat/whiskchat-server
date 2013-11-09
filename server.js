@@ -988,7 +988,8 @@ io.sockets.on('connection', function(socket) {
                                     }
                                 }
                                 if (data.action == "login") {
-                                    db.get("users/" + data.username + "/salt", function(err, reply) {
+                                    db.get("users/" + data.username + "/hash", function(err, reply) {
+                                        console.log('checking password for ' + data.username + ': ' + passwordHash.verify(data.password, reply));
 					if (passwordHash.verify(data.password, reply)) {
                                             socket.emit("message", {
                                                 type: "alert-success",
