@@ -458,7 +458,7 @@ function urlify(text) {
     if (text.indexOf('<') !== -1) {
         // The BBCode parser has made HTML from this, so we don't touch it
         return text;
-    }
+    }    
     var urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.replace(urlRegex, function(url) {
         return '<a target="_blank" href="' + url.replace('"', '') + '">' + url + '</a>';
@@ -1501,7 +1501,7 @@ io.sockets.on('connection', function(socket) {
 			tmp = true;
 		    }
 		});
-		if (!tmp) {
+		if (!tmp && tip.user !== 'donations') {
                     return socket.emit('message', {message: 'That user is not online.'});
 		}
 		bitcoind.move(socket.user, tip.user, Number(tip.tip) / 1000, function(err, res) {
