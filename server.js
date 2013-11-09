@@ -1506,13 +1506,12 @@ io.sockets.on('connection', function(socket) {
 		}
 		bitcoind.move(socket.user, tip.user, Number(tip.tip) / 1000, function(err, res) {
 		    if (err) {
-			handle(err);
-			return;
+			tip.message += ' [SYSTEM NOTICE: ' + err + ']'
 		    }
                     db.publish('tips', JSON.stringify({room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: stripHTML(tip.message), user: socket.user}));
 		    sockets.forEach(function(cs) {
 			if (cs.user == tip.user || cs.user == socket.user) {
-			    getBalance(cs)
+			    getbalance(cs)
 			}
 		    });
 		});
