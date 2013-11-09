@@ -1477,8 +1477,8 @@ io.sockets.on('connection', function(socket) {
                 }
             });
         } else {
-	    if (data.user == "donate" || data.user == "Donate") {
-		data.user == "donations";
+	    if (tip.user == "donate" || tip.user == "Donate") {
+		tip.user == "donations";
 	    }
 	    bitcoind.getBalance(socket.user, 0, function(err, bal1) {
 		if (Number(tip.tip) > (bal1 * 1000)) {
