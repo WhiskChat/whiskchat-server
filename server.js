@@ -64,12 +64,11 @@ function tidyScrollback() {
     }
 }
 iottp.listen(process.env.PORT);
-console.log('Authenticating as ' + process.env.BTCUSER);
 var bitcoind = new bitcoin.Client({
     host: 'localhost',
     port: 8332,
-    user: process.env.BTCUSER,
-    pass: process.env.BTCPASS
+    user: 'whiskchat',
+    pass: 'whiskchatrpc'
 });
 if (process.argv[2] == "travisci") {
     console.log('Travis CI mode active');
