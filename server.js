@@ -705,7 +705,7 @@ setInterval(function() {
             sockets.forEach(function(ads) {
                 ads.emit('chat', {
                     room: 'main',
-                    message: 'Please donate to support hosting of WhiskChat! ' + (Number(res) * 1000).toFixed(2) + ' mBTC has been donated. Donate by sending BTC to: 1AQwd4vtKMSuBMEA2s2GQmmNZdWLm2sdkE. Thanks!',
+                    message: 'Please donate to keep the servers up! ' + (Number(res) * 1000).toFixed(2) + ' mBTC (<img src="http://btcticker.appspot.com/mtgox/' + res + 'btc2usd.png"></img> of $9 goal) has been donated. Donate by sending BTC to: 1AQwd4vtKMSuBMEA2s2GQmmNZdWLm2sdkE or <code>/tip donations [amount]</code>. Thanks!',
                     user: '<strong>Payout system</strong>',
                     timestamp: Date.now()
                 });
