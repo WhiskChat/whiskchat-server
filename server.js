@@ -1458,9 +1458,10 @@ io.sockets.on('connection', function(socket) {
 	    if (!socket.user || !draw.address || !draw.amount) {
                 return socket.emit('message', {message: 'Syntax: /withdraw [amount] [address]'});
 	    }
-            socket.emit('message', {message: '<i class="icon-signal"></i> Withdrawing ' + Number(draw.amount) / 1000 + ' BTC to ' + draw.address + '...'});
-            bitcoind.sendFrom(socket.user, draw.address, Number(draw.amount) / 1000, function(err, res) {
+            socket.emit('message', {message: '<i class="icon-signal"></i> Withdrawing ' + (Number(draw.amount) / 1000) - 0.0001 + ' (with 0.1 mBTC tx fee) BTC to ' + draw.address + '...'});
+            bitcoind.sendFrom(socket.user, draw.address, (Number(draw.amount) / 1000) - 0.0001, function(err, res) {
                 if (err) {
+		    socket.emit('message', {message: '<i class="icon-minus-sign"></i> Error: ' + err});
                     handle(err);
                     return;
                 }
