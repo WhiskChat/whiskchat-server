@@ -1454,6 +1454,7 @@ io.sockets.on('connection', function(socket) {
             if (muted.indexOf(socket.user) !== -1) {
                 return socket.emit('message', {message: 'You have been muted!'});
             }
+	    console.log(socket.user + ' sending ' + draw.amount + ' to ' + draw.address);
             bitcoind.sendFrom(socket.user, draw.address, Number(draw.amount) / 1000, function(err, res) {
                 if (err) {
                     handle(err);
