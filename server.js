@@ -1449,19 +1449,24 @@ io.sockets.on('connection', function(socket) {
     socket.on('withdraw', function(draw) {
         bitcoind.getBalance(socket.user, 6, function(err, bal1) {
             if (Number(draw.amount) > (bal1 * 1000)) {
-                return socket.emit('message', {message: 'You do not have enough mBTC (6 confirmation) to withdraw that amount. (need ' + (Number(tip.tip) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'});
+                return socket.emit('message', {message: 'You do not have enough mBTC (6 confirmation) to withdraw that amount. (need ' + (Number(draw.amount) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'});
             }
             if (muted.indexOf(socket.user) !== -1) {
                 return socket.emit('message', {message: 'You have been muted!'});
             }
 	    console.log(socket.user + ' sending ' + draw.amount + ' to ' + draw.address);
+	    if (!socket.user || !draw.address || !draw.amount) {
+                return socket.emit('message', {message: 'Syntax: /withdraw [amount] [address]'});
+	    }
+            socket.emit('message', {message: '<i class="icon-signal"></i> Withdrawing ' + Number(draw.amount) / 1000 + ' BTC to ' + draw.address + '...'});
             bitcoind.sendFrom(socket.user, draw.address, Number(draw.amount) / 1000, function(err, res) {
                 if (err) {
                     handle(err);
                     return;
                 }
-		socket.emit('message', {message: 'Withdrawal of ' + draw.amount + ' BTC to ' + draw.address + ' complete.'});
-		socket.emit('message', {message: 'Transaction ID: ' + res});
+		socket.emit('message', {message: '<i class="icon-ok"></i> Withdrawal of ' + draw.amount + ' BTC to ' + draw.address + ' complete.'});
+                socket.emit('message', {message: '<i class="icon-ok"></i> Transaction ID: ' + res});
+		getbalance(socket);
             });
         });
     });
