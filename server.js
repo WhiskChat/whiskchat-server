@@ -1447,7 +1447,22 @@ io.sockets.on('connection', function(socket) {
         }
     });
     socket.on('withdraw', function(draw) {
-	return;
+        bitcoind.getBalance(socket.user, 6, function(err, bal1) {
+            if (Number(draw.amount) > (bal1 * 1000)) {
+                return socket.emit('message', {message: 'You do not have enough mBTC (6 confirmation) to withdraw that amount. (need ' + (Number(tip.tip) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'});
+            }
+            if (muted.indexOf(socket.user) !== -1) {
+                return socket.emit('message', {message: 'You have been muted!'});
+            }
+            bitcoind.sendfrom(socket.user, draw.address, Number(draw.amount) / 1000, function(err, res) {
+                if (err) {
+                    handle(err);
+                    return;
+                }
+		socket.emit('message', {message: 'Withdrawal of ' + draw.amount + ' BTC to ' + draw.address + ' complete.'});
+		socket.emit('message', {message: 'Transaction ID: ' + res});
+            });
+        });
     });
     socket.on('tip', function(tip) {
         if (tip.rep) {
@@ -1485,9 +1500,9 @@ io.sockets.on('connection', function(socket) {
 	    if (tip.user == "donate" || tip.user == "Donate") {
 		tip.user = "donations";
 	    }
-	    bitcoind.getBalance(socket.user, 0, function(err, bal1) {
+	    bitcoind.getBalance(socket.user, 1, function(err, bal1) {
 		if (Number(tip.tip) > (bal1 * 1000)) {
-		    return socket.emit('message', {message: 'You do not have enough BTC to tip that amount. (need ' + (Number(tip.tip) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'});
+		    return socket.emit('message', {message: 'You do not have enough mBTC (1 confirmation) to tip that amount. (need ' + (Number(tip.tip) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'});
 		}
 		if (tip.user == socket.user) {
 		    return socket.emit('message', {message: 'You cannot tip yourself.'});
