@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/WhiskTech/whiskchat-server.png?label=ready)](https://waffle.io/WhiskTech/whiskchat-server)  
 whiskchat-server
 ================
 
