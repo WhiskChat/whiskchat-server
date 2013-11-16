@@ -534,7 +534,7 @@ function login(username, usersocket, sess) {
                     message: 'Welcome to WhiskChat!'
 		});
 		usersocket.emit('message', {
-                    message: 'Need help getting started? We have a guide: <a href="http://bit.cur.lv/whiskchat">bit.cur.lv/whiskchat</a>'
+                    message: 'Need help getting started? We have a guide: <a href="//bit.cur.lv/whiskchat">bit.cur.lv/whiskchat</a>'
 		});
 		usersocket.emit('message', {
                     message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ') + ' - say hi!'
@@ -575,11 +575,11 @@ function login(username, usersocket, sess) {
 		message: '<i class="icon-bell"></i> mBTC earning is currently off.'
             });
 	    usersocket.emit('message', {
-		message: '<img src="http://whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="http://whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="http://whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="http://whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="http://whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="http://whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="http://whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="http://whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="http://whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="http://whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="http://whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="http://whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="http://whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="http://whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="http://whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="http://whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="http://whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="http://whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="http://whiskchat.com/static/img/smileys/tickedoff.png"><img src="http://whiskchat.com/static/img/smileys/tongue.png"><img src="http://whiskchat.com/static/img/smileys/wink.png"></span>',
+		message: '<img src="//whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="//whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="//whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="//whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="//whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="//whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="//whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="//whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="//whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="//whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="//whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="//whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="//whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="//whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="//whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="//whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="//whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="//whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="//whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="//whiskchat.com/static/img/smileys/tickedoff.png"><img src="//whiskchat.com/static/img/smileys/tongue.png"><img src="//whiskchat.com/static/img/smileys/wink.png"></span>',
 		clientonly: true
 	    });
             usersocket.emit('message', {
-                message: '<i class="icon-ok"></i> Attributions: <a href="http://coinchat.org">CoinChat</a> (concept, client codebase) - <a href="http://glyphicons.com/">Glyphicons</a> (icons)'
+                message: '<i class="icon-ok"></i> Attributions: <a href="//coinchat.org">CoinChat</a> (concept, client codebase) - <a href="//glyphicons.com/">Glyphicons</a> (icons)'
             });
 	});
     });
@@ -707,7 +707,7 @@ setInterval(function() {
             sockets.forEach(function(ads) {
                 ads.emit('chat', {
                     room: 'main',
-                    message: 'Please donate to keep the servers up! ' + (Number(res) * 1000).toFixed(2) + ' mBTC (<img src="http://btcticker.appspot.com/mtgox/' + res + 'btc2usd.png"></img> of $9 goal) has been donated. Donate by sending BTC to: 1AQwd4vtKMSuBMEA2s2GQmmNZdWLm2sdkE or <code>/tip donations [amount]</code>. Thanks!',
+                    message: 'Please donate to keep the servers up! ' + (Number(res) * 1000).toFixed(2) + ' mBTC (<img src="//btcticker.appspot.com/mtgox/' + res + 'btc2usd.png"></img> of $9 goal) has been donated. Donate by sending BTC to: 1AQwd4vtKMSuBMEA2s2GQmmNZdWLm2sdkE or <code>/tip donations [amount]</code>. Thanks!',
                     user: '<strong>Payout system</strong>',
                     timestamp: Date.now()
                 });
@@ -1164,7 +1164,7 @@ io.sockets.on('connection', function(socket) {
             }
             if (chat.message == '/preload') {
                 socket.emit('message', {
-                    message: '<img src="http://whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="http://whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="http://whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="http://whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="http://whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="http://whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="http://whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="http://whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="http://whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="http://whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="http://whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="http://whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="http://whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="http://whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="http://whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="http://whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="http://whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="http://whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="http://whiskchat.com/static/img/smileys/tickedoff.png"><img src="http://whiskchat.com/static/img/smileys/tongue.png"><img src="http://whiskchat.com/static/img/smileys/wink.png"></span>'
+                    message: '<img src="//whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="//whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="//whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="//whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="//whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="//whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="//whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="//whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="//whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="//whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="//whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="//whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="//whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="//whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="//whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="//whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="//whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="//whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="//whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="//whiskchat.com/static/img/smileys/tickedoff.png"><img src="//whiskchat.com/static/img/smileys/tongue.png"><img src="//whiskchat.com/static/img/smileys/wink.png"></span>'
                 });
                 return;
             }
@@ -1240,9 +1240,9 @@ io.sockets.on('connection', function(socket) {
             }
             if (chat.message.substr(0, 4) == "/btc") {
                 if (chat.message.substr(5, chat.message.length)) {
-                    return chatemit(socket, '<strong>BTC conversion of ' + chat.message.substr(5, chat.message.length) + '</strong>: <img src="http://btcticker.appspot.com/mtgox/' + chat.message.substr(5, chat.message.length) + '.png"></img>', chat.room);
+                    return chatemit(socket, '<strong>BTC conversion of ' + chat.message.substr(5, chat.message.length) + '</strong>: <img src="//btcticker.appspot.com/mtgox/' + chat.message.substr(5, chat.message.length) + '.png"></img>', chat.room);
                 }
-                return chatemit(socket, '<strong>BTC conversion of 1 BTC to USD: </strong> <img src="http://btcticker.appspot.com/mtgox/1btc.png"></img>', chat.room);
+                return chatemit(socket, '<strong>BTC conversion of 1 BTC to USD: </strong> <img src="//btcticker.appspot.com/mtgox/1btc.png"></img>', chat.room);
             }
             if (chat.message.substr(0, 3) == "/sc") {
                 if (socket.rep < 15) {
@@ -1294,7 +1294,7 @@ io.sockets.on('connection', function(socket) {
 			});
 		    }
 		}
-                return chatemit(socket, '<iframe width="400" height="225" src="http://www.youtube.com/embed/' + chat.yt + '" frameborder="0" allowfullscreen></iframe>', chat.room);
+                return chatemit(socket, '<iframe width="400" height="225" src="//www.youtube.com/embed/' + chat.yt + '" frameborder="0" allowfullscreen></iframe>', chat.room);
             }
             if (chat.message.substr(0, 3) == "/ma") {
                 if (socket.rank !== 'mod' && socket.rank !== 'admin') {
@@ -1420,20 +1420,20 @@ io.sockets.on('connection', function(socket) {
             if (parsedcode.length > 7) {
                 a = ' ';
             }
-            parsedcode = parsedcode.replace(a + ':\\', a + '<img src="http://whiskchat.com/static/img/smileys/eh.png">');
-            parsedcode = parsedcode.replace(a + '&gt;:(', a + '<img src="http://whiskchat.com/static/img/smileys/tickedoff.png">')
-            parsedcode = parsedcode.replace(a + ':)', a + '<img src="http://whiskchat.com/static/img/smileys/smile.png">')
-            parsedcode = parsedcode.replace(a + 'D:&lt;', a + '<img src="http://whiskchat.com/static/img/smileys/iamgoingtomurderyou.png">')
-            parsedcode = parsedcode.replace(a + ';)', a + '<img src="http://whiskchat.com/static/img/smileys/wink.png">')
-            parsedcode = parsedcode.replace(a + ':P', a + '<img src="http://whiskchat.com/static/img/smileys/tongue.png">')
-            parsedcode = parsedcode.replace(a + ':D', a + '<img src="http://whiskchat.com/static/img/smileys/Laughter.png">')
-            parsedcode = parsedcode.replace(a + ':(', a + '<img src="http://whiskchat.com/static/img/smileys/sad.png">')
-            parsedcode = parsedcode.replace(a + ':S', a + '<img src="http://whiskchat.com/static/img/smileys/Diamond.png">')
-            parsedcode = parsedcode.replace(a + '8-)', a + '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(a + '8)', a + '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(a + 'B-)', a + '<img src="http://whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(a + ':O', a + '<img src="http://whiskchat.com/static/img/smileys/supprised.png">')
-            parsedcode = parsedcode.replace(a + '-.-', a + '<img src="http://whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
+            parsedcode = parsedcode.replace(a + ':\\', a + '<img src="//whiskchat.com/static/img/smileys/eh.png">');
+            parsedcode = parsedcode.replace(a + '&gt;:(', a + '<img src="//whiskchat.com/static/img/smileys/tickedoff.png">')
+            parsedcode = parsedcode.replace(a + ':)', a + '<img src="//whiskchat.com/static/img/smileys/smile.png">')
+            parsedcode = parsedcode.replace(a + 'D:&lt;', a + '<img src="//whiskchat.com/static/img/smileys/iamgoingtomurderyou.png">')
+            parsedcode = parsedcode.replace(a + ';)', a + '<img src="//whiskchat.com/static/img/smileys/wink.png">')
+            parsedcode = parsedcode.replace(a + ':P', a + '<img src="//whiskchat.com/static/img/smileys/tongue.png">')
+            parsedcode = parsedcode.replace(a + ':D', a + '<img src="//whiskchat.com/static/img/smileys/Laughter.png">')
+            parsedcode = parsedcode.replace(a + ':(', a + '<img src="//whiskchat.com/static/img/smileys/sad.png">')
+            parsedcode = parsedcode.replace(a + ':S', a + '<img src="//whiskchat.com/static/img/smileys/Diamond.png">')
+            parsedcode = parsedcode.replace(a + '8-)', a + '<img src="//whiskchat.com/static/img/smileys/coolcat.png">')
+            parsedcode = parsedcode.replace(a + '8)', a + '<img src="//whiskchat.com/static/img/smileys/coolcat.png">')
+            parsedcode = parsedcode.replace(a + 'B-)', a + '<img src="//whiskchat.com/static/img/smileys/coolcat.png">')
+            parsedcode = parsedcode.replace(a + ':O', a + '<img src="//whiskchat.com/static/img/smileys/supprised.png">')
+            parsedcode = parsedcode.replace(a + '-.-', a + '<img src="//whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
             bbcode.parse(parsedcode, function(parsedcode) {
                 /* link links */
                 parsedcode = urlify(parsedcode);
