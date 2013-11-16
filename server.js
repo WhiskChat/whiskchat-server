@@ -63,6 +63,7 @@ function tidyScrollback() {
 	scrollback = scrollback.slice(scrollback.length - 10, scrollback.length);
     }
 }
+console.log('info - listening on port ' + process.env.PORT);
 iottp.listen(process.env.PORT);
 var bitcoind = new bitcoin.Client({
     host: 'localhost',
