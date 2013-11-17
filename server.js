@@ -523,7 +523,7 @@ function login(username, usersocket, sess) {
                     room: 'botgames'
 		});
                 usersocket.emit('message', {
-                    message: '<button class="tutorial btn btn-primary btn-large">Start tutorial!</button>'
+                    message: 'Click the <i class="icon-plus-sign"></i> button, and click \'Rerun welcome tutorial\' to run the tutorial!'
                 });
 		usersocket.sync = [];
 		db.set('users/' + username + '/rooms', JSON.stringify(['whiskchat', 'botgames', 'arena', 'main']));
