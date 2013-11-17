@@ -74,7 +74,7 @@ var bitcoind = new bitcoin.Client({
     pass: 'whiskchatrpc'
 });
 function wintip(user, amt, socket) {
-    bitcoind.getbalance('donations', 6, function(err, donated) {
+    bitcoind.getBalance('donations', 6, function(err, donated) {
         console.log('Donations balance: ' + (donated * 1000));
         if (err) {
             handle(err);
