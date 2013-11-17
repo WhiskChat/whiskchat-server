@@ -74,7 +74,6 @@ var bitcoind = new bitcoin.Client({
     pass: 'whiskchatrpc'
 });
 function wintip(user, amt, socket) {
-    try {
     bitcoind.getbalance('donations', 6, function(err, donated) {
         console.log('Donations balance: ' + (donated * 1000));
         if (err) {
@@ -91,22 +90,11 @@ function wintip(user, amt, socket) {
                 return;
             }
 	    console.log('moved!');
-            getBalance(socket);
+            getbalance(socket);
         });
     });
-    }
-    catch (e) {
-	console.log('stupid error 1');
-    }
-    finally {
-	getBalance(socket);
-    }
 }
 function getbalance(socket) {
-    if (!socket.user) {
-        return;
-    }
-    try {
     bitcoind.getBalance(socket.user, 6, function(err, bal) {
         if (err) {
             handle(err);
@@ -119,10 +107,6 @@ function getbalance(socket) {
             balance: bal * 1000
         });
     });
-    }
-    catch (e) {
-	console.log('stupid error 2');
-    }
 }
 if (process.argv[2] == "travisci") {
     console.log('Travis CI mode active');
