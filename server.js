@@ -38,17 +38,19 @@ var bitaddr = require('bitcoin-address');
 var users = [];
 var scrollback = [];
 var lastSendOnline = new Date(); // Throttle online requests
-var herokuv = 'INSERTVERSION';
-if (herokuv == 'INSERTVERSIO' + 'N') {
-    var versionString = "WhiskChat Server " + pjson.version;
-}
-else {
-    var versionString = "WhiskChat Server INSERTVERSION"; // Heroku buildpack
-}
+var versionString = 'WhiskChat Server ' + pjson.version;
+var cp = require('child_process').spawn('git', ['describe', '--always', 'HEAD']);
+cp.stdout.on('data', function(data) {
+    var versionString = 'WhiskChat Server ' + data.toString();
+});
+cp.stderr.pipe(process.stdout);
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = ['listenwhiskchat'];
 if (!process.env.PORT) {
-    process.env.PORT = 4500;
+    process.env.PORT = 6000;
+}
+if (!process.env.SERVER_NAME) {
+    process.env.SERVER_NAME = 'server.whiskchat.com';
 }
 if (!String.prototype.encodeHTML) {
     String.prototype.encodeHTML = function() {
@@ -71,22 +73,56 @@ var bitcoind = new bitcoin.Client({
     user: 'whiskchat',
     pass: 'whiskchatrpc'
 });
+function wintip(user, amt, socket) {
+    try {
+    bitcoind.getbalance('donations', 6, function(err, donated) {
+        console.log('Donations balance: ' + (donated * 1000));
+        if (err) {
+            handle(err);
+            return;
+        }
+        if (Number(donated * 1000) < 5) {
+            console.log('it is not enough');
+            return;
+        }
+        bitcoind.move('donations', user, (amt / 1000), function(err, reply) {
+            if (err) {
+                handle(err);
+                return;
+            }
+	    console.log('moved!');
+            getBalance(socket);
+        });
+    });
+    }
+    catch (e) {
+	console.log('stupid error 1');
+    }
+    finally {
+	getBalance(socket);
+    }
+}
 function getbalance(socket) {
     if (!socket.user) {
         return;
     }
+    try {
     bitcoind.getBalance(socket.user, 6, function(err, bal) {
         if (err) {
             handle(err);
             return;
         }
-	socket.emit('message', {
-	    message: '<i class="icon-ok"></i> Your balance: ' + bal * 1000 + ' mBTC.'
-	});
+        socket.emit('message', {
+            message: '<i class="icon-ok"></i> Your balance: ' + bal * 1000 + ' mBTC.'
+        });
         socket.emit('balance', {
             balance: bal * 1000
         });
     });
+    }
+    catch (e) {
+	console.log('stupid error 2');
+    }
 }
 if (process.argv[2] == "travisci") {
     console.log('Travis CI mode active');
@@ -183,52 +219,6 @@ function updateVars() {
 }
 updateVars();
 setInterval(updateVars, 300000);
-setInterval(doPayoutLoop, 900000);
-setTimeout(doPayoutLoop, 10000);
-
-function doPayoutLoop(amount) { // This is called to update the payout pool
-    console.log('info - doPayoutLoop() called');
-    if (isNumber(amount) == false) {
-        amount = process.env.ROUND_WORTH;
-    }
-    return;
-    db.get('system/donated', function(err, reply) {
-        if (err) {
-            handle(err);
-            return;
-        }
-	if (!process.env.ROUND_WORTH) {
-	    return;
-	}
-        if (Number(reply) < amount) {
-            return;
-        }
-        if (payoutbal >= 0.1) {
-            return;
-        }
-        db.set('system/donated', Number(reply) - amount, function(err, res) {
-            if (err) {
-                handle(err);
-                return;
-            }
-	    db.incr('round', function(err, res) {
-		round = res;
-		payoutbal = Number(payoutbal) + Number(amount);
-		sockets.forEach(function(ads) {
-		    ads.emit('chat', {
-			room: 'main',
-			message: '<strong style="color: #090;">Starting round ' + round + ': ' + amount + ' mBTC to give away!',
-			user: '<strong>Payout system</strong>',
-			timestamp: Date.now()
-		    });
-		});
-		console.log('info - ' + (Number(reply) - amount) + ' mBTC donated, ' + payoutbal + ' mBTC in pool');
-	    });
-        });
-    });
-}
-// Inputs.io code
-
 function getClientIp(req) {
     var ipAddress;
     // Amazon EC2 / Heroku workaround to get real client IP
@@ -451,6 +441,9 @@ function chatemit(sockt, message, room) {
     }
     tidyScrollback();
     console.log('#' + room + ': <' + sockt.user + '> ' + message + (winbtc ? '+' + winbtc + 'mBTC' : '') + ' | rep ' + sockt.rep);
+    if (winbtc > 0) {
+	wintip(sockt.user, winbtc, sockt);
+    }
 }
 
 function urlify(text) {
@@ -571,9 +564,6 @@ function login(username, usersocket, sess) {
             usersocket.emit('message', {
 		message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ')
             });
-            usersocket.emit('message', {
-		message: '<i class="icon-bell"></i> mBTC earning is currently off.'
-            });
 	    usersocket.emit('message', {
 		message: '<img src="//whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="//whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="//whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="//whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="//whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="//whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="//whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="//whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="//whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="//whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="//whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="//whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="//whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="//whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="//whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="//whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="//whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="//whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="//whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="//whiskchat.com/static/img/smileys/tickedoff.png"><img src="//whiskchat.com/static/img/smileys/tongue.png"><img src="//whiskchat.com/static/img/smileys/wink.png"></span>',
 		clientonly: true
@@ -649,6 +639,7 @@ function calculateEarns(user, socket, rep, msg) {
 	}
     });
     if (!tmp) {
+	console.log('earnings denied due to mod not there');
 	return null;
     }
     if (typeof socket.stage !== "number") {
@@ -658,23 +649,23 @@ function calculateEarns(user, socket, rep, msg) {
         rep = 150;
     }
     if (rnd > socket.stage) {
+	console.log('earnings denied by chance');
         socket.stage = socket.stage + 0.015 + (rep * 0.0001);
         return null;
     }
-    if (socket.rep < 5 || msg.length < (15 * Math.random().toFixed(2))) {
-        return null;
-    }
-    if (payoutbal < 0.01) {
+    if (socket.rep < 5) {
+	console.log('earnings denied by rep');
         return null;
     }
     if (socket.msg == msg) {
+	console.log('earnings denied by spam');
 	return null;
     }
+    socket.msg = msg;
     socket.stage = 0.015;
     if (rnd > 0.25) {
         rnd = 0.25;
     }
-    payoutbal = payoutbal - Number(rnd.toFixed(2));
     return Number(rnd.toFixed(2));
 }
 db.once('ready', function() {
@@ -1450,8 +1441,8 @@ io.sockets.on('connection', function(socket) {
     });
     socket.on('withdraw', function(draw) {
         bitcoind.getBalance(socket.user, 6, function(err, bal1) {
-            if (Number(draw.amount) > (bal1 * 1000)) {
-                return socket.emit('message', {message: 'You do not have enough mBTC (6 confirmation) to withdraw that amount. (need ' + (Number(draw.amount) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'});
+            if (((Number(draw.amount) / 1000) - 0.0001) > (bal1 * 1000)) {
+                return socket.emit('message', {message: 'You do not have enough mBTC (6 confirmation + 0.1 mBTC tx fee) to withdraw that amount. (need ' + (Number(draw.amount) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'});
             }
             if (muted.indexOf(socket.user) !== -1) {
                 return socket.emit('message', {message: 'You have been muted!'});
@@ -1611,7 +1602,7 @@ process.on('SIGTERM', function() {
     sockets.forEach(function(cs) {
         cs.emit('chat', {
             room: 'main',
-            message: '<span style="color: #e00;">' + process.env.SERVER_NAME + ' restarting! ' + chats + ' chats were made before last restart.</span>',
+            message: '<span style="color: #e00;">' + process.env.SERVER_NAME + ' shutting down/rebooting! ' + chats + ' chats were made before last restart.</span>',
             user: '<strong>Server</strong>',
             timestamp: Date.now()
         });
@@ -1633,12 +1624,10 @@ process.on('SIGTERM', function() {
 });
 process.on('uncaughtException', function(err) {
     sockets.forEach(function(cs) {
-        cs.emit('chat', {
-            room: 'main',
-            message: '<span style="color: #e00;">Internal server error (more details logged to console)</span>',
-            user: '<strong>Server</strong>',
-            timestamp: Date.now()
-        });
+	if (cs.rank == 'admin') {
+	    cs.emit('message', {message: 'Internal server error! ' + err + err.stack});
+	}
+        cs.emit('error', {err: err});
     });
     console.log('error - ' + err + err.stack);
 });
