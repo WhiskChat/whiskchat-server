@@ -511,9 +511,6 @@ function login(username, usersocket, sess) {
                     message: 'Welcome to WhiskChat!'
 		});
 		usersocket.emit('message', {
-                    message: 'Need help getting started? We have a guide: <a href="//bit.cur.lv/whiskchat">bit.cur.lv/whiskchat</a>'
-		});
-		usersocket.emit('message', {
                     message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ') + ' - say hi!'
 		});
 		usersocket.emit('message', {
@@ -525,6 +522,9 @@ function login(username, usersocket, sess) {
 		usersocket.emit('joinroom', {
                     room: 'botgames'
 		});
+                usersocket.emit('message', {
+                    message: '<button class="tutorial btn btn-primary btn-large">Start tutorial!</button>'
+                });
 		usersocket.sync = [];
 		db.set('users/' + username + '/rooms', JSON.stringify(['whiskchat', 'botgames', 'arena', 'main']));
 		return;
