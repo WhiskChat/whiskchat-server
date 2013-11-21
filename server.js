@@ -219,97 +219,10 @@ function getClientIp(req) {
     }
     return ipAddress;
 }
-app.post('/travisci', function(req, res) {
-    var data = '';
-    console.log('info - got Travis request from IP ' + getClientIp(req));
-    req.on("data", function(chunk) {
-        data += chunk;
-    });
-    req.on("end", function() {
-        var payload = JSON.parse(decodeURIComponent(querystring.unescape(data.slice(8))));
-        sockets.forEach(function(sock) {
-            if (typeof payload.status != 'number') {
-                payload.status = 10;
-            }
-            if (payload.status == 0) {
-                sock.emit('chat', {
-                    room: 'main',
-                    message: '<center><strong><i class="icon-ok-sign"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message.replace(/\+/g, " ")) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(' + payload.status + ')</span></strong></center>',
-                    user: 'Travis CI',
-                    timestamp: Date.now()
-                });
-            } else {
-                if (payload.status == 1 && payload.status_message !== "Pending") {
-                    sock.emit('chat', {
-                        room: 'main',
-                        message: '<center><strong><i class="icon-exclamation-sign"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message.replace(/\+/g, " ")) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(' + payload.status + ')</span></strong></center>',
-                        user: 'Travis CI',
-                        timestamp: Date.now()
-                    });
-                } else {
-                    sock.emit('chat', {
-                        room: 'main',
-                        message: '<center><strong><i class="icon-wrench"></i> Build ' + stripHTML(payload.number) + ': ' + stripHTML(payload.status_message.replace(/\+/g, " ")) + ' at commit ' + stripHTML(payload.commit.substr(0, 6)) + ' on ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.branch) + ' <span class="time muted">(' + payload.status + ')</span></strong></center>',
-                        user: 'Travis CI',
-                        timestamp: Date.now()
-                    });
-                }
-            }
-        });
-        res.writeHead(200);
-        res.end();
-    });
-});
 app.get('/', function(req, res) {
     console.log('info - got web server GET / from IP ' + getClientIp(req));
     res.writeHead(200);
     res.end(versionString + ' is up and running! Connect at whiskchat.com.');
-});
-app.post('/github', function(req, res) {
-    var data = '';
-    console.log('info - got GitHub request from IP ' + getClientIp(req));
-    req.on("data", function(chunk) {
-        data += chunk;
-    });
-    req.on("end", function() {
-        var payload = JSON.parse(querystring.unescape(data.slice(8)));
-        sockets.forEach(function(sock) {
-            try {
-                if (payload.commits.length < 1) {
-                    sock.emit('chat', {
-                        room: 'main',
-                        message: '<center><strong><i class="icon-hdd"></i> Rebase to ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>',
-                        user: 'GitHub',
-                        timestamp: Date.now()
-                    });
-                } else {
-                    sock.emit('chat', {
-                        room: 'main',
-                        message: '<center><strong><i class="icon-hdd"></i> ' + stripHTML(payload.commits[0].author.username) + ': Commit ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>',
-                        user: 'GitHub',
-                        timestamp: Date.now()
-                    });
-                }
-            } catch (e) {
-                try {
-                    sock.emit('chat', {
-                        room: 'main',
-                        message: '<center><strong><i class="icon-hdd"></i> ' + stripHTML(payload.commits[0].author.username) + ': Commit ' + stripHTML(payload.after.substr(0, 6)) + ' @ ' + stripHTML(payload.repository.name) + '#' + stripHTML(payload.ref.split('/').pop()) + ' (' + stripHTML(decodeURIComponent(payload.commits[0].message).replace(/\+/g, " ")) + ')</strong></center>',
-                        user: 'GitHub',
-                        timestamp: Date.now()
-                    });
-                } catch (e) {
-                    console.log('Failed to notify GitHub sockets')
-                }
-            }
-        });
-        res.writeHead(200);
-        res.end();
-    });
-});
-app.get('/inputs', function(req, resp) {
-    resp.writeHead(200);
-    resp.end('Inputs is dead. For more information, see their main site.');
 });
 
 
