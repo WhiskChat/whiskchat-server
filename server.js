@@ -595,8 +595,8 @@ setInterval(function() {
             sockets.forEach(function(ads) {
                 ads.emit('chat', {
                     room: 'main',
-                    message: 'Please donate to keep the servers up! ' + (Number(res) * 1000).toFixed(2) + ' mBTC (<img src="//btcticker.appspot.com/mtgox/' + res + 'btc2usd.png"></img> of $9 goal) has been donated. Donate by sending BTC to: 1AQwd4vtKMSuBMEA2s2GQmmNZdWLm2sdkE or <code>/tip donations [amount]</code>. Thanks!',
-                    user: '<strong>Payout system</strong>',
+                    message: '<strong style="color: #090;">Please donate!</strong> Donations are used to give away free mBTC, and host servers. ' + (Number(res) * 1000).toFixed(2) + ' mBTC has been donated. Donate by sending BTC to 1AQwd4vtKMSuBMEA2s2GQmmNZdWLm2sdkE or <code>/tip donations [amount]</code>. Thanks!',
+                    user: '<strong>Donate!</strong>',
                     timestamp: Date.now()
                 });
             });
@@ -1252,6 +1252,9 @@ io.sockets.on('connection', function(socket) {
                 var rString = randomString(6, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
 		db.sadd('invites', rString, function(err, res) {
 		    socket.emit('message', {message: 'Generated invite code: ' + rString});
+		    socket.emit('message', {message: 'Remember: An invite code is an instant whitelist.'});
+		    socket.emit('message', {message: 'Don\'t batch-generate invites, please - do it case by case.'});
+		    socket.emit('message', {message: 'kthxbai! -whiskers75'});
 		});
 		return;
             }
@@ -1351,8 +1354,7 @@ io.sockets.on('connection', function(socket) {
             socket.emit('message', {message: '<i class="icon-signal"></i> Withdrawing ' + ((Number(draw.amount) / 1000) - 0.0001) + ' (with 0.1 mBTC tx fee) BTC to ' + draw.address + '...'});
             bitcoind.sendFrom(socket.user, draw.address, (Number(draw.amount) / 1000) - 0.0001, function(err, res) {
                 if (err) {
-		    socket.emit('message', {message: '<i class="icon-minus-sign"></i> Error: ' + err});
-                    handle(err);
+		    socket.emit('message', {message: '<i class="icon-minus-sign"></i> ' + err});
                     return;
                 }
 		socket.emit('message', {message: '<i class="icon-ok"></i> Withdrawal of ' + draw.amount + ' BTC to ' + draw.address + ' complete.'});
@@ -1422,7 +1424,7 @@ io.sockets.on('connection', function(socket) {
 			return;
 		    }
 		    if (tip.user == 'donations') {
-			tip.user == 'the WhiskChat Server Donation Pool (thanks!)'
+			tip.user = 'the WhiskChat Server Donation Pool (thanks!)'
 		    }
                     db.publish('tips', JSON.stringify({room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: stripHTML(tip.message), user: socket.user}));
 		    sockets.forEach(function(cs) {
