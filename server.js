@@ -114,16 +114,16 @@ function wintip(user, amt, socket) {
             handle(err);
             return;
         }
-        if (Number(donated * 1000) < 5) {
+        if (Number(donated * 1000) < 10) {
+            socket.emit('message', {
+                message: '<i class="icon-minus-sign"></i> The donation pool is not filled up enough to pay out!'
+            });
+            socket.emit('message', {
+                message: 'Please donate with <code>/tip donations [amount]</code>. Thank you!'
+            });
             console.log('it is not enough');
             return;
         }
-        socket.emit('message', {
-            message: '<i class="icon-minus-sign"></i> The donation pool is not filled up enough to pay out!'
-        });
-        socket.emit('message', {
-            message: 'Please donate with <code>/tip donations [amount]</code>. Thank you!'
-        });
         bitcoind.move('donations', user, (amt / 1000), function (err, reply) {
             if (err) {
                 handle(err);
