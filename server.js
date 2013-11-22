@@ -41,7 +41,7 @@ var scrollback = [];
 var lastSendOnline = new Date(); // Throttle online requests
 var versionString = 'WhiskChat Server ' + pjson.version;
 var cp = require('child_process').spawn('git', ['describe', '--always', 'HEAD']);
-cp.stdout.on('data', function(data) {
+cp.stdout.on('data', function (data) {
     var versionString = 'WhiskChat Server ' + data.toString();
 });
 cp.stderr.pipe(process.stdout);
@@ -54,19 +54,23 @@ if (!process.env.SERVER_NAME) {
     process.env.SERVER_NAME = 'server.whiskchat.com';
 }
 if (!String.prototype.encodeHTML) {
-    String.prototype.encodeHTML = function() {
+    String.prototype.encodeHTML = function () {
         return this.replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;');
     };
 }
+
 function tidyScrollback() {
     if (scrollback.length > 10) {
-	scrollback = scrollback.slice(scrollback.length - 10, scrollback.length);
+        scrollback = scrollback.slice(scrollback.length - 10, scrollback.length);
     }
 }
-winston.add(winston.transports.File, {filename: 'chat.log'});
+winston.add(winston.transports.File, {
+    filename: 'chat.log',
+    json: false
+});
 console.log('info - listening on port ' + process.env.PORT);
 iottp.listen(process.env.PORT);
 var bitcoind = new bitcoin.Client({
@@ -75,8 +79,36 @@ var bitcoind = new bitcoin.Client({
     user: 'whiskchat',
     pass: 'whiskchatrpc'
 });
+
+function makeBBCode(chat, callback) {
+    chat = stripHTML(chat);
+    var parsedcode = chat;
+    var a = '';
+    if (parsedcode.length > 7) {
+        a = ' ';
+    }
+    parsedcode = parsedcode.replace(a + ':\\', a + '<img src="//whiskchat.com/static/img/smileys/eh.png">');
+    parsedcode = parsedcode.replace(a + '&gt;:(', a + '<img src="//whiskchat.com/static/img/smileys/tickedoff.png">');
+    parsedcode = parsedcode.replace(a + ':)', a + '<img src="//whiskchat.com/static/img/smileys/smile.png">');
+    parsedcode = parsedcode.replace(a + 'D:&lt;', a + '<img src="//whiskchat.com/static/img/smileys/iamgoingtomurderyou.png">');
+    parsedcode = parsedcode.replace(a + ';)', a + '<img src="//whiskchat.com/static/img/smileys/wink.png">');
+    parsedcode = parsedcode.replace(a + ':P', a + '<img src="//whiskchat.com/static/img/smileys/tongue.png">');
+    parsedcode = parsedcode.replace(a + ':D', a + '<img src="//whiskchat.com/static/img/smileys/Laughter.png">');
+    parsedcode = parsedcode.replace(a + ':(', a + '<img src="//whiskchat.com/static/img/smileys/sad.png">');
+    parsedcode = parsedcode.replace(a + ':S', a + '<img src="//whiskchat.com/static/img/smileys/Diamond.png">');
+    parsedcode = parsedcode.replace(a + '8-)', a + '<img src="//whiskchat.com/static/img/smileys/coolcat.png">');
+    parsedcode = parsedcode.replace(a + '8)', a + '<img src="//whiskchat.com/static/img/smileys/coolcat.png">');
+    parsedcode = parsedcode.replace(a + 'B-)', a + '<img src="//whiskchat.com/static/img/smileys/coolcat.png">');
+    parsedcode = parsedcode.replace(a + ':O', a + '<img src="//whiskchat.com/static/img/smileys/supprised.png">');
+    parsedcode = parsedcode.replace(a + '-.-', a + '<img src="//whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">');
+    bbcode.parse(parsedcode, function (parsedcode) {
+        parsedcode = urlify(parsedcode);
+        callback(parsedcode);
+    });
+}
+
 function wintip(user, amt, socket) {
-    bitcoind.getBalance('donations', 6, function(err, donated) {
+    bitcoind.getBalance('donations', 6, function (err, donated) {
         console.log('Donations balance: ' + (donated * 1000));
         if (err) {
             handle(err);
@@ -86,20 +118,25 @@ function wintip(user, amt, socket) {
             console.log('it is not enough');
             return;
         }
-	socket.emit('message', {message: '<i class="icon-minus-sign"></i> The donation pool is not filled up enough to pay out!'});
-	socket.emit('message', {message: 'Please donate with <code>/tip donations [amount]</code>. Thank you!'});
-        bitcoind.move('donations', user, (amt / 1000), function(err, reply) {
+        socket.emit('message', {
+            message: '<i class="icon-minus-sign"></i> The donation pool is not filled up enough to pay out!'
+        });
+        socket.emit('message', {
+            message: 'Please donate with <code>/tip donations [amount]</code>. Thank you!'
+        });
+        bitcoind.move('donations', user, (amt / 1000), function (err, reply) {
             if (err) {
                 handle(err);
                 return;
             }
-	    console.log('moved!');
+            console.log('moved!');
             getbalance(socket);
         });
     });
 }
+
 function getbalance(socket) {
-    bitcoind.getBalance(socket.user, 6, function(err, bal) {
+    bitcoind.getBalance(socket.user, 6, function (err, bal) {
         if (err) {
             handle(err);
             return;
@@ -114,12 +151,12 @@ function getbalance(socket) {
 }
 if (process.argv[2] == "travisci") {
     console.log('Travis CI mode active');
-    setTimeout(function() {
+    setTimeout(function () {
         console.log('Auto-quitting after 10 seconds');
         process.exit(0);
     }, 10000);
 }
-io.configure(function() {
+io.configure(function () {
     io.set('log level', 1);
     io.set('trust proxy', true);
     io.set("transports", ["xhr-polling", "jsonp-polling"]);
@@ -128,12 +165,13 @@ console.log('info - WhiskChat Server starting');
 console.log('info - Starting DB');
 var db = redis.createClient();
 var db2 = redis.createClient();
-db.on('error', function(err) {
+db.on('error', function (err) {
     console.log('error - DB error: ' + err);
 });
-db2.on('error', function(err) {
+db2.on('error', function (err) {
     console.log('error - DB error: ' + err);
 });
+
 function stripHTML(html) { // Prevent XSS
     if (!html) {
         return '';
@@ -145,68 +183,73 @@ function stripHTML(html) { // Prevent XSS
 function isNumber(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
+
 function addUser(user, version, socket) {
-    db.smembers('online', function(err, res) {
-	if (res.indexOf(user) == -1) {
-	    db.sadd('online', user);
-	    emitOnline();
-	}
+    db.smembers('online', function (err, res) {
+        if (res.indexOf(user) == -1) {
+            db.sadd('online', user);
+            emitOnline();
+        }
     });
 }
+
 function deleteUser(user) {
-    db.smembers('online', function(err, res) {
-	if (res.indexOf(user) !== -1) {
-	    db.srem('online', user);
-	    emitOnline();
-	}
+    db.smembers('online', function (err, res) {
+        if (res.indexOf(user) !== -1) {
+            db.srem('online', user);
+            emitOnline();
+        }
     });
 }
+
 function userOnline(user, callback) {
-    db.smembers('online', function(err, res) {
-	if (res.indexOf(user) !== -1) {
-	    callback(true);
-	}
-	else {
-	    callback(false);
-	}
+    db.smembers('online', function (err, res) {
+        if (res.indexOf(user) !== -1) {
+            callback(true);
+        } else {
+            callback(false);
+        }
     });
 }
+
 function getUserArray(cb) {
-    db.smembers('online', function(err, res) {
-	cb(res);
+    db.smembers('online', function (err, res) {
+        cb(res);
     });
 }
+
 function emitOnline(socket) {
-    db.smembers('online', function(err, res) {
-	if (!socket) {
-	    io.sockets.emit('online', {
-		online: res.length,
-		people: res.length,
-		array: res
-	    });
-	}
-	else {
-	    socket.emit('online', {
-		online: res.length,
-		people: res.length,
-		array: res
-	    });
-	}
+    db.smembers('online', function (err, res) {
+        if (!socket) {
+            io.sockets.emit('online', {
+                online: res.length,
+                people: res.length,
+                array: res
+            });
+        } else {
+            socket.emit('online', {
+                online: res.length,
+                people: res.length,
+                array: res
+            });
+        }
     });
 }
 // DB UPDATED DEFINES
 var earnrooms = ['main'];
+
 function updateVars() {
-    db.smembers('earnrooms', function(err, res) {
-	if (err) {
-	    handle(err);
-	    return;
-	}
-	earnrooms = res;
+    db.smembers('earnrooms', function (err, res) {
+        if (err) {
+            handle(err);
+            return;
+        }
+        earnrooms = res;
     });
 }
 updateVars();
 setInterval(updateVars, 300000);
+
 function getClientIp(req) {
     var ipAddress;
     // Amazon EC2 / Heroku workaround to get real client IP
@@ -223,60 +266,60 @@ function getClientIp(req) {
     }
     return ipAddress;
 }
-app.get('/', function(req, res) {
+app.get('/', function (req, res) {
     console.log('info - got web server GET / from IP ' + getClientIp(req));
     res.writeHead(200);
     res.end(versionString + ' is up and running! Connect at whiskchat.com.');
 });
 
 
-db2.on('message', function(channel, message) {
+db2.on('message', function (channel, message) {
     if (channel == 'whiskchat') {
-	var obj = JSON.parse(message);
-	if (muted.indexOf(obj.user) !== -1) {
-	    return;
-	}
-	sockets.forEach(function(sock) {
+        var obj = JSON.parse(message);
+        if (muted.indexOf(obj.user) !== -1) {
+            return;
+        }
+        sockets.forEach(function (sock) {
             if (!sock.authed) {
-		return;
+                return;
             }
             if (!obj.room) {
-		obj.room = "main";
+                obj.room = "main";
             }
             if (obj.room == "modsprivate" && sock.rank !== "mod" && sock.rank !== "admin") {
-		return; // Mods only!
+                return; // Mods only!
             }
-            
+
             sock.emit('chat', {
-		room: obj.room,
-		message: obj.message,
-		user: obj.user,
-		timestamp: Date.now(),
-		userShow: obj.userShow,
-		winbtc: obj.winbtc,
-		rep: obj.rep
-            });  
-	});
+                room: obj.room,
+                message: obj.message,
+                user: obj.user,
+                timestamp: Date.now(),
+                userShow: obj.userShow,
+                winbtc: obj.winbtc,
+                rep: obj.rep
+            });
+        });
     }
     if (channel == 'tips') {
         var tip = JSON.parse(message);
-	sockets.forEach(function(cs) {
+        sockets.forEach(function (cs) {
             cs.emit('tip', {
-		room: tip.room,
-		target: tip.target,
-		amount: tip.amount,
-		message: tip.message,
-		rep: tip.rep,
-		user: tip.user,
-		timestamp: Date.now()
+                room: tip.room,
+                target: tip.target,
+                amount: tip.amount,
+                message: tip.message,
+                rep: tip.rep,
+                user: tip.user,
+                timestamp: Date.now()
             });
-	});
+        });
     }
     if (channel == 'pms') {
-	var pm = JSON.parse(message);
-        bbcode.parse(pm.msg, function(msg) {
+        var pm = JSON.parse(message);
+        bbcode.parse(pm.msg, function (msg) {
             var foundUser = false; // Was the target user found? 
-            sockets.forEach(function(sock) {
+            sockets.forEach(function (sock) {
                 if (foundUser) {
                     return;
                 }
@@ -290,12 +333,12 @@ db2.on('message', function(channel, message) {
                     foundUser = true;
                 }
             });
-            return;	    
+            return;
         });
     }
     if (channel == 'mutes') {
-	var mute = JSON.parse(message);
-        sockets.forEach(function(cs) {
+        var mute = JSON.parse(message);
+        sockets.forEach(function (cs) {
             cs.emit('chat', {
                 room: 'main',
                 message: '<span style="color: #e00">' + stripHTML(mute.target) + ' has been muted by ' + stripHTML(mute.user) + ' for ' + mute.mute + ' seconds! Reason: ' + stripHTML(mute.reason) + '</span>',
@@ -304,12 +347,12 @@ db2.on('message', function(channel, message) {
             });
         });
         if (muted.indexOf(mute.target) == -1) {
-	    muted.push(mute.target);
-	}
-        setTimeout(function() {
+            muted.push(mute.target);
+        }
+        setTimeout(function () {
             if (muted.indexOf(mute.target) !== -1) {
                 muted.splice(muted.indexOf(mute.target), 1);
-                sockets.forEach(function(cs) {
+                sockets.forEach(function (cs) {
                     cs.emit('chat', {
                         room: 'main',
                         message: '<span style="color: #090">' + stripHTML(mute.target) + '\'s mute expired!</span>',
@@ -321,15 +364,23 @@ db2.on('message', function(channel, message) {
         }, mute.mute * 1000);
     }
 });
+
 function chatemit(sockt, message, room) {
     var winbtc = null;
     if (earnrooms.indexOf(room) !== -1) {
         winbtc = calculateEarns(sockt.user, sockt, 0, message);
     }
-    db.publish('whiskchat', JSON.stringify({room: room, message: message, user: sockt.user, userShow: sockt.pretag + sockt.user + sockt.tag, winbtc: winbtc, rep: sockt.rep}));
+    db.publish('whiskchat', JSON.stringify({
+        room: room,
+        message: message,
+        user: sockt.user,
+        userShow: sockt.pretag + sockt.user + sockt.tag,
+        winbtc: winbtc,
+        rep: sockt.rep
+    }));
     sockt.msg = message;
     if (message.substr(0, 2) !== '!;') {
-	scrollback.push({
+        scrollback.push({
             room: room,
             message: message,
             user: sockt.user,
@@ -338,12 +389,12 @@ function chatemit(sockt, message, room) {
             winbtc: winbtc,
             rep: sockt.rep,
             scrollback: true
-	});
+        });
     }
     tidyScrollback();
     winston.info('<' + sockt.user + '> ' + message + (winbtc ? ' [+' + winbtc + ' mBTC]' : '') + ' [rep: ' + sockt.rep + ']' + ' [room: ' + room + ']');
     if (winbtc > 0) {
-	wintip(sockt.user, winbtc, sockt);
+        wintip(sockt.user, winbtc, sockt);
     }
 }
 
@@ -351,19 +402,19 @@ function urlify(text) {
     if (text.indexOf('<') !== -1) {
         // The BBCode parser has made HTML from this, so we don't touch it
         return text;
-    }    
+    }
     var urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, function(url) {
+    return text.replace(urlRegex, function (url) {
         return '<a target="_blank" href="' + url.replace('"', '') + '">' + url + '</a>';
     });
 }
 
 function login(username, usersocket, sess) {
     console.log(username + ' logging in from IP ' + usersocket.handshake.address.address);
-    db.get('users/' + username + '/session', function(err, res) {
-	if (res) {
-	    db.hdel('sessions', res);
-	}
+    db.get('users/' + username + '/session', function (err, res) {
+        if (res) {
+            db.hdel('sessions', res);
+        }
     });
     sess = crypto.randomBytes(64).toString();
     emitOnline();
@@ -378,8 +429,8 @@ function login(username, usersocket, sess) {
             username: username,
             session: sess
         });
-	db.hset('sessions', sess, username);
-	db.set('users/' + username + '/session', sess);
+        db.hset('sessions', sess, username);
+        db.set('users/' + username + '/session', sess);
     } else {
         usersocket.emit('loggedin', {
             username: username
@@ -389,7 +440,7 @@ function login(username, usersocket, sess) {
         room: '--connectedmsg'
     }); // For whiskchat-client's Connected header
     usersocket.user = username;
-    db.get('users/' + username + '/rep', function(err, rep) {
+    db.get('users/' + username + '/rep', function (err, rep) {
         usersocket.emit('whitelist', {
             whitelisted: Number(Number(rep).toFixed(2))
         });
@@ -404,85 +455,85 @@ function login(username, usersocket, sess) {
             });
         }
     });
-    db.get('users/' + username + '/tag', function(err, reply) {
+    db.get('users/' + username + '/tag', function (err, reply) {
         if (reply) {
             usersocket.tag = reply;
         }
     });
-    db.get('users/' + username + '/pretag', function(err, reply) {
+    db.get('users/' + username + '/pretag', function (err, reply) {
         if (reply) {
             usersocket.pretag = reply;
         }
     });
-    db.get('users/' + username + '/rank', function(err, reply) {
+    db.get('users/' + username + '/rank', function (err, reply) {
         if (reply) {
             usersocket.rank = reply;
         }
     });
-    getUserArray(function(users) {
-	var tmp = false;
-	
-	db.get('users/' + username + '/rooms', function(err, reply) {
+    getUserArray(function (users) {
+        var tmp = false;
+
+        db.get('users/' + username + '/rooms', function (err, reply) {
             if (!reply) {
-		usersocket.emit('message', {
+                usersocket.emit('message', {
                     message: 'Welcome to WhiskChat!'
-		});
-		usersocket.emit('message', {
+                });
+                usersocket.emit('message', {
                     message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ') + ' - say hi!'
-		});
-		usersocket.emit('message', {
+                });
+                usersocket.emit('message', {
                     message: '<i class="icon-bell"></i> Payout stats: Round ' + round + '. ' + payoutbal.toFixed(2) + 'mBTC available to earn once you get 5 reputation from a moderator.'
-		});
-		usersocket.emit('joinroom', {
+                });
+                usersocket.emit('joinroom', {
                     room: 'whiskchat'
-		});
-		usersocket.emit('joinroom', {
+                });
+                usersocket.emit('joinroom', {
                     room: 'botgames'
-		});
+                });
                 usersocket.emit('message', {
                     message: 'Click the <i class="icon-plus-sign"></i> button, and click \'Rerun welcome tutorial\' to run the tutorial!'
                 });
-		usersocket.sync = [];
-		db.set('users/' + username + '/rooms', JSON.stringify(['whiskchat', 'botgames', 'arena', 'main']));
-		return;
+                usersocket.sync = [];
+                db.set('users/' + username + '/rooms', JSON.stringify(['whiskchat', 'botgames', 'arena', 'main']));
+                return;
             }
             usersocket.sync = [];
-            JSON.parse(reply).forEach(function(rm) {
-		usersocket.emit('joinroom', {
+            JSON.parse(reply).forEach(function (rm) {
+                usersocket.emit('joinroom', {
                     room: rm
-		});
-		usersocket.sync.push(rm);
+                });
+                usersocket.sync.push(rm);
             });
             usersocket.emit('message', {
-		message: '<i class="icon-certificate"></i> Welcome back to the WhiskChat Network!'
+                message: '<i class="icon-certificate"></i> Welcome back to the WhiskChat Network!'
             });
             usersocket.emit('message', {
-		message: '<i class="icon-signal"></i> You are connected to ' + process.env.SERVER_NAME + '!'
+                message: '<i class="icon-signal"></i> You are connected to ' + process.env.SERVER_NAME + '!'
             });
             usersocket.emit('message', {
-		message: '<i class="icon-ok-sign"></i> Your rooms: ' + JSON.parse(reply).join(', ')
+                message: '<i class="icon-ok-sign"></i> Your rooms: ' + JSON.parse(reply).join(', ')
             });
             usersocket.emit('message', {
-		message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ')
+                message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ')
             });
-	    usersocket.emit('message', {
-		message: '<img src="//whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="//whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="//whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="//whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="//whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="//whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="//whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="//whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="//whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="//whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="//whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="//whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="//whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="//whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="//whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="//whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="//whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="//whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="//whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="//whiskchat.com/static/img/smileys/tickedoff.png"><img src="//whiskchat.com/static/img/smileys/tongue.png"><img src="//whiskchat.com/static/img/smileys/wink.png"></span>',
-		clientonly: true
-	    });
+            usersocket.emit('message', {
+                message: '<img src="//whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="//whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="//whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="//whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="//whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="//whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="//whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="//whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="//whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="//whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="//whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="//whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="//whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="//whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="//whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="//whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="//whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="//whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="//whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="//whiskchat.com/static/img/smileys/tickedoff.png"><img src="//whiskchat.com/static/img/smileys/tongue.png"><img src="//whiskchat.com/static/img/smileys/wink.png"></span>',
+                clientonly: true
+            });
             usersocket.emit('message', {
                 message: '<i class="icon-ok"></i> Attributions: <a href="//coinchat.org">CoinChat</a> (concept, client codebase) - <a href="//glyphicons.com/">Glyphicons</a> (icons)'
             });
-	});
+        });
     });
     getbalance(usersocket);
     usersocket.version = 'Connected';
     usersocket.quitmsg = 'Disconnected from server';
     usersocket.authed = true;
-    scrollback.forEach(function(chat) {
-	usersocket.emit('chat', chat);
+    scrollback.forEach(function (chat) {
+        usersocket.emit('chat', chat);
     });
-    setTimeout(function() {
-	addUser(username, usersocket.version, usersocket);
+    setTimeout(function () {
+        addUser(username, usersocket.version, usersocket);
         if (muted.indexOf(username) !== -1) {
             return;
         }
@@ -495,25 +546,24 @@ function login(username, usersocket, sess) {
         if (usersocket.rank == 'mod' || usersocket.rank == 'admin') {
             modsonline++;
         }
-	emitOnline(usersocket);
-	try {
+        emitOnline(usersocket);
+        try {
             console.log(username + ' logged in from IP ' + usersocket.handshake.address.address);
-	}
-	catch(e) {
+        } catch (e) {
             usersocket.emit('message', {
                 message: '<i class="icon-ban-circle"></i> Your connection does not provide an IP address. Timing out in 2 seconds...'
             });
-	    setTimeout(function() {
-		usersocket.disconnect();
-	    }, 2000);
-	}
+            setTimeout(function () {
+                usersocket.disconnect();
+            }, 2000);
+        }
     }, 2000);
 }
 
 function handle(err) {
     console.log('error - ' + err.stack);
     try {
-        sockets.forEach(function(socket) {
+        sockets.forEach(function (socket) {
             socket.emit({
                 room: 'main',
                 message: '<span style="color: #e00">Code-based server error (more details logged to dev console)</span>',
@@ -534,14 +584,14 @@ function calculateEarns(user, socket, rep, msg) {
     rep = socket.rep;
     var rnd = Math.random();
     var tmp = false;
-    sockets.forEach(function(socket) {
-	if (socket.rank == 'mod' || socket.rank == 'admin') {
-	    tmp = true;
-	}
+    sockets.forEach(function (socket) {
+        if (socket.rank == 'mod' || socket.rank == 'admin') {
+            tmp = true;
+        }
     });
     if (!tmp) {
-	console.log('earnings denied due to mod not there');
-	return null;
+        console.log('earnings denied due to mod not there');
+        return null;
     }
     if (typeof socket.stage !== "number") {
         socket.stage = 0.015;
@@ -550,17 +600,17 @@ function calculateEarns(user, socket, rep, msg) {
         rep = 150;
     }
     if (rnd > socket.stage) {
-	console.log('earnings denied by chance');
+        console.log('earnings denied by chance');
         socket.stage = socket.stage + 0.015 + (rep * 0.0001);
         return null;
     }
     if (socket.rep < 5) {
-	console.log('earnings denied by rep');
+        console.log('earnings denied by rep');
         return null;
     }
     if (socket.msg == msg) {
-	console.log('earnings denied by spam');
-	return null;
+        console.log('earnings denied by spam');
+        return null;
     }
     socket.msg = msg;
     socket.stage = 0.015;
@@ -569,20 +619,20 @@ function calculateEarns(user, socket, rep, msg) {
     }
     return Number(rnd.toFixed(2));
 }
-db.once('ready', function() {
+db.once('ready', function () {
     console.log('info - DB connected');
 });
-db2.on('ready', function() {
+db2.on('ready', function () {
     console.log('info - DB2 connected');
     db2.subscribe('tips');
     db2.subscribe('pms');
     db2.subscribe('mutes');
     db2.subscribe('whiskchat'); // SUBSCRIBER ONLY DB - DON'T SEND NORMAL COMMANDS HERE!
 });
-setInterval(function() {
+setInterval(function () {
     if (emitAd >= 10) {
-        db.srandmember('adslist', function(err, res) {
-            sockets.forEach(function(ads) {
+        db.srandmember('adslist', function (err, res) {
+            sockets.forEach(function (ads) {
                 ads.emit('chat', {
                     room: 'main',
                     message: res,
@@ -591,12 +641,12 @@ setInterval(function() {
                 });
             });
         });
-        bitcoind.getBalance('donations', 0, function(err, res) {
+        bitcoind.getBalance('donations', 0, function (err, res) {
             if (err) {
                 handle(err);
                 return;
             }
-            sockets.forEach(function(ads) {
+            sockets.forEach(function (ads) {
                 ads.emit('chat', {
                     room: 'main',
                     message: '<strong style="color: #090;">Please donate!</strong> Donations are used to give away free mBTC, and host servers. ' + (Number(res) * 1000).toFixed(2) + ' mBTC has been donated. Donate by sending BTC to 1AQwd4vtKMSuBMEA2s2GQmmNZdWLm2sdkE or <code>/tip donations [amount]</code>. Thanks!',
@@ -608,25 +658,25 @@ setInterval(function() {
         emitAd = 0;
     }
 }, 180000);
-io.sockets.on('connection', function(socket) {
+io.sockets.on('connection', function (socket) {
     sockets.push(socket);
     emitOnline();
-    socket.on('disconnect', function() {
+    socket.on('disconnect', function () {
         sockets.splice(sockets.indexOf(socket), 1);
         var tmp = false;
         if (socket.authed) {
-            sockets.forEach(function(skct) {
+            sockets.forEach(function (skct) {
                 if (socket.user == skct.user) {
                     tmp = true;
                 }
             });
             if (muted.indexOf(socket.user) == -1 && !tmp) {
-		deleteUser(socket.user);
+                deleteUser(socket.user);
                 chatemit(socket, '!; quitchat ' + socket.quitmsg, 'main');
                 if (socket.rank == 'mod' || socket.rank == 'admin') {
                     modsonline--;
                 }
-                
+
             }
             console.log('info - ' + socket.user + ' disconnected');
         }
@@ -636,17 +686,24 @@ io.sockets.on('connection', function(socket) {
     });
     if (socket.handshake && socket.handshake.headers && socket.handshake.headers['x-forwarded-for']) {
         var forwardedIps = socket.handshake.headers['x-forwarded-for'].split(',');
-	socket.handshake.address.address = forwardedIps[forwardedIps.length - 1];
+        socket.handshake.address.address = forwardedIps[forwardedIps.length - 1];
     }
     console.log('info - new connection from IP ' + socket.handshake.address.address);
     socket.captcha = captchagen.create();
-    socket.captcha.generate({height: 100, width: 150});
-    socket.emit('captcha', {html: '<img src="' + socket.captcha.uri() + '"></img>'});
+    socket.captcha.generate({
+        height: 100,
+        width: 150
+    });
+    socket.emit('captcha', {
+        html: '<img src="' + socket.captcha.uri() + '"></img>'
+    });
     var roomsHTML = '';
-    earnrooms.forEach(function(room) {
+    earnrooms.forEach(function (room) {
         roomsHTML += '<div class="media"><a class="pull-left" onclick="srwrap(\'' + room + '\')"><img class="media-object" src="/rooms/' + room + '.jpg" alt="rooms" style="width: 64px;"></a><div class="media-body"><a onclick="srwrap(\'' + room + '\')"><h4 class="media-heading">' + room + '</h4></a><p><iframe frameborder="0" hspace="0" vspace="0" marginheight="0" marginwidth="0" src="/rooms/' + room + '.html" style="height: 60px; width: 100%;"></iframe></div></div></br>';
     });
-    socket.emit('rooms', {html: roomsHTML});
+    socket.emit('rooms', {
+        html: roomsHTML
+    });
     socket.emit('chat', {
         room: 'main',
         message: '<strong>Welcome to the WhiskChat Network!</strong>',
@@ -673,17 +730,17 @@ io.sockets.on('connection', function(socket) {
     socket.msg = '';
     socket.pretag = '';
     socket.rank = '';
-    socket.on('login', function(data) {
+    socket.on('login', function (data) {
         if (data && data.session) {
             console.log('info - checking session cookie for IP ' + socket.handshake.address.address);
             socket.emit("message", {
                 type: "alert-success",
                 message: "Checking session cookie..."
             });
-            db.hget('sessions', data.session, function(err, reply) {
-                db.get('users/' + reply + '/password', function(err, res) {
+            db.hget('sessions', data.session, function (err, reply) {
+                db.get('users/' + reply + '/password', function (err, res) {
                     if (reply && reply !== "nuked") {
-                        db.hexists('banned', reply, function(err, banned) {
+                        db.hexists('banned', reply, function (err, banned) {
                             if (!banned) {
                                 console.log('info - correct, logging in');
                                 socket.emit("message", {
@@ -704,64 +761,66 @@ io.sockets.on('connection', function(socket) {
             });
         }
     });
-    socket.on('accounts', function(data) {
-	sfs.checkSpammer({ip: socket.handshake.address.address}, function(err, spam) {
-	    if (err) {
-		handle(err);
-		return;
-	    }
-	    if (spam > 50) {
+    socket.on('accounts', function (data) {
+        sfs.checkSpammer({
+            ip: socket.handshake.address.address
+        }, function (err, spam) {
+            if (err) {
+                handle(err);
+                return;
+            }
+            if (spam > 50) {
                 return socket.emit("message", {
                     type: "alert-error",
                     message: socket.handshake.address.address + " is banned: StopForumSpam reports a " + spam + "% chance of spam."
                 });
-	    }
-            db.hexists('bannedips', socket.handshake.address.address, function(err, res) {
-		if (err) {
+            }
+            db.hexists('bannedips', socket.handshake.address.address, function (err, res) {
+                if (err) {
                     handle(err);
                     return;
-		}
-		if (res) {
-		    db.hget('bannedips', socket.handshake.address.address, function(err, reason) {
-			return socket.emit("message", {
-			    type: "alert-error",
-			    message: socket.handshake.address.address + " has been IP banned: " + reason
-			});
-		    });
-		} else {
-                    db.hexists('banned', data.username, function(err, res) {
-			if (err) {
+                }
+                if (res) {
+                    db.hget('bannedips', socket.handshake.address.address, function (err, reason) {
+                        return socket.emit("message", {
+                            type: "alert-error",
+                            message: socket.handshake.address.address + " has been IP banned: " + reason
+                        });
+                    });
+                } else {
+                    db.hexists('banned', data.username, function (err, res) {
+                        if (err) {
                             handle(err);
                             return;
-			}
-			if (res) {
+                        }
+                        if (res) {
                             return socket.emit("message", {
-				type: "alert-error",
-				message: "You have been banned: " + res
+                                type: "alert-error",
+                                message: "You have been banned: " + res
                             });
-			} else {
+                        } else {
                             if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
-				return socket.emit("message", {
+                                return socket.emit("message", {
                                     type: "alert-error",
                                     message: "You have been IP banned."
-				});
+                                });
                             }
                             if (socket.failed) {
-				return socket.emit("message", {
+                                return socket.emit("message", {
                                     type: "alert-error",
                                     message: "Please wait 20 seconds in between logins/registers."
-				});
+                                });
                             }
                             if (data && data.action) {
-				if (data.action == "register") {
+                                if (data.action == "register") {
                                     if (data.username && data.password && data.password2 && data.email && data.captcha && data.invite) {
-					db.sismember('invites', data.invite, function(err, res) {
-					    if (err) {
-						handle(err);
-						return;
-					    }
-					    if (res) {
-						db.srem('invites', data.invite);
+                                        db.sismember('invites', data.invite, function (err, res) {
+                                            if (err) {
+                                                handle(err);
+                                                return;
+                                            }
+                                            if (res) {
+                                                db.srem('invites', data.invite);
                                                 if (data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>" || alphanumeric.test(data.username) == false) {
                                                     return socket.emit("message", {
                                                         type: "alert-error",
@@ -775,7 +834,7 @@ io.sockets.on('connection', function(socket) {
                                                     });
                                                 }
                                                 if (data.captcha !== socket.captcha.text()) {
-                                                    setTimeout(function() {
+                                                    setTimeout(function () {
                                                         socket.failed = false;
                                                     }, 20000);
                                                     socket.failed = true;
@@ -791,7 +850,7 @@ io.sockets.on('connection', function(socket) {
                                                         message: "HTML Usernames are not permitted"
                                                     });
                                                 }
-                                                db.get("users/" + data.username, function(err, reply) {
+                                                db.get("users/" + data.username, function (err, reply) {
                                                     if (!reply) {
                                                         if (data.password.length < 6) {
                                                             return socket.emit("message", {
@@ -814,7 +873,10 @@ io.sockets.on('connection', function(socket) {
                                                         }
                                                         // Generate seed for password
                                                         try {
-                                                            var hashed = passwordHash.generate(data.password, {iterations: '5000', algorithm: 'sha512'});
+                                                            var hashed = passwordHash.generate(data.password, {
+                                                                iterations: '5000',
+                                                                algorithm: 'sha512'
+                                                            });
                                                             db.set("users/" + data.username, true);
                                                             db.set("users/" + data.username + "/hash", hashed);
                                                             db.set("users/" + data.username + "/email", data.email);
@@ -827,7 +889,7 @@ io.sockets.on('connection', function(socket) {
                                                             if (typeof data.refer !== 'undefined') {
                                                                 socket.refer = stripHTML(data.refer);
                                                                 db.set("users/" + data.username + '/referrer', stripHTML(data.refer));
-                                                                sockets.forEach(function(s) {
+                                                                sockets.forEach(function (s) {
                                                                     if (data.refer == s.user) {
                                                                         s.emit("message", {
                                                                             message: "<i class='icon-user'></i> Thanks for referring " + data.username + "!"
@@ -849,8 +911,7 @@ io.sockets.on('connection', function(socket) {
                                                         });
                                                     }
                                                 });
-                                            }
-                                            else {                                              
+                                            } else {
                                                 return socket.emit("message", {
                                                     type: "alert-error",
                                                     message: "You do not have a valid invite code."
@@ -865,35 +926,34 @@ io.sockets.on('connection', function(socket) {
                                     }
                                 }
                                 if (data.action == "login") {
-                                    db.get("users/" + data.username + "/hash", function(err, reply) {
+                                    db.get("users/" + data.username + "/hash", function (err, reply) {
                                         console.log('checking password for ' + data.username + ': ' + passwordHash.verify(data.password, reply));
-					if (passwordHash.verify(data.password, reply)) {
+                                        if (passwordHash.verify(data.password, reply)) {
                                             socket.emit("message", {
                                                 type: "alert-success",
                                                 message: "Welcome back, " + data.username + '!'
                                             });
-					    login(data.username, socket);
-                                        }
-					else {
-					    socket.failed = true;
-					    setTimeout(function() {
-						socket.failed = false;
-					    }, 20000);
+                                            login(data.username, socket);
+                                        } else {
+                                            socket.failed = true;
+                                            setTimeout(function () {
+                                                socket.failed = false;
+                                            }, 20000);
                                             return socket.emit("message", {
                                                 type: "alert-error",
                                                 message: "Password incorrect."
                                             });
-					}
+                                        }
                                     });
                                 }
                             }
-			}
+                        }
                     });
-		}
+                }
             });
-	});
+        });
     });
-    socket.on('nuke', function(nuke) {
+    socket.on('nuke', function (nuke) {
         if (socket.rank !== 'admin') {
             socket.emit("message", {
                 type: "alert-error",
@@ -911,7 +971,7 @@ io.sockets.on('connection', function(socket) {
             db.expire('users/' + nuke.target + '/pretag', 86400);
             deleteUser(nuke.target);
             muted.push(nuke.target);
-            sockets.forEach(function(cs) {
+            sockets.forEach(function (cs) {
                 cs.emit('chat', {
                     room: 'main',
                     message: '<span style="color: #e00">' + stripHTML(socket.user) + ' has banned ' + stripHTML(nuke.target) + (nuke.reason ? ' for ' + stripHTML(nuke.reason) : '') + '!</span>',
@@ -920,13 +980,13 @@ io.sockets.on('connection', function(socket) {
                 });
                 if (cs.user == nuke.target) {
                     db.hmset('bannedips', cs.handshake.address.address, 'by ' + socket.user + ' for ' + nuke.reason, redis.print);
-		    cs.authed = false;
+                    cs.authed = false;
                     cs.disconnect();
                 }
             });
         }
     });
-    socket.on('ping', function(ts) {
+    socket.on('ping', function (ts) {
         socket.emit('chat', {
             room: 'main',
             message: '<strong>Pong! Client -> server ' + (Date.now() - ts.ts) + 'ms</strong>',
@@ -934,18 +994,23 @@ io.sockets.on('connection', function(socket) {
             timestamp: Date.now()
         });
     });
-    socket.on('mute', function(mute) {
+    socket.on('mute', function (mute) {
         if (socket.rank !== 'mod' && socket.rank !== 'admin') {
             socket.emit("message", {
                 type: "alert-error",
                 message: "You do not have the permissions to do that."
             });
         } else {
-            db.publish('mutes', JSON.stringify({target: stripHTML(mute.target), user: stripHTML(socket.user), mute: Number(stripHTML(mute.mute)), reason: stripHTML(mute.reason)}));
-            
+            db.publish('mutes', JSON.stringify({
+                target: stripHTML(mute.target),
+                user: stripHTML(socket.user),
+                mute: Number(stripHTML(mute.mute)),
+                reason: stripHTML(mute.reason)
+            }));
+
         }
     });
-    socket.on('chat', function(chat) {
+    socket.on('chat', function (chat) {
         if (!socket.authed) {
             socket.emit('chat', {
                 room: 'main',
@@ -954,420 +1019,427 @@ io.sockets.on('connection', function(socket) {
                 timestamp: Date.now()
             });
         } else {
-            chat.message = stripHTML(chat.message); // Prevented XSS - forever!
-            if (muted.indexOf(socket.user) !== -1) {
-                socket.volatile.emit("message", {
-                    type: "alert-error",
-                    message: "You have been muted!"
-                });
-                return;
-            }
-            if (socket.nuked && chat.room != 'banappeals') {
-                socket.volatile.emit("message", {
-                    type: "alert-error",
-                    message: "You may only talk in #banappeals!"
-                });
-                return;
-            }
-            if (chat.message.length < 2) {
-                return;
-            }
-            if (!socket.ready) {
-                return;
-            }
-            socket.ready = false;
-            setTimeout(function() {
-                socket.ready = true;
-            }, 500);
-	    chats++;
-            emitAd++;
-            if (chat.message.substr(0, 1) == "\\") {
-                chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + chat.message.substr(1, chat.message.length) + '</span>', chat.room);
-                return;
-            }
-            if (chat.message.substr(0, 1) == "|") {
-                chatemit(socket, '<span class="rainbow">' + chat.message.substr(1, chat.message.length) + '</span>', chat.room);
-                return;
-            }
-            if (chat.room == "modsprivate" && socket.rank !== 'mod' && socket.rank !== 'admin') {
-                socket.emit('message', {
-                    message: 'You are not permitted to chat in this room.'
-                });
-                return;
-            }
-            if (chat.message.substr(0, 3) == "/me") {
-                chatemit(socket, '<b> * ' + socket.user + ' </b></strong> <i>' + chat.message.substr(4, chat.message.length) + '</i>', chat.room);
-                return;
-            }
-            if (chat.message.substr(0, 4) == "/msg" || chat.message.substr(0, 3) == "/pm" || chat.message.substr(0, 5) == "/tell") {
-                if (chat.message == "/msg" || chat.message == "/pm" || chat.message == "/tell" || chat.message.split(" ").length == 2) {
-                    socket.emit('message', {
-                        message: 'Syntax: ' + chat.message + ' <user> <message>'
+            makeBBCode(chat.message, function (result) {
+                chat.message = result;
+                if (muted.indexOf(socket.user) !== -1) {
+                    socket.volatile.emit("message", {
+                        type: "alert-error",
+                        message: "You have been muted!"
                     });
                     return;
                 }
-                var msg = "";
-                for (var i = 0; i < chat.message.split(" ").length; i++) { // What if the message has spaces in it?
-                    if (i == 0 || i == 1)
-                        continue; // Skip the PM command and the first argument (target username).
-                    msg = msg + chat.message.split(" ")[i] + " ";
-                }
-                db.publish('pms', JSON.stringify({user: socket.user, target: chat.message.split(" ")[1], msg: msg}));
-                socket.emit('chat', {
-                    room: 'main',
-                    message: '<span class="muted">[me ->' + chat.message.split(" ")[1] + ']</span> ' + msg,
-                    user: '<strong>PM</strong>',
-                    timestamp: Date.now()
-                });
-		return;
-            }
-            if (chat.message.substr(0, 10) == '!; connect') {
-                socket.version = chat.message.substr(11, chat.message.length);
-                return;
-            }
-            if (chat.message.substr(0, 11) == '!; quitchat') {
-                socket.quitmsg = chat.message.substr(12, chat.message.length);
-                socket.disconnect();
-                return;
-            }
-            if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online" || chat.message.substr(0, 6) == "/users") {
-		getUserArray(function(users) {
-		    socket.emit('message', {
-			message: '<i class="icon-user"></i> ' + users.length + ' online users: </strong>' + users.join(', ') + '.'
-		    });
-		});
-                return;
-            }
-            if (chat.message.substr(0, 6) == "/rooms") {
-                return socket.emit('message', {
-                    message: 'Rooms where earning is ON: ' + earnrooms.join(', ')
-                });
-            }
-            if (chat.message.substr(0, 5) == "/ping") {
-                if (chat.message.substr(6, chat.message.length).length < 1) {
-                    return socket.emit('message', {
-                        message: 'You must include a message to ping to all users.'
+                if (socket.nuked && chat.room != 'banappeals') {
+                    socket.volatile.emit("message", {
+                        type: "alert-error",
+                        message: "You may only talk in #banappeals!"
                     });
-		}
-		getUserArray(function(users) {
-                    chatemit(socket, '<span style="display: none;">' + users.join(', ') + '</span><span class="muted">Ping to all users:</span> ' + chat.message.substr(6, chat.message.length), chat.room);
-		});
-                return;
-            }
-            if (chat.message == '/preload') {
-                socket.emit('message', {
-                    message: '<img src="//whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="//whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="//whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="//whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="//whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="//whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="//whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="//whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="//whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="//whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="//whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="//whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="//whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="//whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="//whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="//whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="//whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="//whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="//whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="//whiskchat.com/static/img/smileys/tickedoff.png"><img src="//whiskchat.com/static/img/smileys/tongue.png"><img src="//whiskchat.com/static/img/smileys/wink.png"></span>'
-                });
-                return;
-            }
-            if (chat.message.substr(0, 6) == "/white" && (socket.rank == "admin" || socket.rank == "mod")) {
-                socket.emit('message', {
-                    message: '<i class="icon-user"></i> Confirming ' + chat.message.split(' ')[1]
-                });
-                db.get('users/' + chat.message.split(' ')[1] + '/referrer', function(err, res) {
-                    if (err) {
-                        handle(err);
+                    return;
+                }
+                if (chat.message.length < 2) {
+                    return;
+                }
+                if (!socket.ready) {
+                    return;
+                }
+                socket.ready = false;
+                setTimeout(function () {
+                    socket.ready = true;
+                }, 500);
+                chats++;
+                emitAd++;
+                if (chat.message.substr(0, 1) == "\\") {
+                    chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 1.1em;">' + chat.message.substr(1, chat.message.length) + '</span>', chat.room);
+                    return;
+                }
+                if (chat.message.substr(0, 1) == "|") {
+                    chatemit(socket, '<span class="rainbow">' + chat.message.substr(1, chat.message.length) + '</span>', chat.room);
+                    return;
+                }
+                if (chat.room == "modsprivate" && socket.rank !== 'mod' && socket.rank !== 'admin') {
+                    socket.emit('message', {
+                        message: 'You are not permitted to chat in this room.'
+                    });
+                    return;
+                }
+                if (chat.message.substr(0, 3) == "/me") {
+                    chatemit(socket, '<b> * ' + socket.user + ' </b></strong> <i>' + chat.message.substr(4, chat.message.length) + '</i>', chat.room);
+                    return;
+                }
+                if (chat.message.substr(0, 4) == "/msg" || chat.message.substr(0, 3) == "/pm" || chat.message.substr(0, 5) == "/tell") {
+                    if (chat.message == "/msg" || chat.message == "/pm" || chat.message == "/tell" || chat.message.split(" ").length == 2) {
+                        socket.emit('message', {
+                            message: 'Syntax: ' + chat.message + ' <user> <message>'
+                        });
                         return;
-                    } else {
-                        if (res) {
-                            socket.emit('message', {
-                                message: '<i class="icon-user"></i> User ' + chat.message.split(' ')[1] + ' was referred by ' + res
-                            });
-                            db.incr("users/" + res + '/referred')
-                            chatemit(socket, '<span style="color: #090"><i class="icon-user"></i> Whitelisted ' + chat.message.split(' ')[1] + '</span>', chat.room)
-                            db.set('users/' + chat.message.split(' ')[1] + '/rep', 5);
-                            if (res != 'whiskers75') {
-				
-                                db.get('users/' + res + '/rep', function(err, rep) {
-                                    if (err) {
-                                        handle(err);
-                                        return;
-                                    }
-                                    db.set('users/' + res + '/rep', Number(rep) + 2)
-                                    chatemit(socket, '<span style="color: #090"><i class="icon-user"></i> Thanks to ' + chat.message.split(' ')[1] + ' for referring! +2 rep!</span>', chat.room)
-                                })
-                            }
+                    }
+                    var msg = "";
+                    for (var i = 0; i < chat.message.split(" ").length; i++) { // What if the message has spaces in it?
+                        if (i == 0 || i == 1)
+                            continue; // Skip the PM command and the first argument (target username).
+                        msg = msg + chat.message.split(" ")[i] + " ";
+                    }
+                    db.publish('pms', JSON.stringify({
+                        user: socket.user,
+                        target: chat.message.split(" ")[1],
+                        msg: msg
+                    }));
+                    socket.emit('chat', {
+                        room: 'main',
+                        message: '<span class="muted">[me ->' + chat.message.split(" ")[1] + ']</span> ' + msg,
+                        user: '<strong>PM</strong>',
+                        timestamp: Date.now()
+                    });
+                    return;
+                }
+                if (chat.message.substr(0, 10) == '!; connect') {
+                    socket.version = chat.message.substr(11, chat.message.length);
+                    return;
+                }
+                if (chat.message.substr(0, 11) == '!; quitchat') {
+                    socket.quitmsg = chat.message.substr(12, chat.message.length);
+                    socket.disconnect();
+                    return;
+                }
+                if (chat.message.substr(0, 3) == "/ol" || chat.message.substr(0, 7) == "/online" || chat.message.substr(0, 6) == "/users") {
+                    getUserArray(function (users) {
+                        socket.emit('message', {
+                            message: '<i class="icon-user"></i> ' + users.length + ' online users: </strong>' + users.join(', ') + '.'
+                        });
+                    });
+                    return;
+                }
+                if (chat.message.substr(0, 6) == "/rooms") {
+                    return socket.emit('message', {
+                        message: 'Rooms where earning is ON: ' + earnrooms.join(', ')
+                    });
+                }
+                if (chat.message.substr(0, 5) == "/ping") {
+                    if (chat.message.substr(6, chat.message.length).length < 1) {
+                        return socket.emit('message', {
+                            message: 'You must include a message to ping to all users.'
+                        });
+                    }
+                    getUserArray(function (users) {
+                        chatemit(socket, '<span style="display: none;">' + users.join(', ') + '</span><span class="muted">Ping to all users:</span> ' + chat.message.substr(6, chat.message.length), chat.room);
+                    });
+                    return;
+                }
+                if (chat.message == '/preload') {
+                    socket.emit('message', {
+                        message: '<img src="//whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="//whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="//whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="//whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="//whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="//whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="//whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="//whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="//whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="//whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="//whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="//whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="//whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="//whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="//whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="//whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="//whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="//whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="//whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="//whiskchat.com/static/img/smileys/tickedoff.png"><img src="//whiskchat.com/static/img/smileys/tongue.png"><img src="//whiskchat.com/static/img/smileys/wink.png"></span>'
+                    });
+                    return;
+                }
+                if (chat.message.substr(0, 6) == "/white" && (socket.rank == "admin" || socket.rank == "mod")) {
+                    socket.emit('message', {
+                        message: '<i class="icon-user"></i> Confirming ' + chat.message.split(' ')[1]
+                    });
+                    db.get('users/' + chat.message.split(' ')[1] + '/referrer', function (err, res) {
+                        if (err) {
+                            handle(err);
+                            return;
                         } else {
-                            socket.emit('message', {
-                                message: '<i class="icon-user"></i> User ' + chat.message.split(' ')[1] + ' does not have a referrer.'
+                            if (res) {
+                                socket.emit('message', {
+                                    message: '<i class="icon-user"></i> User ' + chat.message.split(' ')[1] + ' was referred by ' + res
+                                });
+                                db.incr("users/" + res + '/referred')
+                                chatemit(socket, '<span style="color: #090"><i class="icon-user"></i> Whitelisted ' + chat.message.split(' ')[1] + '</span>', chat.room)
+                                db.set('users/' + chat.message.split(' ')[1] + '/rep', 5);
+                                if (res != 'whiskers75') {
+
+                                    db.get('users/' + res + '/rep', function (err, rep) {
+                                        if (err) {
+                                            handle(err);
+                                            return;
+                                        }
+                                        db.set('users/' + res + '/rep', Number(rep) + 2)
+                                        chatemit(socket, '<span style="color: #090"><i class="icon-user"></i> Thanks to ' + chat.message.split(' ')[1] + ' for referring! +2 rep!</span>', chat.room)
+                                    })
+                                }
+                            } else {
+                                socket.emit('message', {
+                                    message: '<i class="icon-user"></i> User ' + chat.message.split(' ')[1] + ' does not have a referrer.'
+                                });
+                            }
+                        }
+                    })
+                    return;
+                }
+                if (chat.message.substr(0, 6) == "/refer") {
+                    db.get('users/' + socket.user + '/referred', function (err, refer) {
+                        socket.emit('message', {
+                            message: 'You have referred ' + Number(refer) + ' users.'
+                        });
+                    });
+                    return;
+                }
+                if (chat.message.substr(0, 4) == "/spt") {
+                    if (socket.rep < 15) {
+                        return socket.emit('message', {
+                            message: 'You must have 15 reputation to embed media!'
+                        });
+                    }
+                    if (chat.message.substr(5, chat.message.length) == '') {
+                        return socket.emit('message', {
+                            message: 'Syntax: /spt (Spotify URI)'
+                        });
+                    }
+                    chatemit(socket, '<iframe src="https://embed.spotify.com/?uri=' + chat.message.substr(5, chat.message.length) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room);
+                    return;
+                }
+                if (chat.message.substr(0, 4) == "!moo") {
+                    socket.emit('message', {
+                        message: 'Octocat is not amused. (Use WhiskDiceBot and built-in media instead)'
+                    });
+                    return;
+                }
+                if (chat.message.substr(0, 5) == "!pool") {
+                    socket.emit('message', {
+                        message: 'Earnings pool: ' + payoutbal + ' mBTC'
+                    });
+                    return;
+                }
+                if (chat.message.substr(0, 4) == "/btc") {
+                    if (chat.message.substr(5, chat.message.length)) {
+                        return chatemit(socket, '<strong>BTC conversion of ' + chat.message.substr(5, chat.message.length) + '</strong>: <img src="//btcticker.appspot.com/mtgox/' + chat.message.substr(5, chat.message.length) + '.png"></img>', chat.room);
+                    }
+                    return chatemit(socket, '<strong>BTC conversion of 1 BTC to USD: </strong> <img src="//btcticker.appspot.com/mtgox/1btc.png"></img>', chat.room);
+                }
+                if (chat.message.substr(0, 3) == "/sc") {
+                    if (socket.rep < 15) {
+                        return socket.emit('message', {
+                            message: 'You must have 15 reputation to embed media!'
+                        });
+                    }
+                    if (chat.message.substr(4, chat.message.length) == '') {
+                        return socket.emit('message', {
+                            message: 'Syntax: /sc (soundcloud id)'
+                        });
+                    }
+                    return chatemit(socket, '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + chat.message.substr(4, chat.message.length) + '"></iframe>', chat.room);
+                }
+                if (chat.message.substr(0, 6) == '/hash ') {
+                    chat.password = chat.message.substr(6, chat.message.length);
+                    socket.emit('message', {
+                        message: 'Changing your password to \'' + chat.password + '\'...'
+                    });
+                    var hashed = passwordHash.generate(chat.password, {
+                        iterations: '5000',
+                        algorithm: 'sha512'
+                    });
+                    db.set("users/" + socket.user, true);
+                    db.set("users/" + socket.user + "/hash", hashed);
+                    chat.password = '';
+                    socket.emit('message', {
+                        message: 'Password changed.'
+                    });
+                    socket.emit('message', {
+                        message: '(This is stored as a SHA512 hash: "' + hashed + '")'
+                    });
+                    return;
+                }
+                if (chat.message.substr(0, 3) == "/yt") {
+                    if (socket.rep < 15) {
+                        return socket.emit('message', {
+                            message: 'You must have 15 reputation to embed media!'
+                        });
+                    }
+                    try {
+                        if (chat.message.substr(4, chat.message.length).indexOf('youtube.com') !== -1) {
+                            chat.yt = chat.message.substr(4, chat.message.length).match(/(\?|&)v=([^&]+)/).pop();
+                        } else {
+                            chat.yt = chat.message.substr(4, chat.message.length);
+                        }
+                    } catch (e) {
+                        if (chat.yt == '') {
+                            return socket.emit('message', {
+                                message: 'Syntax: /yt (youtube link)'
                             });
                         }
                     }
-                })
-                return;
-            }
-            if (chat.message.substr(0, 6) == "/refer") {
-                db.get('users/' + socket.user + '/referred', function(err, refer) {
-                    socket.emit('message', {
-                        message: 'You have referred ' + Number(refer) + ' users.'
-                    });
-                });
-                return;
-            }
-            if (chat.message.substr(0, 4) == "/spt") {
-                if (socket.rep < 15) {
-                    return socket.emit('message', {
-                        message: 'You must have 15 reputation to embed media!'
-                    });
+                    return chatemit(socket, '<iframe width="400" height="225" src="//www.youtube.com/embed/' + chat.yt + '" frameborder="0" allowfullscreen></iframe>', chat.room);
                 }
-                if (chat.message.substr(5, chat.message.length) == '') {
-                    return socket.emit('message', {
-                        message: 'Syntax: /spt (Spotify URI)'
-                    });
-                }
-                chatemit(socket, '<iframe src="https://embed.spotify.com/?uri=' + chat.message.substr(5, chat.message.length) + '" width="450" height="80" frameborder="0" allowtransparency="true"></iframe>', chat.room);
-                return;
-            }
-            if (chat.message.substr(0, 4) == "!moo") {
-                socket.emit('message', {
-                    message: 'Octocat is not amused. (Use WhiskDiceBot and built-in media instead)'
-                });
-                return;
-            }
-            if (chat.message.substr(0, 5) == "!pool") {
-                socket.emit('message', {
-                    message: 'Earnings pool: ' + payoutbal + ' mBTC'
-                });
-                return;
-            }
-            if (chat.message.substr(0, 4) == "/btc") {
-                if (chat.message.substr(5, chat.message.length)) {
-                    return chatemit(socket, '<strong>BTC conversion of ' + chat.message.substr(5, chat.message.length) + '</strong>: <img src="//btcticker.appspot.com/mtgox/' + chat.message.substr(5, chat.message.length) + '.png"></img>', chat.room);
-                }
-                return chatemit(socket, '<strong>BTC conversion of 1 BTC to USD: </strong> <img src="//btcticker.appspot.com/mtgox/1btc.png"></img>', chat.room);
-            }
-            if (chat.message.substr(0, 3) == "/sc") {
-                if (socket.rep < 15) {
-                    return socket.emit('message', {
-                        message: 'You must have 15 reputation to embed media!'
-                    });
-                }
-                if (chat.message.substr(4, chat.message.length) == '') {
-                    return socket.emit('message', {
-                        message: 'Syntax: /sc (soundcloud id)'
-                    });
-                }
-                return chatemit(socket, '<iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' + chat.message.substr(4, chat.message.length) + '"></iframe>', chat.room);
-            }
-	    if (chat.message.substr(0, 6) == '/hash ') {
-		chat.password = chat.message.substr(6, chat.message.length);
-		socket.emit('message', {
-		    message: 'Changing your password to \'' + chat.password + '\'...'
-		});
-                var hashed = passwordHash.generate(chat.password, {iterations: '5000', algorithm: 'sha512'});
-                db.set("users/" + socket.user, true);
-                db.set("users/" + socket.user + "/hash", hashed);
-		chat.password = '';
-                socket.emit('message', {
-                    message: 'Password changed.'
-                });
-                socket.emit('message', {
-                    message: '(This is stored as a SHA512 hash: "' + hashed + '")'
-                });
-		return;
-            }
-            if (chat.message.substr(0, 3) == "/yt") {
-                if (socket.rep < 15) {
-                    return socket.emit('message', {
-                        message: 'You must have 15 reputation to embed media!'
-                    });
-                }
-		try {
-		    if (chat.message.substr(4, chat.message.length).indexOf('youtube.com') !== -1) {
-			chat.yt = chat.message.substr(4, chat.message.length).match(/(\?|&)v=([^&]+)/).pop();
-		    } else {
-			chat.yt = chat.message.substr(4, chat.message.length);
-		    }
-		}
-		catch(e) {
-                    if (chat.yt == '') {
-			return socket.emit('message', {
-			    message: 'Syntax: /yt (youtube link)'
-			});
-		    }
-		}
-                return chatemit(socket, '<iframe width="400" height="225" src="//www.youtube.com/embed/' + chat.yt + '" frameborder="0" allowfullscreen></iframe>', chat.room);
-            }
-            if (chat.message.substr(0, 3) == "/ma") {
-                if (socket.rank !== 'mod' && socket.rank !== 'admin') {
-                    socket.emit("message", {
-                        type: "alert-error",
-                        message: "You do not have permissions to speak in the MOD ACTION VOICE."
-                    });
-                    return;
-                }
-                return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
-            }
-            if (chat.message.substr(0, 3) == "/aa") { // Peapodamus: I'm climbin' in your windows, stealing your codes up
-                if (socket.rank !== 'admin') {
-                    socket.emit("message", {
-                        type: "alert-error",
-                        message: "You do not have permissions to speak in the ADMIN ACTION VOICE."
-                    });
-                    return; // The admin action voice. For when BIG RED LETTERS aren't enough.
-                }
-                return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
-            }
-	    if (chat.message.substr(0, 8) == "/deposit") {
-		bitcoind.getAccountAddress(socket.user, function(err, addr) {
-		    socket.emit('message', {
-			message: 'Send Bitcoins to ' + addr + ' (beta)'
-		    });
-		});
-		return;
-	    }
-	    if (chat.message.substr(0, 4) == "/bal") {
-                socket.emit("message", {
-                    message: 'Checking balance...'
-                });
-		bitcoind.getBalance(socket.user, 6, function(err, bal) {
-                    if (err) {
-                        handle(err);
+                if (chat.message.substr(0, 3) == "/ma") {
+                    if (socket.rank !== 'mod' && socket.rank !== 'admin') {
+                        socket.emit("message", {
+                            type: "alert-error",
+                            message: "You do not have permissions to speak in the MOD ACTION VOICE."
+                        });
                         return;
                     }
-                    socket.emit("message", {
-                        message: "Your balance (spendable): " + (bal * 1000) + ' mBTC'
-                    });
-		});
-                bitcoind.getBalance(socket.user, 0, function(err, bal) {
-                    if (err) {
-                        handle(err);
-                        return;
-                    }
-                    socket.emit("message", {
-                        message: "Your balance (estimated): " + (bal * 1000) + ' mBTC'
-                    });
-                });
-                return;
-	    }
-            if (chat.message.substr(0, 10) == "/newinvite") {
-                if (socket.rank !== 'admin' && socket.rank !== 'mod') {
-                    socket.emit("message", {
-                        type: "alert-error",
-                        message: "You do not have permissions to generate an invite."
-                    });
-                    return; 
+                    return chatemit(socket, '<span style="text-shadow: 2px 2px 0 rgba(64,64,64,0.4),-2px -2px 0px rgba(64,64,64,0.2); font-size: 2em; color: red;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
                 }
-                function randomString(length, chars) {
-                    var result = '';
-                    for (var i = length; i > 0; --i) result += chars[Math.round(Math.random() * (chars.length - 1))];
-                    return result;
-                }
-                var rString = randomString(6, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
-		db.sadd('invites', rString, function(err, res) {
-		    socket.emit('message', {message: 'Generated invite code: ' + rString});
-		    socket.emit('message', {message: 'Remember: An invite code is an instant whitelist.'});
-		    socket.emit('message', {message: 'Don\'t batch-generate invites, please - do it case by case.'});
-		    socket.emit('message', {message: 'kthxbai! -whiskers75'});
-		});
-		return;
-            }
-            if (chat.message.substr(0, 7) == "/finish") { 
-                if (socket.rank !== 'admin') {
-                    socket.emit("message", {
-                        type: "alert-error",
-                        message: "You do not have permissions to clean up the server."
-                    });
-                    return; 
-                }
-                sockets.forEach(function(cs) {
-                    cs.emit('chat', {
-                        room: 'main',
-                        message: '<span style="color: #e00;">' + process.env.SERVER_NAME + ' stopping! ' + chats + ' chats were made before last restart.</span>',
-                        user: '<strong>Server</strong>',
-                        timestamp: Date.now()
-                    });
-                    if (cs.user) {
-                        deleteUser(cs.user);
+                if (chat.message.substr(0, 3) == "/aa") { // Peapodamus: I'm climbin' in your windows, stealing your codes up
+                    if (socket.rank !== 'admin') {
+                        socket.emit("message", {
+                            type: "alert-error",
+                            message: "You do not have permissions to speak in the ADMIN ACTION VOICE."
+                        });
+                        return; // The admin action voice. For when BIG RED LETTERS aren't enough.
                     }
-                });
-                db.get('system/donated', function(err, res) {
-                    if (err) {
-                        handle(err)
-                        return;
-                    }
-                    db.set('system/donated', Number(res) + payoutbal, function(err, res) {
-                        db.incrby('chats', chats, function(err, res) {
-                            process.exit(0);
+                    return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
+                }
+                if (chat.message.substr(0, 8) == "/deposit") {
+                    bitcoind.getAccountAddress(socket.user, function (err, addr) {
+                        socket.emit('message', {
+                            message: 'Send Bitcoins to ' + addr + ' (beta)'
                         });
                     });
-                });
-		return;
-            }
-            if (chat.message.substr(0, 3) == "/b ") { // Bold - DiamondCardz
-                return chatemit(socket, '<strong>' + chat.message.substr(3, chat.message.length) + '</strong>', chat.room);
-            }
-            if (chat.message.substr(0, 5) == "/bold") { // Bold - DiamondCardz
-                return chatemit(socket, '<strong>' + chat.message.substr(6, chat.message.length) + '</strong>', chat.room);
-            }
-            if (chat.message.substr(0, 9) == "/forcepay") {
-                if (socket.rank !== 'admin') {
+                    return;
+                }
+                if (chat.message.substr(0, 4) == "/bal") {
                     socket.emit("message", {
-                        type: "alert-error",
-                        message: "You do not have permissions to force a payout."
+                        message: 'Checking balance...'
+                    });
+                    bitcoind.getBalance(socket.user, 6, function (err, bal) {
+                        if (err) {
+                            handle(err);
+                            return;
+                        }
+                        socket.emit("message", {
+                            message: "Your balance (spendable): " + (bal * 1000) + ' mBTC'
+                        });
+                    });
+                    bitcoind.getBalance(socket.user, 0, function (err, bal) {
+                        if (err) {
+                            handle(err);
+                            return;
+                        }
+                        socket.emit("message", {
+                            message: "Your balance (estimated): " + (bal * 1000) + ' mBTC'
+                        });
                     });
                     return;
                 }
-                return doPayoutLoop(chat.message.split(' ')[1]);
-            }
-	    var parsedcode = chat.message;
-            var a = '';
-            if (parsedcode.length > 7) {
-                a = ' ';
-            }
-            parsedcode = parsedcode.replace(a + ':\\', a + '<img src="//whiskchat.com/static/img/smileys/eh.png">');
-            parsedcode = parsedcode.replace(a + '&gt;:(', a + '<img src="//whiskchat.com/static/img/smileys/tickedoff.png">')
-            parsedcode = parsedcode.replace(a + ':)', a + '<img src="//whiskchat.com/static/img/smileys/smile.png">')
-            parsedcode = parsedcode.replace(a + 'D:&lt;', a + '<img src="//whiskchat.com/static/img/smileys/iamgoingtomurderyou.png">')
-            parsedcode = parsedcode.replace(a + ';)', a + '<img src="//whiskchat.com/static/img/smileys/wink.png">')
-            parsedcode = parsedcode.replace(a + ':P', a + '<img src="//whiskchat.com/static/img/smileys/tongue.png">')
-            parsedcode = parsedcode.replace(a + ':D', a + '<img src="//whiskchat.com/static/img/smileys/Laughter.png">')
-            parsedcode = parsedcode.replace(a + ':(', a + '<img src="//whiskchat.com/static/img/smileys/sad.png">')
-            parsedcode = parsedcode.replace(a + ':S', a + '<img src="//whiskchat.com/static/img/smileys/Diamond.png">')
-            parsedcode = parsedcode.replace(a + '8-)', a + '<img src="//whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(a + '8)', a + '<img src="//whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(a + 'B-)', a + '<img src="//whiskchat.com/static/img/smileys/coolcat.png">')
-            parsedcode = parsedcode.replace(a + ':O', a + '<img src="//whiskchat.com/static/img/smileys/supprised.png">')
-            parsedcode = parsedcode.replace(a + '-.-', a + '<img src="//whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png">')
-            bbcode.parse(parsedcode, function(parsedcode) {
-                /* link links */
-                parsedcode = urlify(parsedcode);
-                // Emoji by thomasanderson - thanks! :D
-                
+                if (chat.message.substr(0, 10) == "/newinvite") {
+                    if (socket.rank !== 'admin' && socket.rank !== 'mod') {
+                        socket.emit("message", {
+                            type: "alert-error",
+                            message: "You do not have permissions to generate an invite."
+                        });
+                        return;
+                    }
+		    
+                    function randomString(length, chars) {
+                        var result = '';
+                        for (var i = length; i > 0; --i) result += chars[Math.round(Math.random() * (chars.length - 1))];
+                        return result;
+                    }
+                    var rString = randomString(6, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+                    db.sadd('invites', rString, function (err, res) {
+                        socket.emit('message', {
+                            message: 'Generated invite code: ' + rString
+                        });
+                        socket.emit('message', {
+                            message: 'Remember: An invite code is an instant whitelist.'
+                        });
+                        socket.emit('message', {
+                            message: 'Don\'t batch-generate invites, please - do it case by case.'
+                        });
+                        socket.emit('message', {
+                            message: 'kthxbai! -whiskers75'
+                        });
+                    });
+                    return;
+                }
+                if (chat.message.substr(0, 7) == "/finish") {
+                    if (socket.rank !== 'admin') {
+                        socket.emit("message", {
+                            type: "alert-error",
+                            message: "You do not have permissions to clean up the server."
+                        });
+                        return;
+                    }
+                    sockets.forEach(function (cs) {
+                        cs.emit('chat', {
+                            room: 'main',
+                            message: '<span style="color: #e00;">' + process.env.SERVER_NAME + ' stopping! ' + chats + ' chats were made before last restart.</span>',
+                            user: '<strong>Server</strong>',
+                            timestamp: Date.now()
+                        });
+                        if (cs.user) {
+                            deleteUser(cs.user);
+                        }
+                    });
+                    db.get('system/donated', function (err, res) {
+                        if (err) {
+                            handle(err)
+                            return;
+                        }
+                        db.set('system/donated', Number(res) + payoutbal, function (err, res) {
+                            db.incrby('chats', chats, function (err, res) {
+                                process.exit(0);
+                            });
+                        });
+                    });
+                    return;
+                }
+                if (chat.message.substr(0, 3) == "/b ") { // Bold - DiamondCardz
+                    return chatemit(socket, '<strong>' + chat.message.substr(3, chat.message.length) + '</strong>', chat.room);
+                }
+                if (chat.message.substr(0, 5) == "/bold") { // Bold - DiamondCardz
+                    return chatemit(socket, '<strong>' + chat.message.substr(6, chat.message.length) + '</strong>', chat.room);
+                }
+                if (chat.message.substr(0, 9) == "/forcepay") {
+                    if (socket.rank !== 'admin') {
+                        socket.emit("message", {
+                            type: "alert-error",
+                            message: "You do not have permissions to force a payout."
+                        });
+                        return;
+                    }
+                    return doPayoutLoop(chat.message.split(' ')[1]);
+                }
                 if (!chat.room) {
-		    socket.emit('message', {
-			message: 'Please give your messages a room in future.'});
+                    socket.emit('message', {
+                        message: 'Please give your messages a room in future.'
+                    });
                     chat.room = 'main';
                 }
-                chatemit(socket, parsedcode, chat.room);
+                chatemit(socket, chat.message, chat.room);
             });
         }
     });
-    socket.on('withdraw', function(draw) {
-        bitcoind.getBalance(socket.user, 6, function(err, bal1) {
+    socket.on('withdraw', function (draw) {
+        bitcoind.getBalance(socket.user, 6, function (err, bal1) {
             if (((Number(draw.amount) / 1000) - 0.0001) > (bal1 * 1000)) {
-                return socket.emit('message', {message: 'You do not have enough mBTC (6 confirmation + 0.1 mBTC tx fee) to withdraw that amount. (need ' + (Number(draw.amount) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'});
+                return socket.emit('message', {
+                    message: 'You do not have enough mBTC (6 confirmation + 0.1 mBTC tx fee) to withdraw that amount. (need ' + (Number(draw.amount) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'
+                });
             }
             if (muted.indexOf(socket.user) !== -1) {
-                return socket.emit('message', {message: 'You have been muted!'});
+                return socket.emit('message', {
+                    message: 'You have been muted!'
+                });
             }
-	    console.log(socket.user + ' sending ' + draw.amount + ' to ' + draw.address);
-	    if (!socket.user || !draw.address || !draw.amount) {
-                return socket.emit('message', {message: 'Syntax: /withdraw [amount] [address]'});
-	    }
-            socket.emit('message', {message: '<i class="icon-signal"></i> Withdrawing ' + ((Number(draw.amount) / 1000) - 0.0001) + ' (with 0.1 mBTC tx fee) BTC to ' + draw.address + '...'});
-            bitcoind.sendFrom(socket.user, draw.address, (Number(draw.amount) / 1000) - 0.0001, function(err, res) {
+            console.log(socket.user + ' sending ' + draw.amount + ' to ' + draw.address);
+            if (!socket.user || !draw.address || !draw.amount) {
+                return socket.emit('message', {
+                    message: 'Syntax: /withdraw [amount] [address]'
+                });
+            }
+            socket.emit('message', {
+                message: '<i class="icon-signal"></i> Withdrawing ' + ((Number(draw.amount) / 1000) - 0.0001) + ' (with 0.1 mBTC tx fee) BTC to ' + draw.address + '...'
+            });
+            bitcoind.sendFrom(socket.user, draw.address, (Number(draw.amount) / 1000) - 0.0001, function (err, res) {
                 if (err) {
-		    socket.emit('message', {message: '<i class="icon-minus-sign"></i> ' + err});
+                    socket.emit('message', {
+                        message: '<i class="icon-minus-sign"></i> ' + err
+                    });
                     return;
                 }
-		socket.emit('message', {message: '<i class="icon-ok"></i> Withdrawal of ' + draw.amount + ' BTC to ' + draw.address + ' complete.'});
-                socket.emit('message', {message: '<i class="icon-ok"></i> Transaction ID: ' + res});
-		getbalance(socket);
+                socket.emit('message', {
+                    message: '<i class="icon-ok"></i> Withdrawal of ' + draw.amount + ' BTC to ' + draw.address + ' complete.'
+                });
+                socket.emit('message', {
+                    message: '<i class="icon-ok"></i> Transaction ID: ' + res
+                });
+                getbalance(socket);
             });
         });
     });
-    socket.on('tip', function(tip) {
+    socket.on('tip', function (tip) {
         if (tip.rep) {
             if (socket.rank != 'admin' && socket.rank != 'mod') {
                 socket.emit('message', {
@@ -1375,14 +1447,21 @@ io.sockets.on('connection', function(socket) {
                 });
                 return;
             }
-            db.get('users/' + tip.user, function(err, exists) {
+            db.get('users/' + tip.user, function (err, exists) {
                 if (exists) {
-                    db.get('users/' + tip.user + '/rep', function(err, bal2) {
+                    db.get('users/' + tip.user + '/rep', function (err, bal2) {
                         if (!isNaN(Number(tip.tip)) && muted.indexOf(socket.user) == -1) {
                             db.set('users/' + tip.user + '/rep', Number(tip.tip), redis.print);
-			    console.log('Moderator ' + socket.user + ' set ' + tip.user + '\'s rep to ' + tip.tip);
-			    db.publish('tips', JSON.stringify({room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: stripHTML(tip.message), rep: true, user: socket.user}));
-                            sockets.forEach(function(cs) {
+                            console.log('Moderator ' + socket.user + ' set ' + tip.user + '\'s rep to ' + tip.tip);
+                            db.publish('tips', JSON.stringify({
+                                room: tip.room,
+                                target: stripHTML(tip.user),
+                                amount: Number(tip.tip),
+                                message: stripHTML(tip.message),
+                                rep: true,
+                                user: socket.user
+                            }));
+                            sockets.forEach(function (cs) {
                                 if (cs.user == tip.user) {
                                     cs.emit('whitelist', {
                                         whitelisted: Number(tip.tip)
@@ -1400,50 +1479,64 @@ io.sockets.on('connection', function(socket) {
                 }
             });
         } else {
-	    if (tip.user == "donate" || tip.user == "Donate") {
-		tip.user = "donations";
-	    }
-	    bitcoind.getBalance(socket.user, 1, function(err, bal1) {
-		if (Number(tip.tip) > (bal1 * 1000)) {
-		    return socket.emit('message', {message: 'You do not have enough mBTC (1 confirmation) to tip that amount. (need ' + (Number(tip.tip) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'});
-		}
-		if (tip.user == socket.user) {
-		    return socket.emit('message', {message: 'You cannot tip yourself.'});
-		}
-		if (muted.indexOf(socket.user) !== -1) {
-                    return socket.emit('message', {message: 'You have been muted!'});
-		}
-		var tmp = false;
-		sockets.forEach(function(cs) {
-		    if (cs.user == tip.user) {
-			tmp = true;
-		    }
-		});
-		if (!tmp && tip.user !== 'donations') {
-                    return socket.emit('message', {message: 'That user is not online.'});
-		}
-		bitcoind.move(socket.user, tip.user, Number(tip.tip) / 1000, function(err, res) {
-		    if (err) {
-			handle(err);
-			return;
-		    }
-		    if (tip.user == 'donations') {
-			tip.user = 'the WhiskChat Server Donation Pool (thanks!)'
-		    }
-                    db.publish('tips', JSON.stringify({room: tip.room, target: stripHTML(tip.user), amount: Number(tip.tip), message: stripHTML(tip.message), user: socket.user}));
-		    sockets.forEach(function(cs) {
-			if (cs.user == tip.user || cs.user == socket.user) {
-			    getbalance(cs)
-			}
-		    });
-		});
-	    });
+            if (tip.user == "donate" || tip.user == "Donate") {
+                tip.user = "donations";
+            }
+            bitcoind.getBalance(socket.user, 1, function (err, bal1) {
+                if (Number(tip.tip) > (bal1 * 1000)) {
+                    return socket.emit('message', {
+                        message: 'You do not have enough mBTC (1 confirmation) to tip that amount. (need ' + (Number(tip.tip) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'
+                    });
+                }
+                if (tip.user == socket.user) {
+                    return socket.emit('message', {
+                        message: 'You cannot tip yourself.'
+                    });
+                }
+                if (muted.indexOf(socket.user) !== -1) {
+                    return socket.emit('message', {
+                        message: 'You have been muted!'
+                    });
+                }
+                var tmp = false;
+                sockets.forEach(function (cs) {
+                    if (cs.user == tip.user) {
+                        tmp = true;
+                    }
+                });
+                if (!tmp && tip.user !== 'donations') {
+                    return socket.emit('message', {
+                        message: 'That user is not online.'
+                    });
+                }
+                bitcoind.move(socket.user, tip.user, Number(tip.tip) / 1000, function (err, res) {
+                    if (err) {
+                        handle(err);
+                        return;
+                    }
+                    if (tip.user == 'donations') {
+                        tip.user = 'the WhiskChat Server Donation Pool (thanks!)'
+                    }
+                    db.publish('tips', JSON.stringify({
+                        room: tip.room,
+                        target: stripHTML(tip.user),
+                        amount: Number(tip.tip),
+                        message: stripHTML(tip.message),
+                        user: socket.user
+                    }));
+                    sockets.forEach(function (cs) {
+                        if (cs.user == tip.user || cs.user == socket.user) {
+                            getbalance(cs)
+                        }
+                    });
+                });
+            });
         }
     });
-    socket.on('getbalance', function() {
-	getbalance(socket);
+    socket.on('getbalance', function () {
+        getbalance(socket);
     });
-    socket.on('sync', function(data) {
+    socket.on('sync', function (data) {
         if (!socket.authed) {
             socket.emit('message', {
                 message: '<i class="icon-exclamation-sign"></i> Sync error: You are not logged in!'
@@ -1463,7 +1556,7 @@ io.sockets.on('connection', function(socket) {
             return;
         }
         var tmp5 = true;
-        data.sync.forEach(function(room) {
+        data.sync.forEach(function (room) {
             if (Object.prototype.toString.call(room) !== '[object String]') {
                 socket.emit('message', {
                     message: '<i class="icon-exclamation-sign"></i> Room \'' + room + '\' is not a string!'
@@ -1484,7 +1577,7 @@ io.sockets.on('connection', function(socket) {
             });
             return;
         }
-        db.set('users/' + socket.user + '/rooms', JSON.stringify(data.sync), function(err, res) {
+        db.set('users/' + socket.user + '/rooms', JSON.stringify(data.sync), function (err, res) {
             if (err) {
                 socket.emit('message', {
                     message: '<i class="icon-exclamation-sign"></i> Sync error: ' + err
@@ -1500,37 +1593,41 @@ io.sockets.on('connection', function(socket) {
 });
 
 console.log('info - listening');
-process.on('SIGTERM', function() {
+process.on('SIGTERM', function () {
     console.log('info - shutting down');
-    sockets.forEach(function(cs) {
+    sockets.forEach(function (cs) {
         cs.emit('chat', {
             room: 'main',
             message: '<span style="color: #e00;">' + process.env.SERVER_NAME + ' shutting down/rebooting! ' + chats + ' chats were made before last restart.</span>',
             user: '<strong>Server</strong>',
             timestamp: Date.now()
         });
-	if (cs.user) {
-	    deleteUser(cs.user);
-	}
+        if (cs.user) {
+            deleteUser(cs.user);
+        }
     });
-    db.get('system/donated', function(err, res) {
+    db.get('system/donated', function (err, res) {
         if (err) {
             handle(err)
             return;
         }
-        db.set('system/donated', Number(res) + payoutbal, function(err, res) {
-	    db.incrby('chats', chats, function(err, res) {
-		process.exit(0);
-	    });
+        db.set('system/donated', Number(res) + payoutbal, function (err, res) {
+            db.incrby('chats', chats, function (err, res) {
+                process.exit(0);
+            });
         });
     });
 });
-process.on('uncaughtException', function(err) {
-    sockets.forEach(function(cs) {
-	if (cs.rank == 'admin') {
-	    cs.emit('message', {message: 'Internal server error! ' + err + err.stack});
-	}
-        cs.emit('error', {err: err});
+process.on('uncaughtException', function (err) {
+    sockets.forEach(function (cs) {
+        if (cs.rank == 'admin') {
+            cs.emit('message', {
+                message: 'Internal server error! ' + err + err.stack
+            });
+        }
+        cs.emit('error', {
+            err: err
+        });
     });
     console.log('error - ' + err + err.stack);
 });
