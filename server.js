@@ -647,12 +647,22 @@ setInterval(function () {
                 return;
             }
             sockets.forEach(function (ads) {
+		if (Number(res) < 10) {
+                    ads.emit('chat', {
+                        room: 'main',
+                        message: '<i class="icon-minus-sign"></i> <strong style="color: #e00;">Donations needed!</strong> The payout pool can no longer pay out! Donate: <code>/tip donations [amount]</code> <script src="http://coinwidget.com/widget/coin.js"></script><script>CoinWidgetCom.go({wallet_address: "1AQwd4vtKMSuBMEA2s2GQmmNZdWLm2sdkE", currency: "bitcoin", counter: "count", alignment: "ac", qrcode: true, auto_show: false, lbl_button: "Donate to WhiskChat", lbl_address: "Donation pool address:", lbl_count: "donations", lbl_amount: "bitcoins donated [total]"});</script>.',
+                        user: '<strong>Donate!</strong>',
+                        timestamp: Date.now()
+                    }); 
+                }
+                else {
                 ads.emit('chat', {
                     room: 'main',
-                    message: '<strong style="color: #090;">Please donate!</strong> Donations are used to give away free mBTC, and host servers. ' + (Number(res) * 1000).toFixed(2) + ' mBTC has been donated. Donate by sending BTC to 1AQwd4vtKMSuBMEA2s2GQmmNZdWLm2sdkE or <code>/tip donations [amount]</code>. Thanks!',
+                    message: '<strong style="color: #090;">Please donate!</strong> Donations are used to give away free mBTC, and host servers. ' + (Number(res) * 1000).toFixed(2) + ' mBTC has been donated. Donate: <code>/tip donations [amount]</code> <script src="http://coinwidget.com/widget/coin.js"></script><script>CoinWidgetCom.go({wallet_address: "1AQwd4vtKMSuBMEA2s2GQmmNZdWLm2sdkE", currency: "bitcoin", counter: "count", alignment: "ac", qrcode: true, auto_show: false, lbl_button: "Donate to WhiskChat", lbl_address: "Donation pool address:", lbl_count: "donations", lbl_amount: "bitcoins donated [total]"});</script>',
                     user: '<strong>Donate!</strong>',
                     timestamp: Date.now()
                 });
+		}
             });
         });
         emitAd = 0;
