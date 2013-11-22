@@ -10,6 +10,7 @@ var chats = 0;
 var bitcoin = require('bitcoin');
 var captchagen = require('captchagen');
 var passwordHash = require('password-hash');
+var winston = require('winston');
 var round = 0;
 var sfs = require('spamcheck');
 var iottp = require('http').createServer(app);
@@ -65,6 +66,7 @@ function tidyScrollback() {
 	scrollback = scrollback.slice(scrollback.length - 10, scrollback.length);
     }
 }
+winston.add(winston.transports.File, {filename: 'chat.log'});
 console.log('info - listening on port ' + process.env.PORT);
 iottp.listen(process.env.PORT);
 var bitcoind = new bitcoin.Client({
@@ -84,6 +86,8 @@ function wintip(user, amt, socket) {
             console.log('it is not enough');
             return;
         }
+	socket.emit('message', {message: '<i class="icon-minus-sign"></i> The donation pool is not filled up enough to pay out!'});
+	socket.emit('message', {message: 'Please donate with <code>/tip donations [amount]</code>. Thank you!'});
         bitcoind.move('donations', user, (amt / 1000), function(err, reply) {
             if (err) {
                 handle(err);
@@ -337,7 +341,7 @@ function chatemit(sockt, message, room) {
 	});
     }
     tidyScrollback();
-    console.log('#' + room + ': <' + sockt.user + '> ' + message + (winbtc ? '+' + winbtc + 'mBTC' : '') + ' | rep ' + sockt.rep);
+    winston.info('<' + sockt.user + '> ' + message + (winbtc ? ' [+' + winbtc + ' mBTC]' : '') + ' [rep: ' + sockt.rep + ']' + ' [room: ' + room + ']');
     if (winbtc > 0) {
 	wintip(sockt.user, winbtc, sockt);
     }
