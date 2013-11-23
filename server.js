@@ -1505,6 +1505,9 @@ io.sockets.on('connection', function (socket) {
                 tip.user = "donations";
             }
             bitcoind.getBalance(socket.user, 1, function (err, bal1) {
+		if (Number(tip.tip) < 0.01) {
+		    return socket.emit('message', {message: 'Please tip at least 0.01 mBTC.'});
+		}
                 if (Number(tip.tip) > (bal1 * 1000)) {
                     return socket.emit('message', {
                         message: 'You do not have enough mBTC (1 confirmation) to tip that amount. (need ' + (Number(tip.tip) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'
