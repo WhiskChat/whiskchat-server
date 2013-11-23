@@ -659,7 +659,7 @@ setInterval(function () {
             sockets.forEach(function (ads) {
                 ads.emit('chat', {
 		    room: 'main',
-		    message: '<strong style="color: #090;">Please donate!</strong> Donations are used to give away free mBTC, and host servers. ' + (Number(res) * 1000).toFixed(2) + ' mBTC has been donated. Donate: <code>/tip donations [amount]</code>.',
+		    message: '<strong style="color: #090;">Please donate!</strong> Donations are used to give away free mBTC, and host servers. ' + (Number(res) * 1000).toFixed(2) + ' mBTC has been donated. Donate: <code>/tip donations [amount]</code> - and get half your donation in rep!.',
 		    user: '<strong>Donate!</strong>',
 		    timestamp: Date.now()
                 });
@@ -1540,6 +1540,9 @@ io.sockets.on('connection', function (socket) {
                     if (tip.user == 'donations') {
                         tip.user = 'the WhiskChat Server Donation Pool [' + dntd * 1000 + ' mBTC]'
 			db.get('users/' + socket.user + '/rep', function(err, rep1) {
+			    if (rep1 < 5) {
+				return;
+			    }
 			    db.set('users/' + socket.user + '/rep', Number(rep1) + (Number(tip.tip) / 2));
 			});
                     }
