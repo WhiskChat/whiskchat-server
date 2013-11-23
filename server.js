@@ -647,14 +647,26 @@ setInterval(function () {
                 return;
             }
             sockets.forEach(function (ads) {
-                    ads.emit('chat', {
-			room: 'main',
-			message: '<strong style="color: #090;">Please donate!</strong> Donations are used to give away free mBTC, and host servers. ' + (Number(res) * 1000).toFixed(2) + ' mBTC has been donated. Donate: <code>/tip donations [amount]</code>.',
-			user: '<strong>Donate!</strong>',
-			timestamp: Date.now()
-                    });
+                ads.emit('chat', {
+		    room: 'main',
+		    message: '<strong style="color: #090;">Please donate!</strong> Donations are used to give away free mBTC, and host servers. ' + (Number(res) * 1000).toFixed(2) + ' mBTC has been donated. Donate: <code>/tip donations [amount]</code>.',
+		    user: '<strong>Donate!</strong>',
+		    timestamp: Date.now()
+                });
             });
         });
+	db.get('motd', function(err, res) {
+	    if (res) {
+                sockets.forEach(function (ads) {
+                    ads.emit('chat', {
+                        room: 'main',
+                        message: '<strong style="color: #F60;">MOTD:</strong> ' + res,
+                        user: '<strong>Donate!</strong>',
+                        timestamp: Date.now()
+                    });
+                });
+	    }
+	});
         emitAd = 0;
     }
 }, 180000);
