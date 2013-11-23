@@ -147,7 +147,7 @@ function getbalance(socket) {
         socket.emit('balance', {
             balance: bal * 1000
         });
-        db.get('users/' + socket.emit + '/rep', function (err, rep) {
+        db.get('users/' + socket.user + '/rep', function (err, rep) {
             socket.emit('message', {
                 message: '<i class="icon-gift"></i> Your reputation: ' + rep + '.'
             });
