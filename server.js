@@ -647,22 +647,12 @@ setInterval(function () {
                 return;
             }
             sockets.forEach(function (ads) {
-		if (Number(res) < 10) {
                     ads.emit('chat', {
-                        room: 'main',
-                        message: '<i class="icon-minus-sign"></i> <strong style="color: #e00;">Donations needed!</strong> The payout pool can no longer pay out! Donate: <code>/tip donations [amount]</code>.',
-                        user: '<strong>Donate!</strong>',
-                        timestamp: Date.now()
-                    }); 
-                }
-                else {
-                ads.emit('chat', {
-                    room: 'main',
-                    message: '<strong style="color: #090;">Please donate!</strong> Donations are used to give away free mBTC, and host servers. ' + (Number(res) * 1000).toFixed(2) + ' mBTC has been donated. Donate: <code>/tip donations [amount]</code>.',
-                    user: '<strong>Donate!</strong>',
-                    timestamp: Date.now()
-                });
-		}
+			room: 'main',
+			message: '<strong style="color: #090;">Please donate!</strong> Donations are used to give away free mBTC, and host servers. ' + (Number(res) * 1000).toFixed(2) + ' mBTC has been donated. Donate: <code>/tip donations [amount]</code>.',
+			user: '<strong>Donate!</strong>',
+			timestamp: Date.now()
+                    });
             });
         });
         emitAd = 0;
