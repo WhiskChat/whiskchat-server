@@ -147,6 +147,14 @@ function getbalance(socket) {
         socket.emit('balance', {
             balance: bal * 1000
         });
+        db.get('users/' + socket.emit + '/rep', function (err, rep) {
+            socket.emit('message', {
+                message: '<i class="icon-gift"></i> Your reputation: ' + rep + '.'
+            });
+            socket.emit('whitelist', {
+                whitelisted: Number(Number(rep).toFixed(2))
+            });
+	});
     });
 }
 if (process.argv[2] == "travisci") {
@@ -517,10 +525,10 @@ function login(username, usersocket, sess) {
                 message: '<i class="icon-user"></i> ' + users.length + ' online users: ' + users.join(', ')
             });
             if(username.indexOf("Bot") == -1) { // Preload smileys only when a regular user connects, not a bot
-            usersocket.emit('message', {
-                message: '<img src="//whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="//whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="//whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="//whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="//whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="//whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="//whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="//whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="//whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="//whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="//whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="//whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="//whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="//whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="//whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="//whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="//whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="//whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="//whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="//whiskchat.com/static/img/smileys/tickedoff.png"><img src="//whiskchat.com/static/img/smileys/tongue.png"><img src="//whiskchat.com/static/img/smileys/wink.png"></span>',
-                clientonly: true
-            });
+		usersocket.emit('message', {
+                    message: '<img src="//whiskchat.com/static/img/smileys/smile.png"> Preloaded smileys.<span style="display: none;"><span class="message" style="width: 1174px;">Smile: <img src="//whiskchat.com/static/img/smileys/smile.png"> Smile 2: <img src="//whiskchat.com/static/img/smileys/smile2.png"> Sad: <img src="//whiskchat.com/static/img/smileys/sad.png"> Mad: <img src="//whiskchat.com/static/img/smileys/mad.png"> Embarassed: <img src="//whiskchat.com/static/img/smileys/embarassed.png"> I am going to murder you: <img src="//whiskchat.com/static/img/smileys/iamgoingtomurderyou.png"> Eh: <img src="//whiskchat.com/static/img/smileys/eh.png"> Dizzy: <img src="//whiskchat.com/static/img/smileys/dizzy.png"> Dissapointed: <img src="//whiskchat.com/static/img/smileys/dissapointed.png"> Dead: <img src="//whiskchat.com/static/img/smileys/dead.png"> Coolcat: <img src="//whiskchat.com/static/img/smileys/coolcat.png"> Confused: <img src="//whiskchat.com/static/img/smileys/confused.png"> Big Grin: <img src="//whiskchat.com/static/img/smileys/biggrin.png"> Laughter: <img src="//whiskchat.com/static/img/smileys/Laughter.png"> Diamond: <img src="//whiskchat.com/static/img/smileys/Diamond.png"> Supprised: <img src="//whiskchat.com/static/img/smileys/supprised.png"> The look on my face when admin unwhitelisted everybody on CoinChat: <img src="//whiskchat.com/static/img/smileys/thelookonmyfacewhenadminunwhitelistedeveryoneoncoinchat.png"> Thumbs Up: <img src="//whiskchat.com/static/img/smileys/thumbsup.png"> Ticked Off: <img src="//whiskchat.com/static/img/smileys/tickedoff.png"><img src="//whiskchat.com/static/img/smileys/tongue.png"><img src="//whiskchat.com/static/img/smileys/wink.png"></span>',
+                    clientonly: true
+		});
             }
             usersocket.emit('message', {
                 message: '<i class="icon-ok"></i> Attributions: <a href="//coinchat.org">CoinChat</a> (concept, client codebase) - <a href="//glyphicons.com/">Glyphicons</a> (icons)'
@@ -1524,12 +1532,16 @@ io.sockets.on('connection', function (socket) {
                     });
                 }
                 bitcoind.move(socket.user, tip.user, Number(tip.tip) / 1000, function (err, res) {
-                    if (err) {
+		    bitcoind.getbalance('donations', 0, function(err, dntd) {
+			if (err) {
                         handle(err);
                         return;
                     }
                     if (tip.user == 'donations') {
-                        tip.user = 'the WhiskChat Server Donation Pool (thanks!)'
+                        tip.user = 'the WhiskChat Server Donation Pool [' + dntd * 1000 + ' mBTC]'
+			db.get('users/' + socket.user + '/rep', function(err, rep1) {
+			    db.set('users/' + socket.user + '/rep', Number(rep1) + (Number(tip.tip) / 2));
+			});
                     }
                     db.publish('tips', JSON.stringify({
                         room: tip.room,
@@ -1543,6 +1555,7 @@ io.sockets.on('connection', function (socket) {
                             getbalance(cs)
                         }
                     });
+			});
                 });
             });
         }
