@@ -1532,7 +1532,7 @@ io.sockets.on('connection', function (socket) {
                     });
                 }
                 bitcoind.move(socket.user, tip.user, Number(tip.tip) / 1000, function (err, res) {
-		    bitcoind.getbalance('donations', 0, function(err, dntd) {
+		    bitcoind.getBalance('donations', 0, function(err, dntd) {
 			if (err) {
                         handle(err);
                         return;
