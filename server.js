@@ -792,20 +792,7 @@ io.sockets.on('connection', function (socket) {
 	if (!socket.handshake || !socket.handshake.address || !socket.handshake.address.address) {
 	    return socket.emit('message', {message: 'Please reconnect.'});
 	}
-        sfs.checkSpammer({
-            ip: socket.handshake.address.address
-        }, function (err, spam) {
-            if (err) {
-                handle(err);
-                return;
-            }
-            if (spam > 50) {
-                return socket.emit("message", {
-                    type: "alert-error",
-                    message: socket.handshake.address.address + " is banned: StopForumSpam reports a " + spam + "% chance of spam."
-                });
-            }
-            db.hexists('bannedips', socket.handshake.address.address, function (err, res) {
+	db.hexists('bannedips', socket.handshake.address.address, function (err, res) {
                 if (err) {
                     handle(err);
                     return;
@@ -980,8 +967,7 @@ io.sockets.on('connection', function (socket) {
                         }
                     });
                 }
-            });
-        });
+	    });
     });
     socket.on('nuke', function (nuke) {
         if (socket.rank !== 'admin') {
@@ -1037,7 +1023,7 @@ io.sockets.on('connection', function (socket) {
                 mute: Number(stripHTML(mute.mute)),
                 reason: stripHTML(mute.reason)
             }));
-
+	    
         }
     });
     socket.on('chat', function (chat) {
@@ -1177,7 +1163,7 @@ io.sockets.on('connection', function (socket) {
                                 chatemit(socket, '<span style="color: #090"><i class="icon-user"></i> Whitelisted ' + chat.message.split(' ')[1] + '</span>', chat.room)
                                 db.set('users/' + chat.message.split(' ')[1] + '/rep', 5);
                                 if (res != 'whiskers75') {
-
+				    
                                     db.get('users/' + res + '/rep', function (err, rep) {
                                         if (err) {
                                             handle(err);
