@@ -12,6 +12,7 @@ var captchagen = require('captchagen');
 var passwordHash = require('password-hash');
 var winston = require('winston');
 var round = 0;
+var payable = true;
 var sfs = require('spamcheck');
 var iottp = require('http').createServer(app);
 var io = require('socket.io').listen(iottp);
@@ -121,6 +122,7 @@ function wintip(user, amt, socket) {
             socket.emit('message', {
                 message: 'Please donate with <code>/tip donations [amount]</code>. Thank you!'
             });
+	    payable = false;
             console.log('it is not enough');
             return;
         }
@@ -602,6 +604,9 @@ function calculateEarns(user, socket, rep, msg) {
     if (!tmp) {
         console.log('earnings denied due to mod not there');
         return null;
+    }
+    if (!payable) {
+	return null;
     }
     if (typeof socket.stage !== "number") {
         socket.stage = 0.015;
@@ -1545,6 +1550,7 @@ io.sockets.on('connection', function (socket) {
 			}
 			if (tip.user == 'donations') {
                             tip.user = 'the WhiskChat Server Donation Pool [' + dntd * 1000 + ' mBTC]'
+			    payable = true;
 			    db.get('users/' + socket.user + '/rep', function(err, rep1) {
 				if (rep1 < 5) {
 				    return;
