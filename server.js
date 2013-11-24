@@ -297,7 +297,7 @@ db2.on('message', function (channel, message) {
             if (obj.room == "modsprivate" && sock.rank !== "mod" && sock.rank !== "admin") {
                 return; // Mods only!
             }
-
+	    
             sock.emit('chat', {
                 room: obj.room,
                 message: obj.message,
@@ -480,7 +480,7 @@ function login(username, usersocket, sess) {
     });
     getUserArray(function (users) {
         var tmp = false;
-
+	
         db.get('users/' + username + '/rooms', function (err, reply) {
             if (!reply) {
                 usersocket.emit('message', {
@@ -698,7 +698,7 @@ io.sockets.on('connection', function (socket) {
                 if (socket.rank == 'mod' || socket.rank == 'admin') {
                     modsonline--;
                 }
-
+		
             }
             console.log('info - ' + socket.user + ' disconnected');
         }
@@ -784,6 +784,9 @@ io.sockets.on('connection', function (socket) {
         }
     });
     socket.on('accounts', function (data) {
+	if (!socket.handshake || !socket.handshake.address || !socket.handshake.address.address) {
+	    return socket.emit('message', {message: 'Please reconnect.'});
+	}
         sfs.checkSpammer({
             ip: socket.handshake.address.address
         }, function (err, spam) {
@@ -1537,31 +1540,31 @@ io.sockets.on('connection', function (socket) {
                 bitcoind.move(socket.user, tip.user, Number(tip.tip) / 1000, function (err, res) {
 		    bitcoind.getBalance('donations', 0, function(err, dntd) {
 			if (err) {
-                        handle(err);
-                        return;
-                    }
-                    if (tip.user == 'donations') {
-                        tip.user = 'the WhiskChat Server Donation Pool [' + dntd * 1000 + ' mBTC]'
-			db.get('users/' + socket.user + '/rep', function(err, rep1) {
-			    if (rep1 < 5) {
-				return;
-			    }
-			    db.set('users/' + socket.user + '/rep', Number(rep1) + (Number(tip.tip) / 2));
+                            handle(err);
+                            return;
+			}
+			if (tip.user == 'donations') {
+                            tip.user = 'the WhiskChat Server Donation Pool [' + dntd * 1000 + ' mBTC]'
+			    db.get('users/' + socket.user + '/rep', function(err, rep1) {
+				if (rep1 < 5) {
+				    return;
+				}
+				db.set('users/' + socket.user + '/rep', Number(rep1) + (Number(tip.tip) / 2));
+			    });
+			}
+			db.publish('tips', JSON.stringify({
+                            room: tip.room,
+                            target: stripHTML(tip.user),
+                            amount: Number(tip.tip),
+                            message: stripHTML(tip.message),
+                            user: socket.user
+			}));
+			sockets.forEach(function (cs) {
+                            if (cs.user == tip.user || cs.user == socket.user) {
+				getbalance(cs)
+                            }
 			});
-                    }
-                    db.publish('tips', JSON.stringify({
-                        room: tip.room,
-                        target: stripHTML(tip.user),
-                        amount: Number(tip.tip),
-                        message: stripHTML(tip.message),
-                        user: socket.user
-                    }));
-                    sockets.forEach(function (cs) {
-                        if (cs.user == tip.user || cs.user == socket.user) {
-                            getbalance(cs)
-                        }
-                    });
-			});
+		    });
                 });
             });
         }
