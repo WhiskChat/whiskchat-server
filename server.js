@@ -138,7 +138,9 @@ function wintip(user, amt, socket) {
 }
 
 function getbalance(socket) {
+    console.log('getting balance for ' + socket.user);
     bitcoind.getBalance(socket.user, 6, function (err, bal) {
+	console.log('bal of ' + socket.user + ': ' + bal);
         if (err) {
             handle(err);
             return;
@@ -793,181 +795,181 @@ io.sockets.on('connection', function (socket) {
 	    return socket.emit('message', {message: 'Please reconnect.'});
 	}
 	db.hexists('bannedips', socket.handshake.address.address, function (err, res) {
-                if (err) {
-                    handle(err);
-                    return;
-                }
-                if (res) {
-                    db.hget('bannedips', socket.handshake.address.address, function (err, reason) {
+            if (err) {
+                handle(err);
+                return;
+            }
+            if (res) {
+                db.hget('bannedips', socket.handshake.address.address, function (err, reason) {
+                    return socket.emit("message", {
+                        type: "alert-error",
+                        message: socket.handshake.address.address + " has been IP banned: " + reason
+                    });
+                });
+            } else {
+                db.hexists('banned', data.username, function (err, res) {
+                    if (err) {
+                        handle(err);
+                        return;
+                    }
+                    if (res) {
                         return socket.emit("message", {
                             type: "alert-error",
-                            message: socket.handshake.address.address + " has been IP banned: " + reason
+                            message: "You have been banned: " + res
                         });
-                    });
-                } else {
-                    db.hexists('banned', data.username, function (err, res) {
-                        if (err) {
-                            handle(err);
-                            return;
-                        }
-                        if (res) {
+                    } else {
+                        if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
                             return socket.emit("message", {
                                 type: "alert-error",
-                                message: "You have been banned: " + res
+                                message: "You have been IP banned."
                             });
-                        } else {
-                            if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
-                                return socket.emit("message", {
-                                    type: "alert-error",
-                                    message: "You have been IP banned."
-                                });
-                            }
-                            if (socket.failed) {
-                                return socket.emit("message", {
-                                    type: "alert-error",
-                                    message: "Please wait 20 seconds in between logins/registers."
-                                });
-                            }
-                            if (data && data.action) {
-                                if (data.action == "register") {
-                                    if (data.username && data.password && data.password2 && data.email && data.captcha && data.invite) {
-                                        db.sismember('invites', data.invite, function (err, res) {
-                                            if (err) {
-                                                handle(err);
-                                                return;
-                                            }
-                                            if (res) {
-                                                db.srem('invites', data.invite);
-                                                if (data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>" || alphanumeric.test(data.username) == false) {
-                                                    return socket.emit("message", {
-                                                        type: "alert-error",
-                                                        message: "Username must be between 3 and 16 characters, must be alphanumeric and cannot contain HTML."
-                                                    });
-                                                }
-                                                if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
-                                                    return socket.emit("message", {
-                                                        type: "alert-error",
-                                                        message: "You have been IP banned by an admin."
-                                                    });
-                                                }
-                                                if (data.captcha !== socket.captcha.text()) {
-                                                    setTimeout(function () {
-                                                        socket.failed = false;
-                                                    }, 20000);
-                                                    socket.failed = true;
-                                                    return socket.emit("message", {
-                                                        type: "alert-error",
-                                                        message: "Please fill in the CAPTCHA correctly."
-                                                    });
-                                                }
-                                                lastip.push(socket.handshake.address.address);
-                                                if (data.username.indexOf('<') !== -1 || data.username.indexOf('>') !== -1) {
-                                                    return socket.emit("message", {
-                                                        type: "alert-error",
-                                                        message: "HTML Usernames are not permitted"
-                                                    });
-                                                }
-                                                db.get("users/" + data.username, function (err, reply) {
-                                                    if (!reply) {
-                                                        if (data.password.length < 6) {
-                                                            return socket.emit("message", {
-                                                                type: "alert-error",
-                                                                message: "Password must be at least 6 characters!"
-                                                            });
-                                                        }
-                                                        if (data.email.indexOf("@") == -1 || data.email.indexOf(".") == -1) {
-                                                            //simple email check
-                                                            return socket.emit("message", {
-                                                                type: "alert-error",
-                                                                message: "Please enter a valid email."
-                                                            });
-                                                        }
-                                                        if (data.password != data.password2) {
-                                                            return socket.emit("message", {
-                                                                type: "alert-error",
-                                                                message: "Passwords must match!"
-                                                            });
-                                                        }
-                                                        // Generate seed for password
-                                                        try {
-                                                            var hashed = passwordHash.generate(data.password, {
-                                                                iterations: '5000',
-                                                                algorithm: 'sha512'
-                                                            });
-                                                            db.set("users/" + data.username, true);
-                                                            db.set("users/" + data.username + "/hash", hashed);
-                                                            db.set("users/" + data.username + "/email", data.email);
-                                                            console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
-                                                            socket.emit("message", {
-                                                                type: "alert-success",
-                                                                message: "Thanks for registering, " + data.username + "!"
-                                                            });
-                                                            login(data.username, socket);
-                                                            if (typeof data.refer !== 'undefined') {
-                                                                socket.refer = stripHTML(data.refer);
-                                                                db.set("users/" + data.username + '/referrer', stripHTML(data.refer));
-                                                                sockets.forEach(function (s) {
-                                                                    if (data.refer == s.user) {
-                                                                        s.emit("message", {
-                                                                            message: "<i class='icon-user'></i> Thanks for referring " + data.username + "!"
-                                                                        });
-                                                                    }
-                                                                });
-                                                            }
-                                                        } catch (e) {
-                                                            console.log(e.stack);
-                                                            return socket.emit("message", {
-                                                                type: "alert-error",
-                                                                message: "Error logging in! Stacktrace: " + e.stack
-                                                            });
-                                                        }
-                                                    } else {
-                                                        return socket.emit("message", {
-                                                            type: "alert-error",
-                                                            message: "The username is already taken!"
-                                                        });
-                                                    }
-                                                });
-                                            } else {
+                        }
+                        if (socket.failed) {
+                            return socket.emit("message", {
+                                type: "alert-error",
+                                message: "Please wait 20 seconds in between logins/registers."
+                            });
+                        }
+                        if (data && data.action) {
+                            if (data.action == "register") {
+                                if (data.username && data.password && data.password2 && data.email && data.captcha && data.invite) {
+                                    db.sismember('invites', data.invite, function (err, res) {
+                                        if (err) {
+                                            handle(err);
+                                            return;
+                                        }
+                                        if (res) {
+                                            db.srem('invites', data.invite);
+                                            if (data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>" || alphanumeric.test(data.username) == false) {
                                                 return socket.emit("message", {
                                                     type: "alert-error",
-                                                    message: "You do not have a valid invite code."
+                                                    message: "Username must be between 3 and 16 characters, must be alphanumeric and cannot contain HTML."
                                                 });
                                             }
-                                        });
-                                    } else {
-                                        socket.emit("message", {
-                                            type: "alert-error",
-                                            message: "Please fill in all the fields."
-                                        });
-                                    }
-                                }
-                                if (data.action == "login") {
-                                    db.get("users/" + data.username + "/hash", function (err, reply) {
-                                        console.log('checking password for ' + data.username + ': ' + passwordHash.verify(data.password, reply));
-                                        if (passwordHash.verify(data.password, reply)) {
-                                            socket.emit("message", {
-                                                type: "alert-success",
-                                                message: "Welcome back, " + data.username + '!'
+                                            if (knownspambots.indexOf(socket.handshake.address.address) !== -1) {
+                                                return socket.emit("message", {
+                                                    type: "alert-error",
+                                                    message: "You have been IP banned by an admin."
+                                                });
+                                            }
+                                            if (data.captcha !== socket.captcha.text()) {
+                                                setTimeout(function () {
+                                                    socket.failed = false;
+                                                }, 20000);
+                                                socket.failed = true;
+                                                return socket.emit("message", {
+                                                    type: "alert-error",
+                                                    message: "Please fill in the CAPTCHA correctly."
+                                                });
+                                            }
+                                            lastip.push(socket.handshake.address.address);
+                                            if (data.username.indexOf('<') !== -1 || data.username.indexOf('>') !== -1) {
+                                                return socket.emit("message", {
+                                                    type: "alert-error",
+                                                    message: "HTML Usernames are not permitted"
+                                                });
+                                            }
+                                            db.get("users/" + data.username, function (err, reply) {
+                                                if (!reply) {
+                                                    if (data.password.length < 6) {
+                                                        return socket.emit("message", {
+                                                            type: "alert-error",
+                                                            message: "Password must be at least 6 characters!"
+                                                        });
+                                                    }
+                                                    if (data.email.indexOf("@") == -1 || data.email.indexOf(".") == -1) {
+                                                        //simple email check
+                                                        return socket.emit("message", {
+                                                            type: "alert-error",
+                                                            message: "Please enter a valid email."
+                                                        });
+                                                    }
+                                                    if (data.password != data.password2) {
+                                                        return socket.emit("message", {
+                                                            type: "alert-error",
+                                                            message: "Passwords must match!"
+                                                        });
+                                                    }
+                                                    // Generate seed for password
+                                                    try {
+                                                        var hashed = passwordHash.generate(data.password, {
+                                                            iterations: '5000',
+                                                            algorithm: 'sha512'
+                                                        });
+                                                        db.set("users/" + data.username, true);
+                                                        db.set("users/" + data.username + "/hash", hashed);
+                                                        db.set("users/" + data.username + "/email", data.email);
+                                                        console.log('info - new signup from IP ' + socket.handshake.address.address + ' (' + data.username + ')');
+                                                        socket.emit("message", {
+                                                            type: "alert-success",
+                                                            message: "Thanks for registering, " + data.username + "!"
+                                                        });
+                                                        login(data.username, socket);
+                                                        if (typeof data.refer !== 'undefined') {
+                                                            socket.refer = stripHTML(data.refer);
+                                                            db.set("users/" + data.username + '/referrer', stripHTML(data.refer));
+                                                            sockets.forEach(function (s) {
+                                                                if (data.refer == s.user) {
+                                                                    s.emit("message", {
+                                                                        message: "<i class='icon-user'></i> Thanks for referring " + data.username + "!"
+                                                                    });
+                                                                }
+                                                            });
+                                                        }
+                                                    } catch (e) {
+                                                        console.log(e.stack);
+                                                        return socket.emit("message", {
+                                                            type: "alert-error",
+                                                            message: "Error logging in! Stacktrace: " + e.stack
+                                                        });
+                                                    }
+                                                } else {
+                                                    return socket.emit("message", {
+                                                        type: "alert-error",
+                                                        message: "The username is already taken!"
+                                                    });
+                                                }
                                             });
-                                            login(data.username, socket);
                                         } else {
-                                            socket.failed = true;
-                                            setTimeout(function () {
-                                                socket.failed = false;
-                                            }, 20000);
                                             return socket.emit("message", {
                                                 type: "alert-error",
-                                                message: "Password incorrect."
+                                                message: "You do not have a valid invite code."
                                             });
                                         }
                                     });
+                                } else {
+                                    socket.emit("message", {
+                                        type: "alert-error",
+                                        message: "Please fill in all the fields."
+                                    });
                                 }
                             }
+                            if (data.action == "login") {
+                                db.get("users/" + data.username + "/hash", function (err, reply) {
+                                    console.log('checking password for ' + data.username + ': ' + passwordHash.verify(data.password, reply));
+                                    if (passwordHash.verify(data.password, reply)) {
+                                        socket.emit("message", {
+                                            type: "alert-success",
+                                            message: "Welcome back, " + data.username + '!'
+                                        });
+                                        login(data.username, socket);
+                                    } else {
+                                        socket.failed = true;
+                                        setTimeout(function () {
+                                            socket.failed = false;
+                                        }, 20000);
+                                        return socket.emit("message", {
+                                            type: "alert-error",
+                                            message: "Password incorrect."
+                                        });
+                                    }
+                                });
+                            }
                         }
-                    });
-                }
-	    });
+                    }
+                });
+            }
+	});
     });
     socket.on('nuke', function (nuke) {
         if (socket.rank !== 'admin') {
