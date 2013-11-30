@@ -1310,24 +1310,26 @@ io.sockets.on('connection', function (socket) {
                     socket.emit("message", {
                         message: 'Checking balance...'
                     });
-                    bitcoind.getBalance(socket.user, 6, function (err, bal) {
+                    bitcoind.getBalance(socket.user, 6, function (err, bal1) {
                         if (err) {
                             handle(err);
                             return;
                         }
-                        socket.emit("message", {
-                            message: "Your balance (spendable): " + (bal * 1000) + ' mBTC'
+                        bitcoind.getBalance(socket.user, 0, function (err, bal2) {
+                            if (err) {
+                                handle(err);
+                                return;
+                            }
+                            socket.emit("message", {
+                                message: "Your confirmed balance: " + (bal1 * 1000).toFixed(2) + ' mBTC'
+                            });
+                            if (bal2 > bal1) {
+                                socket.emit('message', {message: 'You have ' + ((bal2 - bal1) * 1000).toFixed(2) + ' mBTC which has not confirmed yet.'});
+                                socket.emit('message', {message: 'Please wait for 6 confirmations.'});
+                            }
                         });
                     });
-                    bitcoind.getBalance(socket.user, 0, function (err, bal) {
-                        if (err) {
-                            handle(err);
-                            return;
-                        }
-                        socket.emit("message", {
-                            message: "Your balance (estimated): " + (bal * 1000) + ' mBTC'
-                        });
-                    });
+                    
                     return;
                 }
                 if (chat.message.substr(0, 10) == "/newinvite") {
@@ -1423,7 +1425,7 @@ io.sockets.on('connection', function (socket) {
         bitcoind.getBalance(socket.user, 6, function (err, bal1) {
             if (((Number(draw.amount) / 1000) - 0.0001) > (bal1 * 1000)) {
                 return socket.emit('message', {
-                    message: 'You do not have enough mBTC (6 confirmation + 0.1 mBTC tx fee) to withdraw that amount. (need ' + (Number(draw.amount) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'
+                    message: 'You do not have enough mBTC (6 confirmations + 0.1 mBTC tx fee) to withdraw that amount. (need ' + (Number(draw.amount) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'
                 });
             }
             if (muted.indexOf(socket.user) !== -1) {
@@ -1500,13 +1502,13 @@ io.sockets.on('connection', function (socket) {
             if (tip.user == "donate" || tip.user == "Donate") {
                 tip.user = "donations";
             }
-            bitcoind.getBalance(socket.user, 1, function (err, bal1) {
+            bitcoind.getBalance(socket.user, 6, function (err, bal1) {
 		if (Number(tip.tip) < 0.01) {
 		    return socket.emit('message', {message: 'Please tip at least 0.01 mBTC.'});
 		}
                 if (Number(tip.tip) > (bal1 * 1000)) {
                     return socket.emit('message', {
-                        message: 'You do not have enough mBTC (1 confirmation) to tip that amount. (need ' + (Number(tip.tip) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'
+                        message: 'You do not have enough mBTC (6 confirmations) to tip that amount. (need ' + (Number(tip.tip) - (bal1 * 1000)).toFixed(2) + ' mBTC more)'
                     });
                 }
                 if (tip.user == socket.user) {
