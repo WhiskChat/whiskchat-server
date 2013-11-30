@@ -1299,7 +1299,7 @@ io.sockets.on('connection', function (socket) {
                     return chatemit(socket, '<span style="text-shadow: 3px 3px 0 rgba(64,64,64,0.4),-3px -3px 0px rgba(64,64,64,0.2); font-size: 3em; color: #1CFFFB;">' + chat.message.substr(3, chat.message.length) + '</span>', chat.room);
                 }
                 if (chat.message.substr(0, 8) == "/deposit") {
-                    bitcoind.getAccountAddress(socket.user, function (err, addr) {
+                    bitcoind.getNewAddress(socket.user, function (err, addr) {
                         socket.emit('message', {
                             message: 'Send Bitcoins to ' + addr + ' (beta)'
                         });
