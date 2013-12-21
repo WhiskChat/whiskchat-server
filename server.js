@@ -171,6 +171,7 @@ if (process.argv[2] == "travisci") {
 io.configure(function () {
     io.set('log level', 1);
     io.set('trust proxy', true);
+    io.set("transports", ["xhr-polling", "jsonp-polling"]);
 });
 console.log('info - WhiskChat Server starting');
 console.log('info - Starting DB');
