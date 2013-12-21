@@ -832,7 +832,7 @@ io.sockets.on('connection', function (socket) {
                         }
                         if (data && data.action) {
                             if (data.action == "register") {
-                                if (data.username && data.password && data.password2 && data.email && data.captcha && data.invite) {
+                                if (data.username && data.password && data.password2 && data.email && data.captcha) {
                                     db.sismember('invites', data.invite, function (err, res) {
                                         if (err) {
                                             handle(err);
