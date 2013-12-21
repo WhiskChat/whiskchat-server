@@ -49,7 +49,7 @@ cp.stderr.pipe(process.stdout);
 var alphanumeric = /^[a-z0-9]+$/i;
 var muted = ['listenwhiskchat'];
 if (!process.env.PORT) {
-    process.env.PORT = 6000;
+    process.env.PORT = 80;
 }
 if (!process.env.SERVER_NAME) {
     process.env.SERVER_NAME = 'server.whiskchat.com';
