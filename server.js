@@ -838,7 +838,7 @@ io.sockets.on('connection', function (socket) {
                                             handle(err);
                                             return;
                                         }
-                                        if (res) {
+                                        if (true) {
                                             db.srem('invites', data.invite);
                                             if (data.username.length < 3 || data.username.length > 16 || data.username == "<strong>Server</strong>" || alphanumeric.test(data.username) == false) {
                                                 return socket.emit("message", {
